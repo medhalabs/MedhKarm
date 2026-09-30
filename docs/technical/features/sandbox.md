@@ -1,0 +1,79 @@
+# Sandbox
+
+**Status:** Done for local development (Phase 0)  
+**Code:** `backend/app/features/sandbox/`  
+**Last updated:** 2026-10-01
+
+## What it is
+
+An isolated, throwaway workspace where agents write and run code, so AI-written code and downloaded packages never run on our own machines directly. Each build run gets its own sandbox. Today it's a local Docker container; a hosted VM sandbox replaces it in Phase 2 behind the same interface (see [04-tech-stack.md](../../04-tech-stack.md)).
+
+## How it works
+
+1. `DockerSandboxProvider.create()` starts a container from `SANDBOX_IMAGE` (default `python:3.13-slim`) running `sleep infinity`, labelled `medhkarm.sandbox=true`, limited to 1 CPU and 1 GB of memory. The workspace is `/workspace`.
+2. `run(command, timeout_seconds)` executes via `docker exec` wrapped in `timeout`; exit code 124 means it timed out. Output is stdout and stderr combined.
+3. `write_file` uploads a tar archive; `read_file` runs `cat`; `list_files` lists files, skipping hidden folders and `__pycache__`.
+4. Every path goes through `safe_relative_path()`: absolute paths and `..` are refused with `UnsafePathError`.
+5. The sandbox's id is the container id. `attach(id)` reconnects to it, which lets a paused run continue in a different process. `destroy(id)` removes it.
+
+## Code map
+
+| File | Responsibility |
+| --- | --- |
+| `interfaces.py` | `SandboxCommands`, `SandboxFiles`, `Sandbox`, `SandboxProvider` Protocols |
+| `schemas.py` | `CommandResult` (`exit_code`, `output`, `ok`) |
+| `paths.py` | `safe_relative_path()`: keeps every path inside the workspace |
+| `providers/docker_provider.py` | `DockerSandbox`, `DockerSandboxProvider` |
+| `providers/memory_provider.py` | In-memory sandbox for tests; commands answered by a function you pass in |
+| `exceptions.py` | `SandboxError`, `SandboxNotFoundError`, `UnsafePathError` |
+
+## API
+
+None (used in-process by workflows and the developer engine).
+
+## Data model
+
+None. Only the sandbox id is stored, inside the workflow checkpoint.
+
+## Events
+
+None yet.
+
+## Dependencies
+
+- **Other features used:** none
+- **Interfaces defined:** `SandboxProvider`, `Sandbox` → Docker and in-memory implementations
+- **External services:** Docker Engine (Docker Desktop locally), `docker` Python SDK
+- **Config:** `SANDBOX_IMAGE`
+
+## Design decisions
+
+- 2026-10-01 — Docker locally, hosted VM sandbox from Phase 2. Only our own code runs for now; containers share the host kernel, which isn't enough isolation for customers' code.
+- 2026-10-01 — Commands and files are separate small interfaces (interface segregation); `Sandbox` combines them.
+- 2026-10-01 — Network is on by default so `pip install` / `npm install` work; `network_enabled=False` turns it off. Finer rules (allow-list) come with the hosted sandbox.
+- 2026-10-01 — The Docker SDK is synchronous, so each call runs in a thread (`asyncio.to_thread`) to keep the event loop free.
+
+## How to run and test
+
+- Unit tests: `uv run pytest app/features/sandbox`
+- Against real Docker: `uv run pytest -m integration app/features/sandbox`
+
+## Known limitations and gotchas
+
+- One image for every project; stack-specific images (Node + Python) come with the app template.
+- A crashed run can leave containers behind. List them with `docker ps --filter label=medhkarm.sandbox`; remove with `docker rm -f $(docker ps -aq --filter label=medhkarm.sandbox)`.
+- First `create()` pulls the image, which takes longer.
+
+## Troubleshooting
+
+| Symptom | Likely cause | Fix |
+| --- | --- | --- |
+| `docker.errors.DockerException: Error while fetching server API version` | Docker Desktop not running | Start Docker Desktop |
+| `SandboxNotFoundError` on resume | Container was removed (manually or by a reboot) | Start a new run; sandbox persistence arrives with the hosted sandbox |
+| Command exit code 124 | Hit the timeout | Raise `timeout_seconds` or make the command faster |
+
+## Changelog
+
+| Date | Change |
+| --- | --- |
+| 2026-10-01 | Created: Docker and in-memory sandboxes, path guard, attach by id |

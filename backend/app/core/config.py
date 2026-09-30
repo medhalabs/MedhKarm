@@ -2,6 +2,7 @@
 
 from functools import lru_cache
 
+from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -16,6 +17,19 @@ class Settings(BaseSettings):
     redis_url: str = "redis://localhost:6379/0"
 
     cors_origins: list[str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
+
+    # Models (LiteLLM model names, e.g. "ollama_chat/gpt-oss:120b")
+    default_model: str = "ollama_chat/gpt-oss:120b"
+    ollama_api_base: str = "https://ollama.com"
+    ollama_api_key: SecretStr | None = None
+
+    # Sandbox
+    sandbox_image: str = "python:3.13-slim"
+
+    @property
+    def psycopg_database_url(self) -> str:
+        """Plain `postgresql://` URL for libraries that use psycopg (e.g. LangGraph checkpoints)."""
+        return self.database_url.replace("postgresql+asyncpg://", "postgresql://", 1)
 
 
 @lru_cache

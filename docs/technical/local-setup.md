@@ -41,6 +41,27 @@ uv run uvicorn app.main:app --reload --port 8000
 
 - API: http://127.0.0.1:8000 · interactive docs: http://127.0.0.1:8000/docs · health: http://127.0.0.1:8000/health
 - Before pushing: `uv run ruff check . && uv run ruff format --check . && uv run mypy app tests && uv run lint-imports && uv run pytest`
+- Tests that need real Docker: `uv run pytest -m integration`
+
+### Run a build (agents writing code)
+
+1. Get an Ollama Cloud key at https://ollama.com/settings/keys and set `OLLAMA_API_KEY` in `backend/.env`. Never commit it.
+2. Make sure Docker Desktop and Postgres (`docker compose up -d`) are running.
+3. Start a run. It plans, writes code in a fresh Docker sandbox, re-runs the tests, then pauses at the release gate:
+
+   ```bash
+   uv run python -m app.workers.build_run start \
+     --request "Create slugify.py with slugify(text) and pytest tests in test_slugify.py" \
+     --test-command "pip install -q pytest >/dev/null 2>&1; python -m pytest -q"
+   ```
+
+4. Approve or reject it, from any terminal, any time later:
+
+   ```bash
+   uv run python -m app.workers.build_run resume <run_id> --approve
+   ```
+
+The first run pulls the `python:3.13-slim` image. Details: [features/workflows.md](features/workflows.md).
 
 ## 3. Frontend
 
@@ -63,3 +84,5 @@ npm run dev
 | `docker compose up` fails: port 5432 / 5442 already in use | Another Postgres is using the port | Change the host port in `docker-compose.yml` and `DATABASE_URL` in `backend/.env` together |
 | `npm install` fails with ERESOLVE on `@types/node` | Old Node types vs Vitest | Keep `@types/node` at `^24` or newer |
 | Alembic can't connect | Postgres not up, or `.env` missing | `docker compose ps`; `cp .env.example .env` in `backend/` |
+| Build run fails with `ModelCallError` | Missing/wrong `OLLAMA_API_KEY`, or Ollama Cloud outage | Check `backend/.env`; retry later or change `DEFAULT_MODEL` |
+| Leftover sandbox containers | A run crashed before `finish` | `docker rm -f $(docker ps -aq --filter label=medhkarm.sandbox)` |

@@ -12,16 +12,23 @@ flowchart LR
     FE -->|HTTP JSON| API["Backend API<br/>FastAPI :8000"]
     API --> DB[("Postgres + pgvector<br/>:5442 local / Supabase")]
     API -.->|enqueue jobs| Redis[("Redis :6379")]
-    Redis -.-> Worker["Workers<br/>LangGraph runs (planned)"]
-    Worker -.-> DB
-    Worker -.-> Ext["LiteLLM · E2B · OpenHands<br/>GitHub · Vercel (planned)"]
+    Redis -.-> Worker["Workers<br/>LangGraph build runs"]
+    Worker --> DB
+    Worker --> Ollama["Ollama Cloud<br/>via LiteLLM"]
+    Worker --> Sandbox["Docker sandbox<br/>per run"]
+    Worker -.-> Ext["OpenHands · GitHub · Vercel (planned)"]
 ```
+
+Solid lines exist today; dotted lines are planned. Build runs are started from the command line (`app/workers/build_run.py`) until the job queue arrives in Phase 1.
 
 | Component | Where | Status | Role |
 | --- | --- | --- | --- |
 | Frontend | `frontend/` | Running | UI. Server components call the API through `src/shared/api/client.ts` |
 | Backend API | `backend/app/` | Running | HTTP API; one router per feature, assembled in `app/main.py` |
-| Workers | `backend/app/workers/` | Entry point only | Long-running work (agent runs, sandboxes, evals); queue chosen in Phase 1 |
+| Workers | `backend/app/workers/` | Build runs from the command line | Long-running work (agent runs, sandboxes, evals); queue chosen in Phase 1 |
+| Build workflow | `backend/app/features/workflows/` | Running | LangGraph graph: plan → develop → verify → release gate → finish, checkpointed in Postgres |
+| Models | `backend/app/features/models/` | Running | LiteLLM; default `gpt-oss:120b` on Ollama Cloud |
+| Sandbox | `backend/app/features/sandbox/` | Running (Docker) | One isolated container per build run |
 | Postgres | `docker-compose.yml` locally, Supabase in production | Running locally | All data, LangGraph checkpoints, embeddings (pgvector) |
 | Redis | `docker-compose.yml` | Running locally, unused yet | Job queue and caching |
 
@@ -52,7 +59,7 @@ Both sides are organised by feature, with the same feature names on each side. F
 
 | Side | File | Key settings |
 | --- | --- | --- |
-| Backend | `backend/.env` (from `.env.example`), read by `app/core/config.py` | `DATABASE_URL`, `REDIS_URL`, `CORS_ORIGINS`, `ENVIRONMENT` |
+| Backend | `backend/.env` (from `.env.example`), read by `app/core/config.py` | `DATABASE_URL`, `REDIS_URL`, `CORS_ORIGINS`, `ENVIRONMENT`, `DEFAULT_MODEL`, `OLLAMA_API_BASE`, `OLLAMA_API_KEY`, `SANDBOX_IMAGE` |
 | Frontend | `frontend/.env.local` (from `.env.example`) | `NEXT_PUBLIC_API_URL` |
 
 ## Features

@@ -4,7 +4,7 @@ A SaaS where a founder gets an AI software company (PM, CTO, developers, QA, Dev
 
 ## Stack
 
-Next.js frontend · Python backend (uv, FastAPI, Pydantic) · Postgres on Supabase (pgvector) · LangGraph with Postgres checkpoints · LiteLLM · OpenHands developer engine · E2B sandbox · Langfuse. Details: [docs/04-tech-stack.md](docs/04-tech-stack.md).
+Next.js frontend · Python backend (uv, FastAPI, Pydantic) · Postgres on Supabase (pgvector) · LangGraph with Postgres checkpoints · LiteLLM · OpenHands developer engine · Docker sandbox locally (hosted sandbox chosen in Phase 2) · Langfuse. Details: [docs/04-tech-stack.md](docs/04-tech-stack.md).
 
 ## Code organisation (must follow)
 

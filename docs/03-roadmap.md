@@ -37,7 +37,7 @@ Goal: know who we build for and what "working" means before writing product code
 - [ ] Pick the launch niche (recommendation: agencies building client apps and internal tools)
 - [ ] Pick product name and domain
 - [ ] Write 20 reference app specs for the eval suite (booking, CRM, dashboard, internal tool, simple SaaS)
-- [ ] Prove the chosen stack end to end: a LangGraph run that starts OpenHands in an E2B sandbox and saves a checkpoint to Postgres
+- [ ] Prove the chosen stack end to end: a LangGraph run that starts OpenHands in a local Docker sandbox and saves a checkpoint to Postgres
 - [ ] Create the platform repo, cloud accounts, model API keys and a starting budget for tokens
 - [ ] Clickable mock-up of the office to show in interviews
 
@@ -66,7 +66,7 @@ Goal: agents turn a spec into a deployed, tested Next.js + Supabase app without 
 - [ ] Starter repo: auth, Supabase access rules, migrations, UI kit, Playwright setup
 - [ ] Ready-made modules: bookings, payments (Stripe), email and SMS reminders, admin dashboard, file uploads
 - [ ] Workflow: PM spec → clickable prototype → CTO plan and tasks → developer → QA → DevOps
-- [ ] Isolated E2B sandbox per project with limited network access
+- [ ] Choose the hosted sandbox (E2B, Fly Machines, Daytona or Modal) and add it behind the Sandbox interface: isolated per project, limited network access
 - [ ] Developer engine: OpenHands behind a "task + repo in, diff + test results out" interface, running in the sandbox (about 1 extra week; the holiday buffer absorbs it)
 - [ ] Model × role tests in the eval suite: which models can fill which seats
 - [ ] QA writes tests from user stories; build, type-check, lint, unit and Playwright tests must pass

@@ -11,9 +11,9 @@ Decided Oct 1, 2026. A Next.js frontend over a Python backend, Postgres on Supab
 | Frontend ↔ backend | TypeScript client generated from FastAPI's OpenAPI spec | Types always match; Supabase handles sign-in and FastAPI checks its token |
 | Orchestration | LangGraph with Postgres checkpoints | Works with any model; `interrupt()` for approval gates; runs survive restarts. Replaces Temporal for the MVP |
 | Background jobs | arq on Redis, or a Postgres job table | Runs graphs in worker processes |
-| Model layer | LiteLLM | One interface for Claude, OpenAI, Gemini, Ollama and others |
-| Developer engine | OpenHands behind a swappable interface | Model-agnostic coding agent; the Claude Agent SDK can be added later for Claude users |
-| Sandbox | E2B | Isolated environment per project |
+| Model layer | LiteLLM; development default `ollama_chat/gpt-oss:120b` on Ollama Cloud (free tier) | One interface for Claude, OpenAI, Gemini, Ollama and others |
+| Developer engine | Built-in tool-loop engine now; OpenHands next, behind the same `DeveloperEngine` interface | Model-agnostic; the Claude Agent SDK can be added later for Claude users |
+| Sandbox | Docker locally, behind a `Sandbox` interface; hosted sandbox chosen in Phase 2 | Isolated environment per project; see below |
 | Tracing and costs | Langfuse | Works with LangGraph; tokens and cost per agent and task |
 
 ## Why Postgres
@@ -42,7 +42,15 @@ The Claude Agent SDK runs only Claude models, which conflicts with letting custo
 | Team Lead delegating | Supervisor pattern with agents as subgraphs |
 | Live office feed | Step streaming into the event log |
 
-**Gap:** LangGraph is orchestration only; it has no built-in coding agent. The Developer uses OpenHands (model-agnostic, via LiteLLM) running in the E2B sandbox.
+**Gap:** LangGraph is orchestration only; it has no built-in coding agent. The Developer uses OpenHands (model-agnostic, via LiteLLM) running in the sandbox.
+
+## Why Docker for the sandbox, for now
+
+Decided Oct 1, 2026. Agents run code they wrote plus packages from the internet (`npm install`, builds, tests), so it always runs in an isolated sandbox, never on our servers directly.
+
+- **Now (local development, Phase 0–1):** Docker on the developer's machine. Only our own code runs, and OpenHands uses Docker as its default sandbox.
+- **Later (Phase 2, before customer code runs):** a hosted VM sandbox, chosen then on price and features. Candidates: E2B, Fly Machines, Daytona, Modal. Docker containers share the host kernel, which is too weak isolation for many customers' untrusted code, and we'd have to scale and manage the machines ourselves.
+- **Why switching is cheap:** all code talks to a `Sandbox` interface (`backend/app/features/sandbox/interfaces.py`); Docker and the hosted option are two implementations of it.
 
 ## Rules
 

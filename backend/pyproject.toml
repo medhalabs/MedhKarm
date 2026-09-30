@@ -5,7 +5,12 @@ requires-python = ">=3.13"
 dependencies = [
     "alembic>=1.20.0",
     "asyncpg>=0.31.0",
+    "docker>=7.2.0",
     "fastapi>=0.142.2",
+    "langgraph>=1.2.12",
+    "langgraph-checkpoint-postgres>=3.1.2",
+    "litellm>=1.103.1",
+    "psycopg[binary]>=3.3.6",
     "pydantic-settings>=2.15.0",
     "sqlalchemy[asyncio]>=2.1.1",
     "uvicorn[standard]>=0.54.0",
@@ -33,9 +38,15 @@ python_version = "3.13"
 strict = true
 plugins = ["pydantic.mypy"]
 
+[[tool.mypy.overrides]]
+module = ["docker.*", "litellm.*"]
+ignore_missing_imports = true
+
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["app", "tests"]
+markers = ["integration: needs real services (Docker, network); run with -m integration"]
+addopts = "-m 'not integration'"
 
 [tool.importlinter]
 root_package = "app"

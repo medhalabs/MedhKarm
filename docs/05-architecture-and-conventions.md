@@ -38,7 +38,7 @@ The same feature names are used on both sides, so `frontend/src/features/approva
 | `office` | The office floor, meeting-room feed (frontend-heavy; reads `events`) |
 | `reports` | Milestone updates and weekly reports |
 | `models` | LLM providers, API keys, model picker, cost tracking |
-| `sandbox` | E2B sandboxes per project |
+| `sandbox` | Isolated sandbox per project: Docker locally, a hosted sandbox from Phase 2 |
 | `developer_engine` | OpenHands (and later Claude Agent SDK) behind one interface |
 | `integrations` | GitHub, Vercel, Supabase (customer's), MCP servers |
 | `billing` | Plans, usage limits, Stripe |
@@ -160,7 +160,7 @@ Rules:
 | **Open/closed** | Add a model provider, sandbox, deploy target or developer engine by writing a new class that implements the existing interface and registering it — no edits to the code that uses it. |
 | **Liskov substitution** | Every implementation of an interface must be usable wherever the interface is expected: `FakeLLMProvider` in tests behaves like `LiteLLMProvider` in production (same inputs, same kinds of outputs and errors). |
 | **Interface segregation** | Small, focused Protocols: `SandboxRunner` (run commands) is separate from `SandboxFiles` (read/write files). A consumer depends only on what it uses. |
-| **Dependency inversion** | Services depend on Protocols in `interfaces.py`, not on concrete classes. Concrete classes are wired in `dependencies.py` (API) or the worker's setup. That's what lets us swap OpenHands for the Claude Agent SDK, or E2B for Fly Machines. |
+| **Dependency inversion** | Services depend on Protocols in `interfaces.py`, not on concrete classes. Concrete classes are wired in `dependencies.py` (API) or the worker's setup. That's what lets us swap OpenHands for the Claude Agent SDK, or the local Docker sandbox for a hosted one. |
 
 Example of the pattern:
 
