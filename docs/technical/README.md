@@ -1,0 +1,26 @@
+# Technical documentation
+
+Knowledge transfer for anyone working on the code: what each part is, how it works, where its code lives, and why it's built that way. Start with the system overview, then read the feature you're working on.
+
+## Rules
+
+- **Every feature has a doc** at `features/<feature>.md`, named exactly like its code folder, created from [features/_TEMPLATE.md](features/_TEMPLATE.md).
+- **A feature isn't done until its doc is.** The doc is written in the same change as the code.
+- **Any change to behaviour, API, data model, events or config updates the doc** in the same change, with a changelog line.
+- **Cross-cutting pieces** (setup, deployment, auth flow, the event log, the workflow engine) get their own doc in this folder.
+- Write for a newcomer: plain language first, then detail. Diagrams (Mermaid) wherever a flow branches or crosses services.
+
+## Index
+
+### System
+
+| Doc | What it covers |
+| --- | --- |
+| [overview.md](overview.md) | How frontend, backend, workers, database and external services fit together |
+| [local-setup.md](local-setup.md) | Getting the project running on a new machine |
+
+### Features
+
+| Feature | Doc | Status |
+| --- | --- | --- |
+| health | [features/health.md](features/health.md) | Done |

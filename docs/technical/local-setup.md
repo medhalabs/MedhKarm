@@ -1,0 +1,65 @@
+# Local setup
+
+**Last updated:** 2026-10-01
+
+How to get MedhKarm running on a new machine. About 10 minutes.
+
+## Prerequisites
+
+| Tool | Version used | Check |
+| --- | --- | --- |
+| Node.js | 24+ (tested on 26) | `node -v` |
+| npm | 11+ | `npm -v` |
+| Python | 3.13 (uv installs it if missing) | `python3 --version` |
+| uv | 0.8+ | `uv --version` |
+| Docker Desktop | any recent | `docker info` |
+
+## 1. Start Postgres and Redis
+
+From the repo root:
+
+```bash
+docker compose up -d --wait
+```
+
+| Service | Host port | Credentials |
+| --- | --- | --- |
+| Postgres 17 + pgvector | **5442** (not 5432, to avoid clashing with other local Postgres instances) | user `medhkarm`, password `medhkarm`, db `medhkarm` |
+| Redis 7 | 6379 | none |
+
+Stop them with `docker compose stop`; delete all local data with `docker compose down -v`.
+
+## 2. Backend
+
+```bash
+cd backend
+cp .env.example .env
+uv sync
+uv run alembic upgrade head
+uv run uvicorn app.main:app --reload --port 8000
+```
+
+- API: http://127.0.0.1:8000 · interactive docs: http://127.0.0.1:8000/docs · health: http://127.0.0.1:8000/health
+- Before pushing: `uv run ruff check . && uv run ruff format --check . && uv run mypy app tests && uv run lint-imports && uv run pytest`
+
+## 3. Frontend
+
+```bash
+cd frontend
+cp .env.example .env.local
+npm install
+npm run dev
+```
+
+- App: http://localhost:3000. The home page shows **"Backend OK · MedhKarm API v0.1.0 (development)"** when the backend is reachable.
+- Before pushing: `npm run lint && npm run typecheck && npm test && npm run format:check`
+
+## Troubleshooting
+
+| Symptom | Likely cause | Fix |
+| --- | --- | --- |
+| Home page says "Backend unreachable" | Backend not running, or wrong URL | Start the backend; check `NEXT_PUBLIC_API_URL` in `frontend/.env.local` is `http://127.0.0.1:8000` |
+| Backend running but frontend still can't reach it | `localhost` resolves to IPv6 (`::1`) while uvicorn listens on IPv4 only | Use `127.0.0.1`, not `localhost`, in `NEXT_PUBLIC_API_URL` |
+| `docker compose up` fails: port 5432 / 5442 already in use | Another Postgres is using the port | Change the host port in `docker-compose.yml` and `DATABASE_URL` in `backend/.env` together |
+| `npm install` fails with ERESOLVE on `@types/node` | Old Node types vs Vitest | Keep `@types/node` at `^24` or newer |
+| Alembic can't connect | Postgres not up, or `.env` missing | `docker compose ps`; `cp .env.example .env` in `backend/` |
