@@ -126,10 +126,13 @@ def build_engine(
     tools = list(role.tools) if role and role.tools else list(DEFAULT_TOOLS)
     if settings.builtin_apply_patch and "apply_patch" not in tools:
         tools.append("apply_patch")
+    from app.features.integrations.service import tool_sources
+
     builtin = ToolLoopEngine(
         build_provider(settings, model),
         max_steps=(role.max_steps if role and role.max_steps else settings.builtin_max_steps),
         tools=tools,
         instructions=(role.instructions if role and role.instructions else SYSTEM_PROMPT),
+        tool_sources=tool_sources(role.mcp) if role else [],
     )
     return builtin, DockerSandboxProvider(settings.sandbox_image)

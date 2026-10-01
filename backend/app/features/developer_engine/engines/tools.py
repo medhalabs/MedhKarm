@@ -123,6 +123,8 @@ def compacted_patch_arguments(result: str) -> dict[str, str]:
 
 def describe_tool_use(name: str, arguments: dict[str, Any], result: str) -> str:
     """One plain line for the activity feed: what the developer just did."""
+    if result.startswith("Not allowed:"):
+        return f"Tried {name}, which isn't one of its tools"
     path = str(arguments.get("path", ""))
     if name == "write_file":
         return f"Wrote {path}"
@@ -142,6 +144,10 @@ def describe_tool_use(name: str, arguments: dict[str, Any], result: str) -> str:
         if result.startswith("Patch applied: "):
             return "Edited files: " + result.removeprefix("Patch applied: ")
         return "Tried an edit that didn't apply"
+    if "__" in name:  # an MCP tool: "<server>__<tool>"
+        server, tool = name.split("__", 1)
+        detail = next((str(v) for v in arguments.values() if isinstance(v, str)), "")
+        return f"Used {server}: {tool}" + (f" ({detail[:60]})" if detail else "")
     return f"Used {name}"
 
 

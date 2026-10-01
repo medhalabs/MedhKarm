@@ -29,6 +29,7 @@ Solid lines exist today; dotted lines are planned. The API never does long work:
 | Runs and jobs | `backend/app/features/runs/`, `backend/app/features/jobs/` | Running | Start and approve runs over HTTP; durable job queue with leases and retries |
 | Build workflow | `backend/app/features/workflows/` | Running | LangGraph graph: prepare → plan → (develop → review)* → verify → release gate → finish, checkpointed in Postgres |
 | Standups | `backend/app/features/standups/` | Running | Daily standup from the activity log; sent each morning by the worker |
+| Integrations (MCP) | `backend/app/features/integrations/` | Running | MCP servers as agent tools, granted per role with limits (tools, read-only, calls per task); first server `python_docs` |
 | Approval rules | `backend/app/features/approvals/` | Running | The team template's rules decide the release gate: ask the founder (default), approve or reject, with reasons |
 | Models | `backend/app/features/models/` | Running | LiteLLM; default `gpt-oss:20b` on Ollama Cloud |
 | Sandbox | `backend/app/features/sandbox/` | Running (Docker) | One isolated container per build run (`medhkarm-sandbox:dev`: Python, Node, pytest), or an OpenHands agent server |

@@ -61,6 +61,10 @@ sequenceDiagram
     E-->>W: DevResult
 ```
 
+### Extra tools and access limits
+
+`ToolLoopEngine(..., tool_sources=[...])` takes **tool sources** (`interfaces.py`: `ToolSource` opens a `ToolSession` per task with `list_tools()` and `call()`). Their tools are offered next to the built-in ones; calls to them are routed to the session, which enforces its own limits. MCP servers are the first source ([integrations.md](integrations.md)). The engine runs **only tools it offered**: any other name is refused with "Not allowed: …" and logged ("Tried X, which isn't one of its tools"). A patch is still applied for roles that may `write_file`.
+
 ## Code map
 
 | File | Responsibility |
@@ -143,6 +147,7 @@ OpenHands used about 10× the tokens on this small task: its system prompt and t
 
 | Date | Change |
 | --- | --- |
+| 2026-10-01 | `tool_sources` (MCP tools, per-role limits); only offered tools run, others are refused and logged |
 | 2026-10-01 | Built-in engine takes `tools` and `instructions` (from the team template's developer role); replaces `offer_apply_patch` |
 | 2026-10-01 | Engines record `tool.used` and `model.used` events (activity log) |
 | 2026-10-01 | `apply_patch` made opt-in via `BUILTIN_APPLY_PATCH` (default off) |

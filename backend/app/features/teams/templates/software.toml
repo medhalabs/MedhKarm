@@ -46,7 +46,15 @@ your work, fix any failures, and call `finish` with a one-line summary once the 
 Only change files inside the workspace. Keep solutions small and clear.
 Never fake a passing test: don't create files that stand in for the test tool (like
 pytest.py), and don't weaken tests to make them pass. If a tool is missing, say so in
-your summary."""
+your summary. When unsure how a standard-library API works, look it up with the
+python_docs tools instead of guessing."""
+
+# MCP servers this role may use (catalog: integrations/mcp_servers.toml), with limits.
+[[roles.mcp]]
+server = "python_docs"
+tools = ["lookup", "members"]
+read_only = true
+max_calls = 10  # per task
 
 [[roles]]
 id = "qa"

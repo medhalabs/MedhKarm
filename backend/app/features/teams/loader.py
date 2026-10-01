@@ -6,6 +6,7 @@ from pathlib import Path
 from pydantic import ValidationError
 
 from app.features.approvals.service import policy_problems
+from app.features.integrations.service import access_problems
 from app.features.teams.catalog import KNOWN_CHECKERS, KNOWN_TOOLS, WORKFLOW_FACTS, WORKFLOW_ROLES
 from app.features.teams.exceptions import InvalidTemplateError
 from app.features.teams.schemas import TeamTemplate
@@ -56,6 +57,7 @@ def _problems(template: TeamTemplate) -> list[str]:
         unknown = sorted(set(role.tools) - KNOWN_TOOLS)
         if unknown:
             problems.append(f"role {role.id}: unknown tools {', '.join(unknown)}")
+        problems += access_problems(role.id, role.mcp)
         if len(role.display_names) < role.max_count:
             problems.append(f"role {role.id}: needs {role.max_count} display names")
     return problems

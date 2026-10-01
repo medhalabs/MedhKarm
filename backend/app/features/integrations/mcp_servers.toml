@@ -1,0 +1,31 @@
+# MCP servers the platform can run. Agents only get tools from servers their role names in the
+# team template ([[roles.mcp]]), within the limits set there.
+#
+# Servers run on the worker, OUTSIDE the sandbox, with the worker's permissions: only add
+# servers you trust. Never put secrets here; list environment variable names in `env`.
+
+[[servers]]
+id = "python_docs"
+title = "Python docs"
+description = "Look up the Python standard library: a module, class or function's documentation, or what a module contains. Offline and read-only."
+transport = "stdio"
+command = "{python}"
+args = ["-m", "app.features.integrations.servers.python_docs"]
+
+[[servers]]
+id = "fetch"
+title = "Web fetch"
+description = "Fetch a web page as text (official MCP server). Downloaded with uvx on first use."
+transport = "stdio"
+command = "uvx"
+args = ["mcp-server-fetch"]
+enabled = false  # needs a download from PyPI; turn on deliberately
+
+[[servers]]
+id = "github"
+title = "GitHub"
+description = "Read and change repositories, issues and pull requests (official GitHub MCP server)."
+transport = "http"
+url = "https://api.githubcopilot.com/mcp/"
+env = ["GITHUB_TOKEN"]
+enabled = false  # comes with repo onboarding in Phase 2

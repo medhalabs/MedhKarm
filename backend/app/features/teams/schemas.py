@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field, model_validator
 
 from app.features.approvals.schemas import ApprovalPolicy
+from app.features.integrations.schemas import McpAccess
 
 
 class RoleSpec(BaseModel):
@@ -12,7 +13,8 @@ class RoleSpec(BaseModel):
     responsibilities: str  # one line for the founder
     instructions: str = ""  # the agent's system prompt; empty for roles that don't use a model
     review_instructions: str = ""  # for roles that review others' work (the CTO)
-    tools: list[str] = Field(default_factory=list)
+    tools: list[str] = Field(default_factory=list)  # built-in tools
+    mcp: list[McpAccess] = Field(default_factory=list)  # MCP servers it may use, with limits
     model: str | None = None  # LiteLLM model name; None = the default model
     max_steps: int | None = Field(default=None, ge=1, le=200)
     count: int = Field(default=1, ge=1)  # how many the team starts with

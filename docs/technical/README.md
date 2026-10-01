@@ -34,4 +34,5 @@ Knowledge transfer for anyone working on the code: what each part is, how it wor
 | standups | [features/standups.md](features/standups.md) | Daily standup from the activity log: API, CLI, admin page, sent each morning by the worker |
 | runs | [features/runs.md](features/runs.md) | Start, list and approve build runs over HTTP and in the admin page (`/admin`) |
 | jobs | [features/jobs.md](features/jobs.md) | Postgres job queue and the worker: builds and the morning standup |
+| integrations | [features/integrations.md](features/integrations.md) | MCP servers as agent tools, with per-role limits; `python_docs` server |
 | approvals | [features/approvals.md](features/approvals.md) | Approval rules at the release gate: ask, approve or reject, with reasons |
