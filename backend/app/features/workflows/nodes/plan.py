@@ -41,6 +41,7 @@ def make_plan_node(
             "tasks": tasks,
             "current_task": 0,
             "cto_tokens": response.usage.total_tokens,
+            "cto_tokens_total": response.usage.total_tokens,
         }
 
     return plan

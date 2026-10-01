@@ -53,7 +53,7 @@ Goal: a general engine where a team is defined by config, its work is checked, a
 - [x] Append-only event log: actions, messages, tool calls, costs, approvals; detailed enough to drive the animated office (who is doing what, task hand-offs, messages). Done Oct 1, 2026: API with live stream
 - [x] Daily standup generated from the event log (done, planned, blocked, needs approval). Done Oct 1, 2026: built from the log with no model call, by API and command line, and sent every morning by the worker ([standups.md](technical/features/standups.md))
 - [x] API endpoints and a job queue, so runs start and approvals happen over HTTP, not the command line. Done Oct 1, 2026: `POST /runs`, approval over HTTP, Postgres job queue; a worker killed mid-run is taken over by another and the build carries on; standup sent every morning ([jobs.md](technical/features/jobs.md), [runs.md](technical/features/runs.md))
-- [ ] Approval rules on top of fixed gates
+- [x] Approval rules on top of fixed gates. Done Oct 1, 2026: rules in the team template decide ask / approve / reject at the release gate (strictest wins) and say why; the software team asks every time and flags secrets, dependencies, migrations, large or expensive changes ([approvals.md](technical/features/approvals.md))
 - [ ] Tools through MCP, with per-agent access limits
 - [ ] Bare admin page to watch runs
 

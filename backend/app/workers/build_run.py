@@ -23,7 +23,7 @@ from app.core.logging import configure_logging
 from app.features.events.service import EventService
 from app.features.events.stores.sql_store import SqlEventStore
 from app.features.workflows.schemas import RunOutcome, StepUpdate
-from app.workers.wiring import workflow_service
+from app.workers.wiring import ensure_sandbox_image, workflow_service
 
 
 async def print_events(run_id: str) -> None:
@@ -103,6 +103,8 @@ async def main() -> None:
     settings = get_settings()
     if getattr(args, "engine", None):
         settings = settings.model_copy(update={"developer_engine": args.engine})
+    if args.command == "start" and settings.developer_engine == "builtin":
+        ensure_sandbox_image(settings.sandbox_image)
     async with workflow_service(settings) as service:
         if args.command == "start":
             run_id = uuid.uuid4().hex[:12]

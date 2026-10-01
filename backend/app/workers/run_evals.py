@@ -16,7 +16,6 @@ import sys
 from datetime import UTC, datetime
 from pathlib import Path
 
-import docker
 from langgraph.checkpoint.memory import InMemorySaver
 
 from app.core.config import Settings, get_settings
@@ -29,23 +28,13 @@ from app.features.evals.validator import TaskValidator
 from app.features.sandbox.providers.docker_provider import DockerSandboxProvider
 from app.features.workflows.graphs.build_app import build_app_graph
 from app.features.workflows.service import WorkflowService
-from app.workers.wiring import build_team_runtime
+from app.workers.wiring import build_team_runtime, ensure_sandbox_image
 
 BACKEND_DIR = Path(__file__).resolve().parents[2]
 EVALS_DIR = BACKEND_DIR / "evals"
-SANDBOX_IMAGE_DIR = BACKEND_DIR / "sandbox-image"
 
 # The OpenHands agent-server image has Python and Node but not our test tools.
 OPENHANDS_PREPARE = "pip install -q pytest fastapi httpx2 >/dev/null 2>&1"
-
-
-def ensure_eval_image(tag: str) -> None:
-    client = docker.from_env()
-    try:
-        client.images.get(tag)
-    except docker.errors.ImageNotFound:
-        print(f"Building sandbox image {tag} (one-time, about a minute)...")
-        client.images.build(path=str(SANDBOX_IMAGE_DIR), tag=tag, rm=True)
 
 
 def print_outcome(outcome: TaskOutcome) -> None:
@@ -62,7 +51,7 @@ def print_outcome(outcome: TaskOutcome) -> None:
 
 
 async def validate(settings: Settings, only: list[str] | None, parallel: int) -> int:
-    ensure_eval_image(settings.eval_sandbox_image)
+    ensure_sandbox_image(settings.eval_sandbox_image)
     tasks = load_tasks(EVALS_DIR, only)
     validator = TaskValidator(DockerSandboxProvider(settings.eval_sandbox_image))
     results = await validator.validate_all(tasks, parallel=parallel)
@@ -75,7 +64,7 @@ async def run(settings: Settings, only: list[str] | None, parallel: int) -> int:
     if settings.developer_engine == "openhands":
         prepare = OPENHANDS_PREPARE
     else:
-        ensure_eval_image(settings.eval_sandbox_image)
+        ensure_sandbox_image(settings.eval_sandbox_image)
         settings = settings.model_copy(update={"sandbox_image": settings.eval_sandbox_image})
 
     tasks = load_tasks(EVALS_DIR, only)
@@ -90,6 +79,7 @@ async def run(settings: Settings, only: list[str] | None, parallel: int) -> int:
         review_instructions=team.review_instructions,
         developer_names=team.developer_names,
         max_developers=team.max_developers,
+        approval_policy=team.approval_policy,
     )
     runner = EvalRunner(WorkflowService(graph), sandboxes, prepare_command=prepare)
 

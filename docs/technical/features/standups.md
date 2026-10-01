@@ -47,7 +47,7 @@ Model use: 416,095 tokens.
 
 | Section | What goes in it |
 | --- | --- |
-| Needs you | Runs whose last event is `approval.requested`: "Approve the release" |
+| Needs you | Runs whose last event is `approval.requested`: "Approve the release", plus why when an approval rule asked ("Approve the release: It changes secrets, dependencies, …") |
 | Done | Tasks the CTO approved (`review.finished`, approve); runs released or stopped by the founder (`run.finished`) |
 | Planned today | Tasks of open runs that aren't done yet, with their state: to do, working, in review, changes requested |
 | Blocked | Tasks accepted with review comments still open (revision limit reached); runs stopped because the final checks failed; runs that broke and ran out of retries (`run.finished` status `error`); **stalled** runs (open, not waiting for approval, no events for `STANDUP_STALL_MINUTES`; usually a worker that stopped) |
@@ -140,5 +140,6 @@ Consumes: `run.started` (project name), `task.assigned`, `work.started`, `work.f
 
 | Date | Change |
 | --- | --- |
+| 2026-10-01 | "Needs you" says why when an approval rule asked |
 | 2026-10-01 | Sent every morning by the worker (`standup.send` job, `StandupDelivery`, `LogDelivery`); `error` runs listed under Blocked |
 | 2026-10-01 | Created: standup from the event log (needs you, done, planned, blocked), API, plain text, command line |

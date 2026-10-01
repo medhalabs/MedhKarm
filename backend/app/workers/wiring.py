@@ -1,13 +1,16 @@
 """Chooses concrete implementations from settings and the team template. Entry points (CLI,
 API, workers) call this; features only ever see interfaces (dependency inversion)."""
 
+import logging
 import os
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
+from pathlib import Path
 
 from app.core.config import Settings
 from app.core.database import session_factory
+from app.features.approvals.schemas import ApprovalPolicy
 from app.features.developer_engine.interfaces import DeveloperEngine
 from app.features.events.stores.sql_store import SqlEventStore
 from app.features.models.interfaces import LLMProvider
@@ -20,6 +23,26 @@ from app.features.workflows.checkpointer import postgres_checkpointer
 from app.features.workflows.graphs.build_app import build_app_graph
 from app.features.workflows.service import WorkflowService
 
+logger = logging.getLogger(__name__)
+
+SANDBOX_IMAGE_DIR = Path(__file__).resolve().parents[2] / "sandbox-image"
+OWN_IMAGE_PREFIX = "medhkarm-sandbox:"
+
+
+def ensure_sandbox_image(tag: str) -> None:
+    """Build our sandbox image (backend/sandbox-image/) if it isn't there yet. Other images
+    are pulled by Docker as usual. About a minute, once per machine."""
+    if not tag.startswith(OWN_IMAGE_PREFIX):
+        return
+    import docker
+
+    client = docker.from_env()
+    try:
+        client.images.get(tag)
+    except docker.errors.ImageNotFound:
+        logger.warning("Building sandbox image %s (one-time, about a minute)...", tag)
+        client.images.build(path=str(SANDBOX_IMAGE_DIR), tag=tag, rm=True)
+
 
 @dataclass(frozen=True)
 class TeamRuntime:
@@ -31,6 +54,7 @@ class TeamRuntime:
     review_instructions: str
     developer_names: list[str]
     max_developers: int
+    approval_policy: ApprovalPolicy  # what happens at the release gate
     engine: DeveloperEngine  # the developer
     sandboxes: SandboxProvider
 
@@ -46,6 +70,7 @@ def build_team_runtime(settings: Settings) -> TeamRuntime:
         review_instructions=cto.review_instructions,
         developer_names=developer.display_names,
         max_developers=developer.max_count,
+        approval_policy=template.approval,
         engine=engine,
         sandboxes=sandboxes,
     )
@@ -69,6 +94,7 @@ async def workflow_service(
             review_instructions=team.review_instructions,
             developer_names=team.developer_names,
             max_developers=team.max_developers,
+            approval_policy=team.approval_policy,
         )
         yield WorkflowService(graph, events)
 

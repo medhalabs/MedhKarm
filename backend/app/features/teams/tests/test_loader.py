@@ -75,3 +75,18 @@ def test_shipped_templates_load() -> None:
     assert [r.id for r in software.roles] == ["pm", "cto", "developer", "qa", "devops"]
     assert [r.id for r in software.roles if not r.active] == ["pm", "devops"]
     assert software.role("developer").max_count == 3
+
+
+def test_approval_rules_must_use_the_workflows_facts() -> None:
+    import pytest
+
+    from app.features.teams.exceptions import InvalidTemplateError
+    from app.features.teams.loader import TEMPLATES_DIR, parse_template
+
+    text = (TEMPLATES_DIR / "software.toml").read_text() + (
+        '\n[[approval.rules]]\nid = "refunds"\naction = "ask"\nreason = "Big refund."\n'
+        'when = [{ fact = "refund_amount", op = "gt", value = 2000 }]\n'
+    )
+
+    with pytest.raises(InvalidTemplateError, match="unknown facts refund_amount"):
+        parse_template(text)

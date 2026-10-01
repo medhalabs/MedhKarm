@@ -15,7 +15,8 @@ A team is a **settings file**, not code. Each template lists the team's roles (t
    - **CTO** → the planner: the role's `model` and `instructions`
    - **Developer** → the developer engine: the role's `model`, `tools`, `instructions` and `max_steps`
    - **QA** → the checking step named by the template's `checker` (`test_command` today)
-3. `TeamService.assemble()` lists who's on the team: each active role, `count` times, named from `display_names` in order. The office and the API use this.
+3. The template's `[approval]` section holds the team's **approval rules** for the release gate ([approvals.md](approvals.md)); the loader rejects rules that use facts the workflow doesn't provide (`WORKFLOW_FACTS` in `catalog.py`).
+4. `TeamService.assemble()` lists who's on the team: each active role, `count` times, named from `display_names` in order. The office and the API use this.
 
 ### The software team
 
@@ -34,8 +35,8 @@ Role ids are also the actors in the activity log ([events.md](events.md)).
 | File | Responsibility |
 | --- | --- |
 | `templates/software.toml` | The software team |
-| `catalog.py` | The vocabulary templates may use: `KNOWN_TOOLS`, `WORKFLOW_ROLES` (roles each workflow needs), `KNOWN_CHECKERS` |
-| `schemas.py` | `RoleSpec`, `TeamTemplate`, `TemplateSummary`, `TeamMember`, `Team` |
+| `catalog.py` | The vocabulary templates may use: `KNOWN_TOOLS`, `WORKFLOW_ROLES` (roles each workflow needs), `KNOWN_CHECKERS`, `WORKFLOW_FACTS` (facts approval rules may use) |
+| `schemas.py` | `RoleSpec`, `TeamTemplate` (with its `approval` policy), `TemplateSummary`, `TeamMember`, `Team` |
 | `loader.py` | `load_templates()`, `parse_template()` with validation |
 | `service.py` | `TeamService`: list, get, assemble |
 | `exceptions.py` | `InvalidTemplateError`, `TemplateNotFoundError` |
@@ -103,5 +104,6 @@ None of its own. Role ids are the `actor` values in the activity log; `Actor` in
 
 | Date | Change |
 | --- | --- |
+| 2026-10-01 | `[approval]` rules in templates, validated against `WORKFLOW_FACTS`; developer and CTO instructions forbid faking tests |
 | 2026-10-01 | `review_instructions` for the CTO; developer `max_count` used by the CTO's assignment |
 | 2026-10-01 | Created: template schema and validation, software team, API, wiring builds the CTO and developer from the template |

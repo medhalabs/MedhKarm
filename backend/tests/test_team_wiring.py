@@ -41,3 +41,10 @@ async def test_developer_gets_the_role_instructions_and_only_its_tools() -> None
     assert prompt == role.instructions.strip()
     assert sorted(tools) == sorted(role.tools)
     assert "apply_patch" not in tools
+
+
+def test_approval_facts_match_the_catalog() -> None:
+    from app.features.teams.catalog import WORKFLOW_FACTS
+    from app.features.workflows.nodes.approval import approval_facts
+
+    assert set(approval_facts({})) == WORKFLOW_FACTS["build_app"]

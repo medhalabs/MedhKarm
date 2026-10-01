@@ -10,7 +10,7 @@ An isolated, throwaway workspace where agents write and run code, so AI-written 
 
 ## How it works
 
-1. `DockerSandboxProvider.create()` starts a container from `SANDBOX_IMAGE` (default `python:3.13-slim`) running `sleep infinity`, labelled `medhkarm.sandbox=true`, limited to 1 CPU and 1 GB of memory. The workspace is `/workspace`.
+1. `DockerSandboxProvider.create()` starts a container from `SANDBOX_IMAGE` (default `medhkarm-sandbox:dev`: Python, Node, pytest; built from `backend/sandbox-image/` on first use by `ensure_sandbox_image()` in `app/workers/wiring.py`) running `sleep infinity`, labelled `medhkarm.sandbox=true`, limited to 1 CPU and 1 GB of memory. The workspace is `/workspace`.
 2. `run(command, timeout_seconds)` executes via `docker exec` wrapped in `timeout`; exit code 124 means it timed out. Output is stdout and stderr combined.
 3. `write_file` uploads a tar archive; `read_file` runs `cat`; `list_files` lists files, skipping hidden folders and `__pycache__`.
 4. Every path goes through `safe_relative_path()`: absolute paths and `..` are refused with `UnsafePathError`.
@@ -90,5 +90,6 @@ None yet.
 
 | Date | Change |
 | --- | --- |
+| 2026-10-01 | Default image is now `medhkarm-sandbox:dev` (has pytest), built automatically when missing: with plain `python:3.13-slim`, developers faked pytest |
 | 2026-10-01 | Added the OpenHands agent-server sandbox and `AgentServerSandbox` |
 | 2026-10-01 | Created: Docker and in-memory sandboxes, path guard, attach by id |

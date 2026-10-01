@@ -11,13 +11,14 @@ from langgraph.checkpoint.base import BaseCheckpointSaver
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.state import CompiledStateGraph
 
+from app.features.approvals.schemas import ApprovalPolicy
 from app.features.developer_engine.interfaces import DeveloperEngine
 from app.features.events.interfaces import EventStore
 from app.features.models.interfaces import LLMProvider
 from app.features.sandbox.interfaces import SandboxProvider
 from app.features.workflows.checkers.test_command import TestCommandChecker
 from app.features.workflows.interfaces import WorkChecker
-from app.features.workflows.nodes.approval import approval
+from app.features.workflows.nodes.approval import make_approval_node
 from app.features.workflows.nodes.develop import make_develop_node
 from app.features.workflows.nodes.finish import make_finish_node
 from app.features.workflows.nodes.plan import PLANNER_PROMPT, make_plan_node
@@ -43,9 +44,11 @@ def build_app_graph(
     developer_names: list[str] | None = None,
     max_developers: int = 1,
     max_revisions: int = 1,
+    approval_policy: ApprovalPolicy | None = None,
 ) -> CompiledStateGraph[BuildState, None, BuildState, BuildState]:
     """`planner` is the CTO's model: it plans and reviews. The role settings normally come from
-    the team template (see app/workers/wiring.py)."""
+    the team template (see app/workers/wiring.py). `approval_policy` decides the release gate:
+    without one, every release asks the founder."""
     graph = StateGraph(BuildState)
     graph.add_node("prepare", make_prepare_node(sandboxes))
     graph.add_node(
@@ -60,7 +63,7 @@ def build_app_graph(
         make_review_node(planner, sandboxes, review_instructions or REVIEW_PROMPT, max_revisions),
     )
     graph.add_node("verify", make_verify_node(sandboxes, checker or TestCommandChecker()))
-    graph.add_node("approval", approval)
+    graph.add_node("approval", make_approval_node(approval_policy))
     graph.add_node("finish", make_finish_node(sandboxes))
 
     graph.add_edge(START, "prepare")

@@ -34,3 +34,4 @@ Knowledge transfer for anyone working on the code: what each part is, how it wor
 | standups | [features/standups.md](features/standups.md) | Daily standup from the activity log: API, CLI, sent each morning by the worker |
 | runs | [features/runs.md](features/runs.md) | Start, list and approve build runs over HTTP |
 | jobs | [features/jobs.md](features/jobs.md) | Postgres job queue and the worker: builds and the morning standup |
+| approvals | [features/approvals.md](features/approvals.md) | Approval rules at the release gate: ask, approve or reject, with reasons |

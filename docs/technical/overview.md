@@ -29,8 +29,9 @@ Solid lines exist today; dotted lines are planned. The API never does long work:
 | Runs and jobs | `backend/app/features/runs/`, `backend/app/features/jobs/` | Running | Start and approve runs over HTTP; durable job queue with leases and retries |
 | Build workflow | `backend/app/features/workflows/` | Running | LangGraph graph: prepare → plan → (develop → review)* → verify → release gate → finish, checkpointed in Postgres |
 | Standups | `backend/app/features/standups/` | Running | Daily standup from the activity log; sent each morning by the worker |
+| Approval rules | `backend/app/features/approvals/` | Running | The team template's rules decide the release gate: ask the founder (default), approve or reject, with reasons |
 | Models | `backend/app/features/models/` | Running | LiteLLM; default `gpt-oss:20b` on Ollama Cloud |
-| Sandbox | `backend/app/features/sandbox/` | Running (Docker) | One isolated container per build run: plain Docker, or an OpenHands agent server |
+| Sandbox | `backend/app/features/sandbox/` | Running (Docker) | One isolated container per build run (`medhkarm-sandbox:dev`: Python, Node, pytest), or an OpenHands agent server |
 | Developer engine | `backend/app/features/developer_engine/` | Running | Built-in tool loop or OpenHands, chosen by `DEVELOPER_ENGINE` |
 | Team templates | `backend/app/features/teams/` | Running | Teams as settings files; the software team's CTO and developer are built from it |
 | Activity log | `backend/app/features/events/` | Running | Append-only `events` table; every step, tool use and model call; API with live stream |

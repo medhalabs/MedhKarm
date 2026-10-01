@@ -15,3 +15,18 @@ WORKFLOW_ROLES: dict[str, frozenset[str]] = {
 
 # How a team's work is checked before the founder sees it.
 KNOWN_CHECKERS = frozenset({"test_command"})  # later: "human_review", "approval_rules"
+
+# Facts each workflow gives its approval rules at the release gate (see the workflow's
+# `approval_facts()`; a test keeps the two in sync).
+WORKFLOW_FACTS: dict[str, frozenset[str]] = {
+    "build_app": frozenset(
+        {
+            "files_changed",  # list of paths
+            "files_count",
+            "tokens",  # all model tokens in the run so far (CTO and developers)
+            "tasks_count",
+            "tasks_with_issues",  # tasks accepted with review comments still open
+            "tests_passed",
+        }
+    ),
+}

@@ -19,7 +19,7 @@ flowchart LR
     R -->|send back with changes| D
     R -->|approved, more tasks| D
     R -->|all tasks done| V[verify<br/>QA re-runs the tests]
-    V -->|tests pass| A{{approval<br/>release gate: pause}}
+    V -->|tests pass| A{{approval<br/>release gate: rules decide,<br/>usually pause}}
     V -->|tests fail| F[finish]
     A -->|founder decides| F
     F --> E((end))
@@ -28,9 +28,9 @@ flowchart LR
 0. **prepare** — creates the run's sandbox (unless one was given, as the eval runner does), so its id is saved in a checkpoint before any work. A retry or another worker then re-attaches to it instead of creating a new one.
 1. **plan** — the CTO (template role `cto`: model and `instructions`) answers with the `submit_plan` tool: a summary, how many developers to use, and 1–5 tasks in order. `assign()` gives each task an id (`t1`…) and an owner, round-robin over the developers' names (up to the developer role's `max_count`). The plan is read leniently (see `cto.py`): small models name fields their own way, and if no usable plan comes back the fallback is one task covering the whole request.
 2. **develop** — re-attaches to the run's sandbox by id; the current task's owner works on it through the `DeveloperEngine`. The brief has the request, the CTO's plan, "your task (i of n)", and, on a second attempt, the CTO's requested changes. Tasks run one after another in the same workspace, so later tasks build on earlier ones.
-3. **review** — if the task's tests failed, it goes straight back to the developer with the test output (no model call). Otherwise the CTO reads the task, the developer's summary and the changed files (up to 6, 1,500 characters each) and answers with `submit_review`: approve, or revise with specific changes. A task gets at most `max_revisions` (default 1) rounds of changes; after that the run moves on (`done_with_issues`) and QA's final check decides. A review the CTO doesn't format properly counts as approval, so a format slip never blocks a run.
-3. **verify** — asks the run's `WorkChecker` whether the work is good. For software that's `TestCommandChecker`: it re-runs the test command in the same sandbox. QA never trusts the developer's report. Human review (content team) and approval rules (operations team) will be other checkers.
-4. **approval** — only reached if tests pass. `interrupt()` saves the run and stops, returning the gate details (summary, files changed, test output). Resuming with `Command(resume={"approved": ..., "feedback": ...})` continues from here.
+3. **review** — if the task's files include a stand-in for the test tool (e.g. `pytest.py`, see `guards.py`), or its tests failed, it goes straight back to the developer (no model call). Otherwise the CTO reads the task, the developer's summary and the changed files (up to 6, 1,500 characters each) and answers with `submit_review`: approve, or revise with specific changes. A task gets at most `max_revisions` (default 1) rounds of changes; after that the run moves on (`done_with_issues`) and QA's final check decides. A review the CTO doesn't format properly counts as approval, so a format slip never blocks a run.
+3. **verify** — asks the run's `WorkChecker` whether the work is good. For software that's `TestCommandChecker`: it re-runs the test command in the same sandbox, and fails at once if the workspace contains a stand-in for the test tool. QA never trusts the developer's report. Human review (content team) and approval rules (operations team) will be other checkers.
+4. **approval** — only reached if tests pass. The team's approval rules look at the run's facts (files changed, tokens, open review comments; see [approvals.md](approvals.md)) and either decide on their own (approve or reject, recorded as `approval.decided` by `system`) or pause: `interrupt()` saves the run and stops, returning the gate details (why it asks, summary, files changed, tokens, test output). Resuming with `Command(resume={"approved": ..., "feedback": ...})` continues from here.
 5. **finish** — destroys the sandbox and sets `status`: `released`, `rejected` or `failed`.
 
 The run id is LangGraph's `thread_id`; each checkpoint is stored under it.
@@ -51,7 +51,8 @@ The run id is LangGraph's `thread_id`; each checkpoint is stored under it.
 | `nodes/review.py` | CTO review node and `after_review` routing |
 | `nodes/develop.py` | Developer node: current task, sandbox, totals across tasks |
 | `nodes/verify.py` | QA node (re-runs tests) |
-| `nodes/approval.py` | Release gate (`interrupt`) |
+| `nodes/approval.py` | Release gate: `approval_facts()`, approval rules, `interrupt` |
+| `guards.py` | `shadowed_test_tools()`: spots work that fakes its tests (a stand-in `pytest.py`) |
 | `nodes/finish.py` | Outcome + sandbox cleanup |
 | `graphs/build_app.py` | Wires the nodes and edges; takes its dependencies as arguments |
 | `checkpointer.py` | Opens the Postgres checkpointer and creates its tables |
@@ -112,7 +113,7 @@ LangGraph creates and owns its tables in our Postgres (`checkpoints`, `checkpoin
 - The eval suite's results predate the CTO step; rerun it before comparing.
 - One fixed graph; per-template graphs (PM → CTO → Dev → QA → DevOps) come in Phase 1–2.
 - No retry loop from verify back to develop yet.
-- In the default `python:3.13-slim` sandbox there is no pytest; with a bare `pytest` test command, developers have written a fake `pytest.py` to make the command pass, and the CTO approved it. Use `medhkarm-sandbox:dev` or install pytest in the test command until the review catches this.
+- Faked tests: in a sandbox without pytest, gpt-oss:20b wrote its own `pytest.py` so the test command "passed", and the CTO approved it (seen twice live on Oct 1). Now the sandbox has pytest by default, the developer and CTO instructions forbid it, and the review and QA refuse it automatically (`guards.py`). Other ways of faking (tests that assert nothing) still rely on the CTO's review.
 
 ## Troubleshooting
 
@@ -126,6 +127,7 @@ LangGraph creates and owns its tables in our Postgres (`checkpoints`, `checkpoin
 
 | Date | Change |
 | --- | --- |
+| 2026-10-01 | Approval rules at the release gate (`approval_policy`, facts, reasons in the gate); review and QA refuse stand-ins for the test tool; CTO tokens totalled (`cto_tokens_total`) |
 | 2026-10-01 | `prepare` node creates the sandbox first (retries no longer leak containers); `continue_run()` and `RunOutcome.next_nodes` for runs interrupted mid-way; runs normally start through the job queue |
 | 2026-10-01 | CTO agent: plans tasks, assigns developers by name, reviews each task and sends it back with changes; CTO tokens recorded |
 | 2026-10-01 | Planner takes its instructions from the team template (`planner_instructions`) |

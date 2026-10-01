@@ -140,7 +140,9 @@ def _replay(
     status = _status(events[-1], until, stall_after)
     last = events[-1]
     if status == ProjectStatus.WAITING_FOR_APPROVAL:
-        report.needs_you.append(item("Approve the release", last))
+        gate = last.data.get("gate", {})
+        why = " ".join(gate.get("reasons", [])) if gate.get("rules") else ""
+        report.needs_you.append(item("Approve the release" + (f": {why}" if why else ""), last))
     elif status == ProjectStatus.STALLED:
         report.blocked.append(item("No activity for a while: check the worker", last))
     if status in (ProjectStatus.IN_PROGRESS, ProjectStatus.STALLED):

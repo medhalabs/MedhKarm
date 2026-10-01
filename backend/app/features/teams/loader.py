@@ -5,7 +5,8 @@ from pathlib import Path
 
 from pydantic import ValidationError
 
-from app.features.teams.catalog import KNOWN_CHECKERS, KNOWN_TOOLS, WORKFLOW_ROLES
+from app.features.approvals.service import policy_problems
+from app.features.teams.catalog import KNOWN_CHECKERS, KNOWN_TOOLS, WORKFLOW_FACTS, WORKFLOW_ROLES
 from app.features.teams.exceptions import InvalidTemplateError
 from app.features.teams.schemas import TeamTemplate
 
@@ -48,6 +49,7 @@ def _problems(template: TeamTemplate) -> list[str]:
             problems.append(
                 f"workflow {template.workflow!r} needs active roles: {', '.join(missing)}"
             )
+        problems += policy_problems(template.approval, WORKFLOW_FACTS[template.workflow])
     if template.checker not in KNOWN_CHECKERS:
         problems.append(f"unknown checker {template.checker!r}")
     for role in template.roles:

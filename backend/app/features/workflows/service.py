@@ -82,11 +82,13 @@ class WorkflowService:
                     on_step(StepUpdate(node=node, data=dict(data or {})))
         outcome = await self._outcome(run_id)
         if outcome.waiting_for_approval:
+            gate = outcome.gate or {}
+            why = " ".join(gate.get("reasons", [])) if gate.get("rules") else ""
             await recorder.record(
                 Actor.CTO,
                 EventType.APPROVAL_REQUESTED,
-                "Waiting for your approval to release",
-                {"gate": outcome.gate or {}},
+                "Waiting for your approval to release" + (f": {why}" if why else ""),
+                {"gate": gate},
             )
         return outcome
 

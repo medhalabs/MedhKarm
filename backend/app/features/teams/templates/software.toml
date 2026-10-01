@@ -27,8 +27,9 @@ names the files to create or change and what its tests must check. Keep tasks sm
 simple request is one or two tasks. Answer with submit_plan."""
 review_instructions = """You are the CTO reviewing a developer's task. Approve it if it does
 what the task asked, with tests, in a small and clear way. Otherwise send it back with
-specific, short changes. Don't ask for extras the task didn't ask for. Answer with
-submit_review."""
+specific, short changes. Don't ask for extras the task didn't ask for. Always send it back
+if it fakes or bypasses the tests: a stand-in for the test tool (like a pytest.py), tests
+that check nothing, or tests edited only to pass. Answer with submit_review."""
 
 [[roles]]
 id = "developer"
@@ -42,7 +43,10 @@ max_count = 3
 instructions = """You are a careful software developer working in a Linux workspace.
 Use the tools to write the code and tests the task needs, run the test command to check
 your work, fix any failures, and call `finish` with a one-line summary once the tests pass.
-Only change files inside the workspace. Keep solutions small and clear."""
+Only change files inside the workspace. Keep solutions small and clear.
+Never fake a passing test: don't create files that stand in for the test tool (like
+pytest.py), and don't weaken tests to make them pass. If a tool is missing, say so in
+your summary."""
 
 [[roles]]
 id = "qa"
@@ -57,3 +61,54 @@ title = "DevOps"
 display_names = ["Neel"]
 responsibilities = "Puts the app online: a preview to try, then the release."
 active = false  # joins in Phase 2, with preview deploys
+
+# What happens at the release gate. Every enabled rule whose conditions all hold applies, and
+# the strictest wins: reject, then ask, then approve. With no match, `default` applies.
+# Facts: files_changed (paths), files_count, tokens, tasks_count, tasks_with_issues, tests_passed.
+# Operators: eq, ne, gt, gte, lt, lte, matches_any (patterns like "*.env", by path or file name).
+[approval]
+default = "ask"
+default_reason = "Every release needs your approval."
+
+[[approval.rules]]
+id = "sensitive_files"
+action = "ask"
+reason = "It changes secrets, dependencies, database or deployment settings."
+when = [
+  { fact = "files_changed", op = "matches_any", value = [
+    ".env*", "*.pem", "*.key", "requirements*.txt", "pyproject.toml", "uv.lock",
+    "package.json", "package-lock.json", "Dockerfile*", "docker-compose*",
+    ".github/*", "*.sql", "migrations/*", "alembic/*",
+  ] },
+]
+
+[[approval.rules]]
+id = "open_review_comments"
+action = "ask"
+reason = "The CTO accepted a task with review comments still open."
+when = [{ fact = "tasks_with_issues", op = "gt", value = 0 }]
+
+[[approval.rules]]
+id = "large_change"
+action = "ask"
+reason = "It changes more than 15 files."
+when = [{ fact = "files_count", op = "gt", value = 15 }]
+
+[[approval.rules]]
+id = "expensive_run"
+action = "ask"
+reason = "It used more than 1,000,000 model tokens."
+when = [{ fact = "tokens", op = "gt", value = 1_000_000 }]
+
+# Turn on to release small, clean changes without asking. The rules above still ask
+# whenever they match, because the strictest action wins.
+[[approval.rules]]
+id = "small_clean_change"
+action = "approve"
+reason = "A small change with passing tests and no open review comments."
+enabled = false
+when = [
+  { fact = "files_count", op = "lte", value = 3 },
+  { fact = "tasks_with_issues", op = "eq", value = 0 },
+  { fact = "tests_passed", op = "eq", value = true },
+]

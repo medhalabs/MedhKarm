@@ -24,6 +24,7 @@ The log is **append-only**: the database refuses to change or delete an event, s
 | `WorkflowService` (workflows) | `run.started`, `plan.created`, `task.assigned` (one per task: "Assigned “CSV export” to Isha”), `work.finished`, `review.finished` ("Approved …" or "Sent … back to Isha: …"), `check.finished`, `approval.requested`, `approval.decided`, `run.finished`; `model.used` for the CTO's plan and review calls |
 | Develop node (workflows) | `work.started` |
 | `WorkflowService.continue_run` (workflows) | `run.resumed` ("Picked up again after an interruption") when a worker carries on a run another worker didn't finish |
+| Release gate (workflows) | `approval.decided` from `system` when the team's approval rules approve or reject on their own ("Approved the release by your rules: …"); `approval.requested` ends with the rules' reasons when a rule asked ([approvals.md](approvals.md)) |
 | Build job handlers (worker) | `run.finished` with `status: error` ("Stopped: something went wrong") when a build runs out of retries |
 | Developer engines | `tool.used` (one per tool call, e.g. "Wrote calc.py", "Ran `python -m pytest -q` (exit 0)"), `model.used` (one per model call, with tokens; OpenHands records its total once) |
 
@@ -135,6 +136,7 @@ This feature *is* the event log. Other features call `RunRecorder.record()`.
 
 | Date | Change |
 | --- | --- |
+| 2026-10-01 | `approval.decided` by `system` for decisions made by approval rules; reasons in `approval.requested` |
 | 2026-10-01 | `run.resumed` now recorded (run picked up after an interruption); `run.finished` can carry status `error` |
 | 2026-10-01 | `run_ids_between` and `latest_per_run` store queries and an `occurred_at` index (migration `0002`) for the daily standup; `InMemoryEventStore.now` lets tests set event times |
 | 2026-10-01 | `task.assigned` and `review.finished` events; `member`/`task_id` context on task events; CTO tokens recorded |

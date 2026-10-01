@@ -69,6 +69,17 @@ async def record_step(recorder: RunRecorder, node: str, data: dict[str, Any]) ->
             "Checks passed" if passed else "Checks failed: sent back",
             {"passed": passed, "output": str(data.get("verify_output", ""))[-2000:]},
         )
+    elif node == "approval":
+        approval = data.get("approval", {})
+        if approval.get("decided_by") == "rules":  # founders' decisions are recorded on resume
+            approved = bool(data.get("approved"))
+            await recorder.record(
+                Actor.SYSTEM,
+                EventType.APPROVAL_DECIDED,
+                ("Approved the release by your rules: " if approved else "Stopped by your rules: ")
+                + " ".join(approval.get("reasons", [])),
+                {"approved": approved, "rules": approval.get("rule_ids", []), "by": "rules"},
+            )
     elif node == "finish":
         status = data.get("status", "finished")
         summaries = {

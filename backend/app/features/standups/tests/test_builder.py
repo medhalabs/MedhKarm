@@ -111,3 +111,21 @@ def test_projects_get_short_names_and_tokens_count_in_window_only() -> None:
         "Create calc.py with add and divide where divide\u2026",
     ]
     assert standup.tokens == 30  # the events before the window don't count
+
+
+def test_needs_you_says_which_rule_asked() -> None:
+    by_rule = started("rules").add(
+        2,
+        EventType.APPROVAL_REQUESTED,
+        gate={"rules": ["sensitive_files"], "reasons": ["It changes package.json."]},
+    )
+    by_default = started("default").add(
+        2, EventType.APPROVAL_REQUESTED, gate={"rules": [], "reasons": ["Every release..."]}
+    )
+
+    standup = build(by_rule, by_default)
+
+    assert [i.text for i in standup.needs_you] == [
+        "Approve the release: It changes package.json.",
+        "Approve the release",
+    ]

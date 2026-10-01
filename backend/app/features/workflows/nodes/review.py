@@ -1,6 +1,7 @@
 """CTO review node: approves the current task or sends it back with specific changes.
 
-Failing tests are sent back without asking the model (cheaper, and never wrong). Each task
+Failing tests, and work that replaces the test tool (see guards.py), are sent back without
+asking the model (cheaper, and never wrong). Each task
 gets at most `max_revisions` rounds of changes; after that the run moves on and QA's final
 check decides.
 """
@@ -11,6 +12,7 @@ from app.features.models.interfaces import LLMProvider
 from app.features.sandbox.exceptions import SandboxError
 from app.features.sandbox.interfaces import Sandbox, SandboxProvider
 from app.features.workflows.cto import REVIEW_TOOL, ReviewDecision, parse_review
+from app.features.workflows.guards import shadow_feedback, shadowed_test_tools
 from app.features.workflows.nodes.base import BuildNode
 from app.features.workflows.state import BuildState
 
@@ -35,7 +37,10 @@ def make_review_node(
         task = tasks[index]
 
         cto_tokens = 0
-        if not task.get("success"):
+        shadows = shadowed_test_tools(task.get("files_changed", []))
+        if shadows:
+            verdict = ReviewDecision(decision="revise", feedback=shadow_feedback(shadows))
+        elif not task.get("success"):
             verdict = ReviewDecision(
                 decision="revise",
                 feedback="The tests don't pass yet. Fix them:\n"
@@ -66,6 +71,7 @@ def make_review_node(
             "tasks": tasks,
             "current_task": next_index,
             "cto_tokens": cto_tokens,
+            "cto_tokens_total": state.get("cto_tokens_total", 0) + cto_tokens,
             "last_review": {
                 "task_id": task["id"],
                 "title": task["title"],

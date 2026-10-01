@@ -63,7 +63,7 @@ curl -X POST 127.0.0.1:8000/runs/<run_id>/approval -H 'content-type: application
 
 | Table | Key columns | Notes |
 | --- | --- | --- |
-| `runs` | `id` (same as the LangGraph thread id and the events' `run_id`), `request`, `test_command`, `status`, `gate` (jsonb), `error`, `created_at`, `updated_at`, `company_id` (nullable) | Index on `created_at`. The detail of a run lives in the event log and the checkpoint; this row is its current status, for lists and approvals |
+| `runs` | `id` (same as the LangGraph thread id and the events' `run_id`), `request`, `test_command`, `status`, `gate` (jsonb: question, `reasons` and `rules` from the approval rules, summary, files, tokens, tests), `error`, `created_at`, `updated_at`, `company_id` (nullable) | Index on `created_at`. The detail of a run lives in the event log and the checkpoint; this row is its current status, for lists and approvals |
 
 ## Events
 
@@ -90,7 +90,7 @@ None of its own. The workflow records the run's events ([workflows.md](workflows
 ## Known limitations and gotchas
 
 - No sign-in or companies yet: anyone who can reach the API can start and approve runs. Keep it on localhost until auth lands.
-- The default test command `pytest -q` needs pytest in the sandbox image. The default `python:3.13-slim` doesn't have it, so either use `medhkarm-sandbox:dev` (`SANDBOX_IMAGE`) or put `pip install -q pytest` in the test command.
+- The default test command `pytest -q` relies on the default sandbox image (`medhkarm-sandbox:dev`), which has pytest. With another `SANDBOX_IMAGE`, install the test tools in the test command.
 - Cancelling a running build isn't supported yet.
 - Runs started from the command line (`build_run start`) have no `runs` row, so they don't appear in `GET /runs` (their events and standup still work).
 
@@ -106,4 +106,5 @@ None of its own. The workflow records the run's events ([workflows.md](workflows
 
 | Date | Change |
 | --- | --- |
+| 2026-10-01 | `gate` carries the approval rules' reasons; runs the rules approve or reject never wait ([approvals.md](approvals.md)) |
 | 2026-10-01 | Created: runs table, start/list/get/approve API, statuses kept up to date by workers |

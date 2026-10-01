@@ -26,7 +26,9 @@ class Settings(BaseSettings):
     ollama_api_key: SecretStr | None = None
 
     # Sandbox
-    sandbox_image: str = "python:3.13-slim"
+    # Python + Node + pytest, built from backend/sandbox-image/ on first use. A bare
+    # python:3.13-slim has no pytest, and developers then faked it (see workflows/guards.py).
+    sandbox_image: str = "medhkarm-sandbox:dev"
     # Python + Node + test tools, built from backend/sandbox-image/ (see features/evals.md)
     eval_sandbox_image: str = "medhkarm-sandbox:dev"
 

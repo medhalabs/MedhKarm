@@ -80,7 +80,7 @@ Or from the command line, without the API or a worker:
 
 See everything the team did, step by step: `uv run python -m app.workers.build_run events <run_id>`.
 
-The first run pulls the `python:3.13-slim` image. Details: [features/workflows.md](features/workflows.md).
+The first run builds the `medhkarm-sandbox:dev` image (Python, Node, pytest; about a minute, once). Details: [features/workflows.md](features/workflows.md).
 
 ### Run the eval suite
 

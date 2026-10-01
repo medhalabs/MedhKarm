@@ -28,7 +28,7 @@ from app.features.standups.dependencies import get_standup_service
 from app.features.workflows.service import WorkflowService
 from app.workers.handlers.build import ResumeBuild, StartBuild
 from app.workers.handlers.standup import SEND_STANDUP, SendStandup, standup_schedule
-from app.workers.wiring import build_team_runtime, workflow_service
+from app.workers.wiring import build_team_runtime, ensure_sandbox_image, workflow_service
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +39,8 @@ async def main() -> None:
     queue = SqlJobQueue(session_factory)
     events = SqlEventStore(session_factory)
     runs = RunService(SqlRunRepository(session_factory), queue, settings.build_max_attempts)
+    if settings.developer_engine == "builtin":
+        ensure_sandbox_image(settings.sandbox_image)
     team = build_team_runtime(settings)
     standups = get_standup_service()
 

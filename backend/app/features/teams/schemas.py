@@ -1,5 +1,7 @@
 from pydantic import BaseModel, Field, model_validator
 
+from app.features.approvals.schemas import ApprovalPolicy
+
 
 class RoleSpec(BaseModel):
     """One seat on a team: what it does, how it behaves, what it may touch."""
@@ -31,6 +33,7 @@ class TeamTemplate(BaseModel):
     workflow: str
     checker: str
     roles: list[RoleSpec] = Field(min_length=1)
+    approval: ApprovalPolicy = Field(default_factory=ApprovalPolicy)  # rules at the gates
 
     def role(self, role_id: str) -> RoleSpec:
         for role in self.roles:
