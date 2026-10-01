@@ -26,6 +26,8 @@ class Settings(BaseSettings):
 
     # Sandbox
     sandbox_image: str = "python:3.13-slim"
+    # Python + Node + test tools, built from backend/sandbox-image/ (see features/evals.md)
+    eval_sandbox_image: str = "medhkarm-sandbox:dev"
 
     # Developer engine: "builtin" (ToolLoopEngine + plain Docker sandbox)
     # or "openhands" (OpenHands agent + OpenHands agent-server sandbox)

@@ -1,0 +1,15 @@
+id = "new-py-roman"
+title = "New module: Roman numerals"
+kind = "new"
+difficulty = 2
+language = "python"
+test_command = "python -m pytest -q"
+check_command = "python -m pytest -q .eval_checks"
+request = """
+Create roman.py with two functions:
+- to_roman(n): converts an int from 1 to 3999 to a Roman numeral string (e.g. 1994 -> "MCMXCIV").
+  Anything outside 1-3999, or a non-int, raises ValueError.
+- from_roman(s): converts a valid uppercase Roman numeral back to an int. Invalid numerals
+  (wrong characters, wrong order, too many repeats like "IIII" or "VV") raise ValueError.
+Add pytest tests in test_roman.py.
+"""

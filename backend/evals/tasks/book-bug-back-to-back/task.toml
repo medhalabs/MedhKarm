@@ -1,0 +1,14 @@
+id = "book-bug-back-to-back"
+title = "Allow back-to-back bookings"
+kind = "bug"
+difficulty = 1
+language = "python"
+repo = "py-bookings"
+test_command = "python -m pytest -q"
+check_command = "python -m pytest -q .eval_checks"
+request = """
+The salon can't book appointments back to back: a booking that starts exactly when
+another one ends (for example 10:00-10:45 and then 10:45-11:15) is rejected as
+"Slot already booked". Back-to-back bookings must be allowed. Real overlaps must still
+be rejected. Fix it and add tests.
+"""

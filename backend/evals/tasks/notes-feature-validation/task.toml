@@ -1,0 +1,15 @@
+id = "notes-feature-validation"
+title = "Validate note input"
+kind = "feature"
+difficulty = 2
+language = "python"
+repo = "py-notes-api"
+test_command = "python -m pytest -q"
+check_command = "python -m pytest -q .eval_checks"
+request = """
+The API accepts bad input today. Add validation to creating notes (POST /notes):
+- title is required, must not be empty or only whitespace, and at most 100 characters
+- body is at most 5000 characters
+- leading and trailing whitespace in the title is removed before saving
+Invalid input must get a 422 response. Add tests.
+"""

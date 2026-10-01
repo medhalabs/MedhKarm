@@ -1,0 +1,13 @@
+id = "cart-feature-set-quantity"
+title = "Change a line's quantity"
+kind = "feature"
+difficulty = 1
+language = "javascript"
+repo = "js-cart"
+test_command = "node --test"
+check_command = "node --test .eval_checks/*.test.js"
+request = """
+Add setQuantity(sku, qty) to the cart. It sets the quantity of an existing line.
+A quantity of 0 removes the line. Negative or non-integer quantities throw an Error.
+An sku that isn't in the cart throws an Error. Add tests.
+"""

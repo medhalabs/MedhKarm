@@ -1,0 +1,13 @@
+id = "inv-bug-total-value"
+title = "Fix total stock value"
+kind = "bug"
+difficulty = 1
+language = "python"
+repo = "py-inventory"
+test_command = "python -m pytest -q"
+check_command = "python -m pytest -q .eval_checks"
+request = """
+Customers report that Inventory.total_value() gives the wrong number. It should return
+the value of all stock on hand: the sum of price x quantity for every item, rounded to
+2 decimal places. An empty inventory is worth 0. Fix it and add a test.
+"""

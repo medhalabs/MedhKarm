@@ -18,9 +18,17 @@ class WorkflowService:
         self._graph = graph
 
     async def start(
-        self, run_id: str, request: str, test_command: str, on_step: OnStep | None = None
+        self,
+        run_id: str,
+        request: str,
+        test_command: str,
+        on_step: OnStep | None = None,
+        sandbox_id: str | None = None,
     ) -> RunOutcome:
+        """Start a run. Pass `sandbox_id` to work in an existing, prepared sandbox."""
         initial: BuildState = {"request": request, "test_command": test_command}
+        if sandbox_id:
+            initial["sandbox_id"] = sandbox_id
         return await self._run(run_id, initial, on_step)
 
     async def resume(

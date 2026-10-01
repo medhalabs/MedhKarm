@@ -1,0 +1,15 @@
+id = "notes-feature-pagination"
+title = "Paginate the notes list"
+kind = "feature"
+difficulty = 2
+language = "python"
+repo = "py-notes-api"
+test_command = "python -m pytest -q"
+check_command = "python -m pytest -q .eval_checks"
+request = """
+Add pagination to GET /notes with query parameters `limit` and `offset`:
+- limit defaults to 50 and must be between 1 and 100
+- offset defaults to 0 and must not be negative
+- results stay sorted by id; skip `offset` notes, then return at most `limit`
+Out-of-range values must get a 422 response. Add tests.
+"""

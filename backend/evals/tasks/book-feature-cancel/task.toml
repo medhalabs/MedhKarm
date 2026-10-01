@@ -1,0 +1,17 @@
+id = "book-feature-cancel"
+title = "Cancellation with refund rules"
+kind = "feature"
+difficulty = 2
+language = "python"
+repo = "py-bookings"
+test_command = "python -m pytest -q"
+check_command = "python -m pytest -q .eval_checks"
+request = """
+Add BookingBook.cancel(booking_id, now) which removes the booking and returns the refund
+percentage as an int:
+- 100 if cancelled 24 hours or more before the start
+- 50 if cancelled at least 2 hours (but less than 24 hours) before the start
+- 0 otherwise, including after the start
+Cancelling an unknown booking id must raise KeyError. A cancelled slot can be booked again.
+Add tests.
+"""

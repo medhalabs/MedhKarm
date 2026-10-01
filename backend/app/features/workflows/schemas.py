@@ -3,6 +3,11 @@ from typing import Any
 from pydantic import BaseModel, Field
 
 
+class CheckResult(BaseModel):
+    passed: bool
+    output: str = ""
+
+
 class StepUpdate(BaseModel):
     """One node finishing, as it happens. Later this feeds the event log and the office view."""
 

@@ -1,0 +1,13 @@
+id = "inv-feature-remove"
+title = "Remove an item"
+kind = "feature"
+difficulty = 1
+language = "python"
+repo = "py-inventory"
+test_command = "python -m pytest -q"
+check_command = "python -m pytest -q .eval_checks"
+request = """
+Add Inventory.remove_item(sku) which deletes the item and returns the removed Item.
+Removing an unknown SKU must raise KeyError. After removal the SKU can be added again.
+Add tests.
+"""

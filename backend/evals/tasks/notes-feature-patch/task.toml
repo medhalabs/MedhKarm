@@ -1,0 +1,13 @@
+id = "notes-feature-patch"
+title = "Partial update endpoint"
+kind = "feature"
+difficulty = 1
+language = "python"
+repo = "py-notes-api"
+test_command = "python -m pytest -q"
+check_command = "python -m pytest -q .eval_checks"
+request = """
+Add PATCH /notes/{note_id} for partial updates. The JSON body may contain "title",
+"body", or both; fields that are left out keep their current value. Return the updated
+note with status 200. Return 404 for an unknown note. Add tests.
+"""

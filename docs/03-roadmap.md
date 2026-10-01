@@ -38,7 +38,7 @@ Goal: know who we build for and what "working" means before building the product
 - [x] Launch market decided: India first
 - [ ] Interview round 2: 10+ solo builders and 5+ content creators, every one ending with a beta ask
 - [ ] Pick product name and domain
-- [ ] Write 20 eval tasks: mostly tasks on existing repos, plus a few new apps
+- [x] Write 20 eval tasks: 17 on 4 existing projects, 3 new modules; all validated, baseline 18/19 (Oct 1, 2026). Waiting for your review
 - [ ] Office mock-up with the standup and backlog up front, for interviews
 
 **Gate 0:** at least 5 solo builders commit to the beta with a real project; 20 eval tasks written and reviewed.

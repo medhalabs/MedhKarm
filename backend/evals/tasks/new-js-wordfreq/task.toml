@@ -1,0 +1,17 @@
+id = "new-js-wordfreq"
+title = "New module: word frequency"
+kind = "new"
+difficulty = 2
+language = "javascript"
+test_command = "node --test"
+check_command = "node --test .eval_checks/*.test.mjs"
+request = """
+Create an ES module wordfreq.mjs exporting a function topWords(text, n) that returns the
+n most frequent words as an array of [word, count] pairs.
+- Words are runs of letters a-z and apostrophes, compared in lowercase.
+- Sort by count (highest first), then alphabetically for ties.
+- If there are fewer than n distinct words, return all of them. n must be a positive
+  integer, otherwise throw an Error.
+Example: topWords("the cat and the hat", 2) -> [["the", 2], ["and", 1]].
+Add tests in wordfreq.test.mjs using node:test.
+"""

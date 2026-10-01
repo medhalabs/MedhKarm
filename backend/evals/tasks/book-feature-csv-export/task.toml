@@ -1,0 +1,16 @@
+id = "book-feature-csv-export"
+title = "Export a day's bookings as CSV"
+kind = "feature"
+difficulty = 2
+language = "python"
+repo = "py-bookings"
+test_command = "python -m pytest -q"
+check_command = "python -m pytest -q .eval_checks"
+request = """
+Add BookingBook.export_csv(day) returning the bookings on that date as CSV text:
+- header row: id,customer,service,start,end
+- one row per booking, sorted by start time, with start and end as HH:MM (24-hour)
+- rows separated by "\n", ending with a trailing newline
+- values containing commas or quotes must be quoted the standard CSV way
+A day with no bookings returns just the header line. Add tests.
+"""

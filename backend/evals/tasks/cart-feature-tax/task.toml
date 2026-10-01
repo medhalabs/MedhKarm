@@ -1,0 +1,16 @@
+id = "cart-feature-tax"
+title = "GST by category"
+kind = "feature"
+difficulty = 2
+language = "javascript"
+repo = "js-cart"
+test_command = "node --test"
+check_command = "node --test .eval_checks/*.test.js"
+request = """
+Add GST to the cart. Add an optional fourth parameter to add(sku, price, qty, category)
+with categories "standard" (18% GST, the default), "reduced" (5%) and "exempt" (0%).
+An unknown category throws an Error. Add:
+- tax(): total GST for all lines, rounded to 2 decimal places
+- totalWithTax(): subtotal plus tax, rounded to 2 decimal places
+Existing behaviour must not change. Add tests.
+"""

@@ -1,0 +1,18 @@
+id = "cart-feature-discount"
+title = "Discount codes"
+kind = "feature"
+difficulty = 2
+language = "javascript"
+repo = "js-cart"
+test_command = "node --test"
+check_command = "node --test .eval_checks/*.test.js"
+request = """
+Add discount codes to the cart:
+- applyCode(code) applies a code; only one code is active at a time, so a new code
+  replaces the previous one. Codes are case-insensitive.
+- "SAVE10" gives 10% off the subtotal; "FLAT50" gives 50 rupees off.
+- Unknown codes throw an Error and leave the current code unchanged.
+- total() returns subtotal minus discount, never below 0, rounded to 2 decimal places.
+  Without a code, total() equals the subtotal.
+Add tests.
+"""

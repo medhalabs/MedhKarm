@@ -1,0 +1,13 @@
+id = "notes-feature-search"
+title = "Search notes"
+kind = "feature"
+difficulty = 1
+language = "python"
+repo = "py-notes-api"
+test_command = "python -m pytest -q"
+check_command = "python -m pytest -q .eval_checks"
+request = """
+Add an optional query parameter `q` to GET /notes. When given, return only notes whose
+title or body contains `q`, ignoring case, still sorted by id. Without `q` (or with an
+empty `q`) return all notes as today. Add tests.
+"""

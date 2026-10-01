@@ -63,6 +63,15 @@ uv run uvicorn app.main:app --reload --port 8000
 
 The first run pulls the `python:3.13-slim` image. Details: [features/workflows.md](features/workflows.md).
 
+### Run the eval suite
+
+```bash
+uv run python -m app.workers.run_evals validate   # no model needed; checks the 20 tasks are fair
+uv run python -m app.workers.run_evals run        # all 20 tasks through the software team
+```
+
+The first run builds the `medhkarm-sandbox:dev` image (about a minute). Details: [features/evals.md](features/evals.md).
+
 To use the OpenHands engine instead, add `--engine openhands` (or set `DEVELOPER_ENGINE=openhands` in `backend/.env`). Pull its 1.2 GB image once beforehand so the first run doesn't wait:
 
 ```bash

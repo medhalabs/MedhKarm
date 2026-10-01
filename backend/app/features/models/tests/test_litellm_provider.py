@@ -3,6 +3,7 @@ from typing import Any
 
 import litellm
 import pytest
+from litellm.exceptions import InternalServerError
 
 from app.core.config import Settings
 from app.features.models.exceptions import ModelCallError
@@ -52,6 +53,45 @@ async def test_wraps_provider_errors(monkeypatch: pytest.MonkeyPatch) -> None:
 
     with pytest.raises(ModelCallError):
         await LiteLLMProvider("ollama_chat/test").complete([])
+
+
+def _server_error() -> Exception:
+    return InternalServerError(message="boom", llm_provider="ollama", model="m")
+
+
+async def test_retries_server_errors_with_growing_waits(monkeypatch: pytest.MonkeyPatch) -> None:
+    calls = {"n": 0}
+    waits: list[float] = []
+
+    async def flaky(**kwargs: Any) -> SimpleNamespace:
+        calls["n"] += 1
+        if calls["n"] < 3:
+            raise _server_error()
+        return _fake_response("ok", [])
+
+    async def record_sleep(seconds: float) -> None:
+        waits.append(seconds)
+
+    monkeypatch.setattr(litellm, "acompletion", flaky)
+    provider = LiteLLMProvider("m", backoff_seconds=2, sleep=record_sleep)
+
+    result = await provider.complete([])
+
+    assert result.content == "ok"
+    assert waits == [2, 4]
+
+
+async def test_gives_up_after_retries(monkeypatch: pytest.MonkeyPatch) -> None:
+    async def always_down(**kwargs: Any) -> SimpleNamespace:
+        raise _server_error()
+
+    async def no_sleep(seconds: float) -> None:
+        return None
+
+    monkeypatch.setattr(litellm, "acompletion", always_down)
+
+    with pytest.raises(ModelCallError, match="after 3 attempts"):
+        await LiteLLMProvider("m", num_retries=2, sleep=no_sleep).complete([])
 
 
 def test_non_ollama_models_use_provider_env_vars() -> None:

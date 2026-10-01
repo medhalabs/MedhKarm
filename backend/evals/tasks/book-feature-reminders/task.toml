@@ -1,0 +1,13 @@
+id = "book-feature-reminders"
+title = "Reminders for upcoming bookings"
+kind = "feature"
+difficulty = 1
+language = "python"
+repo = "py-bookings"
+test_command = "python -m pytest -q"
+check_command = "python -m pytest -q .eval_checks"
+request = """
+Add BookingBook.reminders_due(now) returning the bookings that start within the next
+24 hours: strictly after `now` and at most 24 hours after it. Return them sorted by
+start time, across days. Add tests.
+"""

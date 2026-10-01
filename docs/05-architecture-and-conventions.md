@@ -42,7 +42,7 @@ The same feature names are used on both sides, so `frontend/src/features/approva
 | `developer_engine` | OpenHands (and later Claude Agent SDK) behind one interface |
 | `integrations` | GitHub, Vercel, Supabase (customer's), MCP servers |
 | `billing` | Plans, usage limits, Stripe |
-| `evals` | Reference app specs and the eval runner |
+| `evals` | 20 eval tasks (in `backend/evals/`), validator, runner and reports |
 
 New features get a new folder with the same name on both sides. Names are plural nouns, lowercase, `snake_case` in Python and `kebab-case` folders in the frontend (`developer-engine`).
 

@@ -1,0 +1,16 @@
+id = "inv-refactor-package"
+title = "Split the module into a package"
+kind = "refactor"
+difficulty = 2
+language = "python"
+repo = "py-inventory"
+test_command = "python -m pytest -q"
+check_command = "python -m pytest -q .eval_checks"
+solution_delete = ["inventory.py"]
+request = """
+The inventory module is growing. Turn inventory.py into a package named `inventory`:
+- inventory/models.py holds the Item dataclass
+- inventory/store.py holds the Inventory class
+- inventory/__init__.py re-exports both, so `from inventory import Inventory, Item` keeps working
+Remove the old inventory.py file. Behaviour must not change and the existing tests must pass.
+"""

@@ -32,6 +32,8 @@ dev = [
 [tool.ruff]
 line-length = 100
 target-version = "py313"
+# Eval tasks are sample customer projects, not our code.
+extend-exclude = ["evals"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP", "N", "SIM", "ASYNC", "RUF"]

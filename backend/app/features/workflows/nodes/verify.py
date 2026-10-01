@@ -1,18 +1,17 @@
-"""QA node: re-runs the tests itself. The developer's own report is never trusted as proof."""
+"""QA node: checks the work itself. The developer's own report is never trusted as proof."""
 
 from typing import Any
 
 from app.features.sandbox.interfaces import SandboxProvider
+from app.features.workflows.interfaces import WorkChecker
 from app.features.workflows.nodes.base import BuildNode
 from app.features.workflows.state import BuildState
 
 
-def make_verify_node(
-    sandboxes: SandboxProvider,
-) -> BuildNode:
+def make_verify_node(sandboxes: SandboxProvider, checker: WorkChecker) -> BuildNode:
     async def verify(state: BuildState) -> dict[str, Any]:
         sandbox = await sandboxes.attach(state["sandbox_id"])
-        result = await sandbox.run(state["test_command"])
-        return {"verified": result.ok, "verify_output": result.output[-4000:]}
+        result = await checker.check(state, sandbox)
+        return {"verified": result.passed, "verify_output": result.output}
 
     return verify

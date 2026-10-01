@@ -1,0 +1,14 @@
+id = "new-py-slugify"
+title = "New module: slugify"
+kind = "new"
+difficulty = 1
+language = "python"
+test_command = "python -m pytest -q"
+check_command = "python -m pytest -q .eval_checks"
+request = """
+Create slugify.py with a function slugify(text) that turns text into a URL slug:
+lowercase; every run of characters that aren't a-z or 0-9 becomes a single hyphen;
+no hyphens at the start or end. Examples: "Hello, World!" -> "hello-world",
+"  Multiple   spaces " -> "multiple-spaces", "" -> "". Add pytest tests in
+test_slugify.py.
+"""

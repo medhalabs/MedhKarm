@@ -1,0 +1,13 @@
+id = "cart-bug-rounding"
+title = "Fix money rounding"
+kind = "bug"
+difficulty = 1
+language = "javascript"
+repo = "js-cart"
+test_command = "node --test"
+check_command = "node --test .eval_checks/*.test.js"
+request = """
+Cart.subtotal() sometimes returns values like 0.30000000000000004 instead of 0.3, which
+shows up on invoices. subtotal() must return the amount rounded to 2 decimal places
+(paise). Fix it and add a test.
+"""

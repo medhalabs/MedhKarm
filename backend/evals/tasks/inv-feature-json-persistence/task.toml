@@ -1,0 +1,15 @@
+id = "inv-feature-json-persistence"
+title = "Save and load inventory as JSON"
+kind = "feature"
+difficulty = 2
+language = "python"
+repo = "py-inventory"
+test_command = "python -m pytest -q"
+check_command = "python -m pytest -q .eval_checks"
+request = """
+Add persistence to the inventory:
+- Inventory.save(path) writes all items to a JSON file at `path` (a str or pathlib.Path).
+- Inventory.load(path) is a classmethod that returns a new Inventory with the same items
+  (sku, name, price, quantity).
+Loading a file that doesn't exist must raise FileNotFoundError. Add tests.
+"""

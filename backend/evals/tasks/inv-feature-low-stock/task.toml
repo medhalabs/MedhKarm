@@ -1,0 +1,13 @@
+id = "inv-feature-low-stock"
+title = "Low-stock report"
+kind = "feature"
+difficulty = 1
+language = "python"
+repo = "py-inventory"
+test_command = "python -m pytest -q"
+check_command = "python -m pytest -q .eval_checks"
+request = """
+Add Inventory.low_stock(threshold=5) returning the SKUs of items whose quantity is
+strictly below the threshold, sorted alphabetically. A negative threshold must raise
+ValueError. Add tests.
+"""

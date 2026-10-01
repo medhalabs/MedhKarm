@@ -13,40 +13,18 @@ This is the only place concrete classes are chosen (dependency inversion).
 import argparse
 import asyncio
 import json
-import os
 import uuid
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 from app.core.config import Settings, get_settings
 from app.core.logging import configure_logging
-from app.features.developer_engine.interfaces import DeveloperEngine
-from app.features.models.interfaces import LLMProvider
-from app.features.models.service import build_provider, resolve_model_config
-from app.features.sandbox.interfaces import SandboxProvider
+from app.features.models.service import build_provider
 from app.features.workflows.checkpointer import postgres_checkpointer
 from app.features.workflows.graphs.build_app import build_app_graph
 from app.features.workflows.schemas import RunOutcome, StepUpdate
 from app.features.workflows.service import WorkflowService
-
-
-def build_engine(settings: Settings, llm: LLMProvider) -> tuple[DeveloperEngine, SandboxProvider]:
-    """Pick the developer engine and the sandbox it needs. Imports are local so the
-    heavy OpenHands packages load only when that engine is chosen."""
-    if settings.developer_engine == "openhands":
-        os.environ.setdefault("OPENHANDS_SUPPRESS_BANNER", "1")
-        from app.features.developer_engine.engines.openhands_engine import OpenHandsEngine
-        from app.features.sandbox.providers.openhands_provider import OpenHandsSandboxProvider
-
-        engine = OpenHandsEngine(
-            resolve_model_config(settings), max_iterations=settings.openhands_max_iterations
-        )
-        return engine, OpenHandsSandboxProvider(settings.openhands_server_image)
-
-    from app.features.developer_engine.engines.tool_loop_engine import ToolLoopEngine
-    from app.features.sandbox.providers.docker_provider import DockerSandboxProvider
-
-    return ToolLoopEngine(llm), DockerSandboxProvider(settings.sandbox_image)
+from app.workers.wiring import build_engine
 
 
 @asynccontextmanager
