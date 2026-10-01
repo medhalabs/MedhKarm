@@ -7,7 +7,7 @@ import pytest
 from app.core.config import Settings
 from app.features.models.exceptions import ModelCallError
 from app.features.models.providers.litellm_provider import LiteLLMProvider
-from app.features.models.service import build_provider
+from app.features.models.service import build_provider, resolve_model_config
 
 
 def _fake_response(content: str | None, tool_calls: list[Any]) -> SimpleNamespace:
@@ -52,6 +52,20 @@ async def test_wraps_provider_errors(monkeypatch: pytest.MonkeyPatch) -> None:
 
     with pytest.raises(ModelCallError):
         await LiteLLMProvider("ollama_chat/test").complete([])
+
+
+def test_non_ollama_models_use_provider_env_vars() -> None:
+    config = resolve_model_config(Settings(ollama_api_key="secret"), "anthropic/claude-x")
+
+    assert config.api_base is None
+    assert config.api_key is None
+
+
+def test_model_config_never_shows_the_key() -> None:
+    config = resolve_model_config(Settings(ollama_api_key="secret"), "ollama_chat/gpt-oss:20b")
+
+    assert config.api_key == "secret"
+    assert "secret" not in repr(config)
 
 
 def test_ollama_models_get_ollama_base_and_key() -> None:

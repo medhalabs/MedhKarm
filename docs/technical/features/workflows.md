@@ -51,7 +51,7 @@ The run id is LangGraph's `thread_id`; each checkpoint is stored under it.
 No HTTP endpoints yet. Command line:
 
 ```bash
-uv run python -m app.workers.build_run start --request "..." --test-command "..."
+uv run python -m app.workers.build_run start --request "..." --test-command "..." [--engine builtin|openhands]
 uv run python -m app.workers.build_run resume <run_id> --approve [--feedback "..."]
 uv run python -m app.workers.build_run resume <run_id> --reject  [--feedback "..."]
 uv run python -m app.workers.build_run status <run_id>
@@ -68,7 +68,7 @@ LangGraph creates and owns its tables in our Postgres (`checkpoints`, `checkpoin
 ## Dependencies
 
 - **Other features used:** `models`, `developer_engine`, `sandbox`, through their interfaces
-- **External services:** Postgres (checkpoints), Docker and Ollama Cloud via the implementations wired in `build_run.py`
+- **External services:** Postgres (checkpoints), Docker and Ollama Cloud via the implementations wired in `build_run.py`. `build_engine()` there picks the developer engine and its matching sandbox from `DEVELOPER_ENGINE` (or `--engine`).
 - **Libraries:** `langgraph`, `langgraph-checkpoint-postgres`, `psycopg` (checkpoints use psycopg 3; the app uses asyncpg)
 - **Config:** `DATABASE_URL` (converted to a plain `postgresql://` URL by `Settings.psycopg_database_url`)
 
@@ -86,6 +86,7 @@ LangGraph creates and owns its tables in our Postgres (`checkpoints`, `checkpoin
 
 ## Known limitations and gotchas
 
+- Resume uses the current `DEVELOPER_ENGINE`. That's harmless today (after the gate only `finish` runs, and removing a container works with either provider), but a future graph that does more work after the gate should store the engine in the state.
 - One fixed graph; per-template graphs (PM → CTO → Dev → QA → DevOps) come in Phase 1–2.
 - No retry loop from verify back to develop yet.
 - Runs are started from the command line; API endpoints and a worker queue come in Phase 1.
@@ -102,4 +103,5 @@ LangGraph creates and owns its tables in our Postgres (`checkpoints`, `checkpoin
 
 | Date | Change |
 | --- | --- |
+| 2026-10-01 | `--engine` option; engine and sandbox chosen together in `build_engine()` |
 | 2026-10-01 | Created: build graph with plan, develop, verify, release gate and finish; Postgres checkpoints; CLI |

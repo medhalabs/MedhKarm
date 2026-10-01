@@ -4,7 +4,7 @@ Implementations: Docker (local development) now; a hosted VM sandbox from Phase 
 Paths are always relative to the sandbox's workspace directory.
 """
 
-from typing import Protocol
+from typing import Protocol, runtime_checkable
 
 from app.features.sandbox.schemas import CommandResult
 
@@ -24,6 +24,17 @@ class SandboxFiles(Protocol):
 class Sandbox(SandboxCommands, SandboxFiles, Protocol):
     @property
     def id(self) -> str: ...
+
+
+@runtime_checkable
+class AgentServerSandbox(Sandbox, Protocol):
+    """A sandbox that also runs an OpenHands agent server, so OpenHands can work inside it."""
+
+    @property
+    def agent_server_url(self) -> str: ...
+
+    @property
+    def workspace_dir(self) -> str: ...
 
 
 class SandboxProvider(Protocol):

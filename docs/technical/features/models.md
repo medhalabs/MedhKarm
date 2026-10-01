@@ -20,8 +20,8 @@ The single way agents talk to AI models. Agents depend on the `LLMProvider` inte
 | File | Responsibility |
 | --- | --- |
 | `interfaces.py` | `LLMProvider` Protocol: `model_name`, `complete(messages, tools)` |
-| `schemas.py` | `Message`, `ToolSpec`, `ToolCall`, `TokenUsage`, `LLMResponse` |
-| `service.py` | `build_provider()`: model name → configured provider |
+| `schemas.py` | `ModelConfig` (key hidden from `repr`), `Message`, `ToolSpec`, `ToolCall`, `TokenUsage`, `LLMResponse` |
+| `service.py` | `resolve_model_config()`: model name → `ModelConfig` (endpoint + key); `build_provider()`: → configured provider |
 | `providers/litellm_provider.py` | Real provider via LiteLLM, with retries |
 | `providers/scripted_provider.py` | Test provider that replays prepared responses and records calls |
 | `exceptions.py` | `ModelCallError` |
@@ -50,6 +50,7 @@ None yet.
 - 2026-10-01 — Start on Ollama Cloud's free models. All six (`gpt-oss:120b`, `gpt-oss:20b`, `gemma4:31b`, `nemotron-3-nano:30b`, `nemotron-3-super`, `nemotron-3-ultra`) made correct tool calls in a direct test. `gpt-oss:120b` is the default; it completed real coding tasks through LiteLLM.
 - 2026-10-01 — Use `ollama_chat/` (Ollama's chat endpoint), not `ollama/` (completion endpoint): tool calling needs the chat endpoint.
 - 2026-10-01 — Retry 3 times inside the provider: Ollama Cloud returned an occasional 500 that succeeded on retry.
+- 2026-10-01 — `resolve_model_config()` is the single place that knows endpoints and keys. External agents (OpenHands) get the same `ModelConfig`, so every agent uses the same model setup.
 - 2026-10-01 — OpenAI message format everywhere: LiteLLM converts it for each provider, so nothing else changes when models change.
 
 ## How to run and test
@@ -75,4 +76,5 @@ None yet.
 
 | Date | Change |
 | --- | --- |
+| 2026-10-01 | Added `ModelConfig` and `resolve_model_config()` for external agents |
 | 2026-10-01 | Created: LiteLLM provider, Ollama Cloud defaults, retries, scripted test provider |

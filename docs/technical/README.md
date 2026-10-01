@@ -25,6 +25,6 @@ Knowledge transfer for anyone working on the code: what each part is, how it wor
 | --- | --- | --- |
 | health | [features/health.md](features/health.md) | Done |
 | models | [features/models.md](features/models.md) | Done (Phase 0) |
-| sandbox | [features/sandbox.md](features/sandbox.md) | Done for local development |
-| developer_engine | [features/developer_engine.md](features/developer_engine.md) | Built-in engine done; OpenHands next |
+| sandbox | [features/sandbox.md](features/sandbox.md) | Docker and OpenHands agent server, local development |
+| developer_engine | [features/developer_engine.md](features/developer_engine.md) | Built-in and OpenHands engines done |
 | workflows | [features/workflows.md](features/workflows.md) | Build graph done (Phase 0 stack check) |

@@ -1,30 +1,61 @@
 # Developer engine
 
-**Status:** Built-in engine done (Phase 0); OpenHands engine next  
+**Status:** Two engines done (Phase 0): built-in and OpenHands  
 **Code:** `backend/app/features/developer_engine/`  
 **Last updated:** 2026-10-01
 
 ## What it is
 
-The part that actually writes code. It takes a task (description + test command) and a sandbox, and returns what changed and whether the tests pass. The rest of the system only knows the `DeveloperEngine` interface, so the engine behind it can be swapped: the built-in `ToolLoopEngine` now, OpenHands next, the Claude Agent SDK later for Claude users.
+The part that actually writes code. It takes a task (description + test command) and a sandbox, and returns what changed and whether the tests pass. The rest of the system only knows the `DeveloperEngine` interface, so engines are swappable:
+
+| Engine | Setting | Sandbox it needs | Best for |
+| --- | --- | --- | --- |
+| `ToolLoopEngine` (built in) | `DEVELOPER_ENGINE=builtin` (default) | Any (`DockerSandboxProvider` in practice) | Small tasks, low token cost, fully under our control |
+| `OpenHandsEngine` | `DEVELOPER_ENGINE=openhands` | `OpenHandsSandboxProvider` (agent server) | Larger, multi-file work: persistent terminal, targeted file edits, task tracking, context condensing |
+
+The Claude Agent SDK is a planned third engine for Claude users.
 
 ## How it works
 
-`ToolLoopEngine.run_task()`:
+Both engines follow the same contract:
+
+1. Note the workspace state.
+2. Let the agent work in the sandbox.
+3. **Run the test command ourselves.** `success` is our test result, never the agent's claim.
+4. Return a `DevResult`: success, summary, files changed, test output, steps, total tokens.
+
+### ToolLoopEngine
 
 1. Sends the model a system prompt, the task and the test command, plus five tools: `write_file`, `read_file`, `list_files`, `run_command`, `finish`.
-2. Loops up to `max_steps` (default 15): the model calls tools; each call runs in the sandbox and its result goes back as a `tool` message. Tool errors (missing file, unsafe path) are returned as text so the model can recover, never raised.
-3. Stops when the model calls `finish`, or at the step limit.
-4. **Runs the test command itself.** `success` is our test result, never the model's claim.
-5. Returns a `DevResult`: success, summary, files changed, test output, steps, total tokens.
+2. Loops up to `max_steps` (default 15): each tool call runs in the sandbox and its result goes back as a `tool` message. Tool errors are returned as text so the model can recover.
+3. Stops at `finish` or the step limit.
+
+### OpenHandsEngine
+
+1. Refuses any sandbox that isn't an `AgentServerSandbox` (`IncompatibleSandboxError`).
+2. Hashes every workspace file (`workspace_snapshot.snapshot`).
+3. Builds an OpenHands `LLM` from our `ModelConfig` (same model, endpoint and key as everything else), an `Agent` with OpenHands' default tools minus the browser, and a `RemoteWorkspace` pointing at the sandbox's agent server.
+4. Starts a `Conversation`, sends the task prompt and runs it to completion (up to `OPENHANDS_MAX_ITERATIONS`, default 50; the SDK also stops at 1 hour). This is blocking SDK code, so it runs in a thread.
+5. Reads the final answer, token usage and number of actions; closes the conversation.
+6. Hashes the workspace again: new or modified files are `files_changed`.
 
 ```mermaid
-flowchart LR
-    A[Task + sandbox] --> B[Model picks tools]
-    B --> C[Run tools in sandbox]
-    C --> B
-    B -->|finish or step limit| D[Run test command]
-    D --> E[DevResult]
+sequenceDiagram
+    participant W as Workflow (develop node)
+    participant E as OpenHandsEngine
+    participant S as Agent-server container
+    participant M as Model (Ollama Cloud)
+    W->>E: run_task(task, sandbox)
+    E->>S: snapshot (sha1sum)
+    E->>S: start conversation (agent + tools + LLM config)
+    loop until finish or iteration limit
+        S->>M: next action?
+        M-->>S: tool call
+        S->>S: run terminal / file editor in /workspace/project
+    end
+    E->>S: run test command
+    E->>S: snapshot again
+    E-->>W: DevResult
 ```
 
 ## Code map
@@ -33,8 +64,13 @@ flowchart LR
 | --- | --- |
 | `interfaces.py` | `DeveloperEngine` Protocol: `run_task(task, sandbox) -> DevResult` |
 | `schemas.py` | `DevTask`, `DevResult` |
-| `engines/tools.py` | Tool definitions for the model and how each runs in the sandbox (output capped at 4,000 characters) |
-| `engines/tool_loop_engine.py` | `ToolLoopEngine`: the loop, the prompt, the final test run |
+| `exceptions.py` | `IncompatibleSandboxError` |
+| `engines/tools.py` | Built-in engine's tool definitions and how each runs in the sandbox (output capped at 4,000 characters) |
+| `engines/tool_loop_engine.py` | `ToolLoopEngine` |
+| `engines/openhands_engine.py` | `OpenHandsEngine` |
+| `engines/workspace_snapshot.py` | Hash the workspace; list new or modified files |
+
+Engine selection lives in `app/workers/build_run.py` (`build_engine()`), the only place concrete classes are chosen.
 
 ## API
 
@@ -46,48 +82,57 @@ None.
 
 ## Events
 
-None yet.
+None yet. OpenHands produces a detailed event stream (every action and observation); feeding it to the event log and office view is future work.
 
 ## Dependencies
 
-- **Other features used:** `models` (`LLMProvider`), `sandbox` (`Sandbox`), through their interfaces
-- **Interfaces defined:** `DeveloperEngine` → `ToolLoopEngine`
-- **External services:** none directly
-- **Config:** none (model and sandbox are passed in)
+- **Other features used:** `models` (`LLMProvider`, `ModelConfig`), `sandbox` (`Sandbox`, `AgentServerSandbox`), through their interfaces
+- **Interfaces defined:** `DeveloperEngine` → `ToolLoopEngine`, `OpenHandsEngine`
+- **Libraries:** `openhands-sdk`, `openhands-tools` (OpenHands engine only; imported only when chosen)
+- **Config:** `DEVELOPER_ENGINE`, `OPENHANDS_MAX_ITERATIONS`, `OPENHANDS_SUPPRESS_BANNER`
 
 ## Design decisions
 
-- 2026-10-01 — Built-in engine first, OpenHands second. It proves the model, sandbox and workflow pieces without OpenHands' large install and its own Docker images mixed in. OpenHands plugs in behind the same interface.
-- 2026-10-01 — Success is decided by running the tests ourselves ("checks run the app").
-- 2026-10-01 — Tool errors go back to the model as text, so one bad call doesn't end the task.
+- 2026-10-01 — Built-in engine first, OpenHands second, so problems in our own pieces weren't mixed with OpenHands setup issues.
+- 2026-10-01 — Success is decided by running the tests ourselves, for every engine.
+- 2026-10-01 — OpenHands runs *inside the sandbox* (its agent server), not on our machine, so its terminal and file tools touch only the sandbox. Hence the `AgentServerSandbox` requirement.
+- 2026-10-01 — The OpenHands SDK (`openhands-sdk` 1.50), not the full OpenHands app: it's the embeddable library.
+- 2026-10-01 — Changed files are found by hashing, so modified files count too, not just new ones.
 
 ## How to run and test
 
-- Unit tests (scripted model, in-memory sandbox): `uv run pytest app/features/developer_engine`
-- Live: run a build (see [workflows.md](workflows.md)).
+- Unit tests: `uv run pytest app/features/developer_engine`
+- Live: `uv run python -m app.workers.build_run start --engine openhands --request "..." --test-command "..."` (see [workflows.md](workflows.md)).
 
-**Measured on 2026-10-01** with `gpt-oss:120b` on Ollama Cloud in Docker:
+**Measured on 2026-10-01** with `gpt-oss:120b` on Ollama Cloud:
 
-| Task | Result | Steps | Tokens | Time |
-| --- | --- | --- | --- | --- |
-| `calc.py` with add/divide + pytest tests | Passed (2 tests) | 6 | 4,285 | 24 s |
-| `slugify.py` + pytest tests (inside the full graph) | Passed (5 tests) | 5 | 6,370 | ~30 s |
+| Engine | Task | Result | Steps | Tokens | Time |
+| --- | --- | --- | --- | --- | --- |
+| Built-in | `calc.py` with add/divide + pytest tests (engine only) | Passed (2 tests) | 6 | 4,285 | 24 s |
+| Built-in | `slugify.py` + pytest tests (full graph) | Passed (5 tests) | 5 | 6,370 | ~30 s |
+| OpenHands | `slugify.py` + pytest tests (full graph) | Passed (4 tests) | 7 | 67,243 | 65 s (incl. container start) |
+
+OpenHands used about 10× the tokens on this small task: its system prompt and tool definitions are much larger. The trade-off should pay off on bigger, multi-file tasks; the eval suite in Phase 2 will measure it.
 
 ## Known limitations and gotchas
 
-- The whole conversation is resent every step; long tasks will need context trimming.
-- No diff output yet, only the list of changed files.
-- Single-file edits only (`write_file` rewrites the whole file); fine for small tasks, costly for big files.
+- Built-in: the whole conversation is resent every step; `write_file` rewrites whole files.
+- OpenHands: high fixed token cost per task; the run can't be paused mid-task (only between graph steps).
+- Neither engine returns a diff yet, only the list of changed files.
+- If `OPENHANDS_SERVER_IMAGE` and the installed `openhands-sdk` versions drift apart, the client and server may disagree. Upgrade them together.
 
 ## Troubleshooting
 
 | Symptom | Likely cause | Fix |
 | --- | --- | --- |
-| "step limit reached" summary | Model looped or the task is too big | Split the task, raise `max_steps`, or try a stronger model |
-| Model writes code but tests never run | Test command needs a tool missing from the image (e.g. pytest) | Install it in the test command or use an image that has it |
+| "step limit reached" summary (built-in) | Model looped or the task is too big | Split the task, raise `max_steps`, or try a stronger model |
+| `IncompatibleSandboxError` | OpenHands engine paired with the plain Docker sandbox | Use `DEVELOPER_ENGINE=openhands` (wires both together) |
+| Tests never run | Test command needs a tool missing from the image (e.g. pytest) | Install it in the test command or use an image that has it |
+| OpenHands run ends with an empty summary | Agent hit the iteration limit | Raise `OPENHANDS_MAX_ITERATIONS` or split the task |
 
 ## Changelog
 
 | Date | Change |
 | --- | --- |
+| 2026-10-01 | Added `OpenHandsEngine`, `IncompatibleSandboxError`, hash-based change detection |
 | 2026-10-01 | Created: `DeveloperEngine` interface and built-in `ToolLoopEngine` |

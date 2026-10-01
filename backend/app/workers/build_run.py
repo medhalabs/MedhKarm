@@ -1,6 +1,7 @@
 """Command-line entry point for build runs (the Phase 0 stack check).
 
     uv run python -m app.workers.build_run start --request "..." --test-command "..."
+        [--engine builtin|openhands]
     uv run python -m app.workers.build_run resume <run_id> --approve   (or --reject)
     uv run python -m app.workers.build_run status <run_id>
 
@@ -12,28 +13,48 @@ This is the only place concrete classes are chosen (dependency inversion).
 import argparse
 import asyncio
 import json
+import os
 import uuid
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
-from app.core.config import get_settings
+from app.core.config import Settings, get_settings
 from app.core.logging import configure_logging
-from app.features.developer_engine.engines.tool_loop_engine import ToolLoopEngine
-from app.features.models.service import build_provider
-from app.features.sandbox.providers.docker_provider import DockerSandboxProvider
+from app.features.developer_engine.interfaces import DeveloperEngine
+from app.features.models.interfaces import LLMProvider
+from app.features.models.service import build_provider, resolve_model_config
+from app.features.sandbox.interfaces import SandboxProvider
 from app.features.workflows.checkpointer import postgres_checkpointer
 from app.features.workflows.graphs.build_app import build_app_graph
 from app.features.workflows.schemas import RunOutcome, StepUpdate
 from app.features.workflows.service import WorkflowService
 
 
+def build_engine(settings: Settings, llm: LLMProvider) -> tuple[DeveloperEngine, SandboxProvider]:
+    """Pick the developer engine and the sandbox it needs. Imports are local so the
+    heavy OpenHands packages load only when that engine is chosen."""
+    if settings.developer_engine == "openhands":
+        os.environ.setdefault("OPENHANDS_SUPPRESS_BANNER", "1")
+        from app.features.developer_engine.engines.openhands_engine import OpenHandsEngine
+        from app.features.sandbox.providers.openhands_provider import OpenHandsSandboxProvider
+
+        engine = OpenHandsEngine(
+            resolve_model_config(settings), max_iterations=settings.openhands_max_iterations
+        )
+        return engine, OpenHandsSandboxProvider(settings.openhands_server_image)
+
+    from app.features.developer_engine.engines.tool_loop_engine import ToolLoopEngine
+    from app.features.sandbox.providers.docker_provider import DockerSandboxProvider
+
+    return ToolLoopEngine(llm), DockerSandboxProvider(settings.sandbox_image)
+
+
 @asynccontextmanager
-async def workflow_service() -> AsyncIterator[WorkflowService]:
-    settings = get_settings()
+async def workflow_service(settings: Settings) -> AsyncIterator[WorkflowService]:
     llm = build_provider(settings)
-    sandboxes = DockerSandboxProvider(settings.sandbox_image)
+    engine, sandboxes = build_engine(settings, llm)
     async with postgres_checkpointer(settings) as checkpointer:
-        graph = build_app_graph(llm, ToolLoopEngine(llm), sandboxes, checkpointer)
+        graph = build_app_graph(llm, engine, sandboxes, checkpointer)
         yield WorkflowService(graph)
 
 
@@ -75,6 +96,9 @@ async def main() -> None:
     start = commands.add_parser("start")
     start.add_argument("--request", required=True)
     start.add_argument("--test-command", required=True)
+    start.add_argument(
+        "--engine", choices=["builtin", "openhands"], help="Overrides DEVELOPER_ENGINE"
+    )
     resume = commands.add_parser("resume")
     resume.add_argument("run_id")
     decision = resume.add_mutually_exclusive_group(required=True)
@@ -86,10 +110,13 @@ async def main() -> None:
     args = parser.parse_args()
 
     configure_logging("WARNING")
-    async with workflow_service() as service:
+    settings = get_settings()
+    if getattr(args, "engine", None):
+        settings = settings.model_copy(update={"developer_engine": args.engine})
+    async with workflow_service(settings) as service:
         if args.command == "start":
             run_id = uuid.uuid4().hex[:12]
-            print(f"Run {run_id}: {args.request}")
+            print(f"Run {run_id} ({settings.developer_engine} engine): {args.request}")
             outcome = await service.start(run_id, args.request, args.test_command, print_step)
         elif args.command == "resume":
             outcome = await service.resume(args.run_id, args.approve, args.feedback, print_step)

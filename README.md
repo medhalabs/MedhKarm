@@ -1,6 +1,6 @@
 # MedhKarm — AI Virtual Office
 
-A founder gets an AI software company (PM, CTO, developers, QA, DevOps agents) that builds and ships apps while the founder watches and approves.
+An AI workforce for solo founders, creators and small businesses in India: ready-made AI teams for specific jobs. The software team (PM, tech lead, developers, QA, DevOps) launches first. See [docs/08-product-plan-v2.md](docs/08-product-plan-v2.md).
 
 | Folder | What it is |
 | --- | --- |

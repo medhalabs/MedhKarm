@@ -15,8 +15,8 @@ flowchart LR
     Redis -.-> Worker["Workers<br/>LangGraph build runs"]
     Worker --> DB
     Worker --> Ollama["Ollama Cloud<br/>via LiteLLM"]
-    Worker --> Sandbox["Docker sandbox<br/>per run"]
-    Worker -.-> Ext["OpenHands · GitHub · Vercel (planned)"]
+    Worker --> Sandbox["Sandbox per run<br/>Docker or OpenHands agent server"]
+    Worker -.-> Ext["GitHub · Vercel (planned)"]
 ```
 
 Solid lines exist today; dotted lines are planned. Build runs are started from the command line (`app/workers/build_run.py`) until the job queue arrives in Phase 1.
@@ -28,7 +28,8 @@ Solid lines exist today; dotted lines are planned. Build runs are started from t
 | Workers | `backend/app/workers/` | Build runs from the command line | Long-running work (agent runs, sandboxes, evals); queue chosen in Phase 1 |
 | Build workflow | `backend/app/features/workflows/` | Running | LangGraph graph: plan → develop → verify → release gate → finish, checkpointed in Postgres |
 | Models | `backend/app/features/models/` | Running | LiteLLM; default `gpt-oss:120b` on Ollama Cloud |
-| Sandbox | `backend/app/features/sandbox/` | Running (Docker) | One isolated container per build run |
+| Sandbox | `backend/app/features/sandbox/` | Running (Docker) | One isolated container per build run: plain Docker, or an OpenHands agent server |
+| Developer engine | `backend/app/features/developer_engine/` | Running | Built-in tool loop or OpenHands, chosen by `DEVELOPER_ENGINE` |
 | Postgres | `docker-compose.yml` locally, Supabase in production | Running locally | All data, LangGraph checkpoints, embeddings (pgvector) |
 | Redis | `docker-compose.yml` | Running locally, unused yet | Job queue and caching |
 
@@ -59,7 +60,7 @@ Both sides are organised by feature, with the same feature names on each side. F
 
 | Side | File | Key settings |
 | --- | --- | --- |
-| Backend | `backend/.env` (from `.env.example`), read by `app/core/config.py` | `DATABASE_URL`, `REDIS_URL`, `CORS_ORIGINS`, `ENVIRONMENT`, `DEFAULT_MODEL`, `OLLAMA_API_BASE`, `OLLAMA_API_KEY`, `SANDBOX_IMAGE` |
+| Backend | `backend/.env` (from `.env.example`), read by `app/core/config.py` | `DATABASE_URL`, `REDIS_URL`, `CORS_ORIGINS`, `ENVIRONMENT`, `DEFAULT_MODEL`, `OLLAMA_API_BASE`, `OLLAMA_API_KEY`, `SANDBOX_IMAGE`, `DEVELOPER_ENGINE`, `OPENHANDS_SERVER_IMAGE`, `OPENHANDS_MAX_ITERATIONS` |
 | Frontend | `frontend/.env.local` (from `.env.example`) | `NEXT_PUBLIC_API_URL` |
 
 ## Features

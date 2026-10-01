@@ -63,6 +63,12 @@ uv run uvicorn app.main:app --reload --port 8000
 
 The first run pulls the `python:3.13-slim` image. Details: [features/workflows.md](features/workflows.md).
 
+To use the OpenHands engine instead, add `--engine openhands` (or set `DEVELOPER_ENGINE=openhands` in `backend/.env`). Pull its 1.2 GB image once beforehand so the first run doesn't wait:
+
+```bash
+docker pull ghcr.io/openhands/agent-server:1.50.1-python
+```
+
 ## 3. Frontend
 
 ```bash

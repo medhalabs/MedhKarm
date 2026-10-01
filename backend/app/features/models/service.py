@@ -3,12 +3,19 @@
 from app.core.config import Settings
 from app.features.models.interfaces import LLMProvider
 from app.features.models.providers.litellm_provider import LiteLLMProvider
+from app.features.models.schemas import ModelConfig
 
 
-def build_provider(settings: Settings, model: str | None = None) -> LLMProvider:
+def resolve_model_config(settings: Settings, model: str | None = None) -> ModelConfig:
+    """Model name + where to reach it. Shared by our providers and external agents (OpenHands)."""
     name = model or settings.default_model
     if name.startswith(("ollama/", "ollama_chat/")):
         key = settings.ollama_api_key.get_secret_value() if settings.ollama_api_key else None
-        return LiteLLMProvider(name, api_base=settings.ollama_api_base, api_key=key)
+        return ModelConfig(model=name, api_base=settings.ollama_api_base, api_key=key)
     # Other providers read their keys from the standard env vars (ANTHROPIC_API_KEY, ...).
-    return LiteLLMProvider(name)
+    return ModelConfig(model=name)
+
+
+def build_provider(settings: Settings, model: str | None = None) -> LLMProvider:
+    config = resolve_model_config(settings, model)
+    return LiteLLMProvider(config.model, api_base=config.api_base, api_key=config.api_key)

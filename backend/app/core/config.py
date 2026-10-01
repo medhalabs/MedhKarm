@@ -1,6 +1,7 @@
 """Application settings, read from environment variables (and `.env` in development)."""
 
 from functools import lru_cache
+from typing import Literal
 
 from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -25,6 +26,13 @@ class Settings(BaseSettings):
 
     # Sandbox
     sandbox_image: str = "python:3.13-slim"
+
+    # Developer engine: "builtin" (ToolLoopEngine + plain Docker sandbox)
+    # or "openhands" (OpenHands agent + OpenHands agent-server sandbox)
+    developer_engine: Literal["builtin", "openhands"] = "builtin"
+    # Keep the image tag equal to the installed openhands-sdk version.
+    openhands_server_image: str = "ghcr.io/openhands/agent-server:1.50.1-python"
+    openhands_max_iterations: int = 50
 
     @property
     def psycopg_database_url(self) -> str:
