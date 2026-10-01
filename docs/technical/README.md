@@ -28,4 +28,6 @@ Knowledge transfer for anyone working on the code: what each part is, how it wor
 | sandbox | [features/sandbox.md](features/sandbox.md) | Docker and OpenHands agent server, local development |
 | developer_engine | [features/developer_engine.md](features/developer_engine.md) | Built-in and OpenHands engines done |
 | workflows | [features/workflows.md](features/workflows.md) | Build graph with swappable checking step |
+| teams | [features/teams.md](features/teams.md) | Team templates; software team |
+| events | [features/events.md](features/events.md) | Activity log: append-only, API with live stream |
 | evals | [features/evals.md](features/evals.md) | 20 tasks, validator, runner, reports |

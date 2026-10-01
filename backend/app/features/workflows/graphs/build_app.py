@@ -10,6 +10,7 @@ from langgraph.graph import END, START, StateGraph
 from langgraph.graph.state import CompiledStateGraph
 
 from app.features.developer_engine.interfaces import DeveloperEngine
+from app.features.events.interfaces import EventStore
 from app.features.models.interfaces import LLMProvider
 from app.features.sandbox.interfaces import SandboxProvider
 from app.features.workflows.checkers.test_command import TestCommandChecker
@@ -32,10 +33,17 @@ def build_app_graph(
     sandboxes: SandboxProvider,
     checkpointer: BaseCheckpointSaver[str],
     checker: WorkChecker | None = None,
+    events: EventStore | None = None,
+    planner_instructions: str | None = None,
 ) -> CompiledStateGraph[BuildState, None, BuildState, BuildState]:
     graph = StateGraph(BuildState)
-    graph.add_node("plan", make_plan_node(planner))
-    graph.add_node("develop", make_develop_node(engine, sandboxes))
+    plan_node = (
+        make_plan_node(planner, planner_instructions)
+        if planner_instructions
+        else make_plan_node(planner)
+    )
+    graph.add_node("plan", plan_node)
+    graph.add_node("develop", make_develop_node(engine, sandboxes, events))
     graph.add_node("verify", make_verify_node(sandboxes, checker or TestCommandChecker()))
     graph.add_node("approval", approval)
     graph.add_node("finish", make_finish_node(sandboxes))

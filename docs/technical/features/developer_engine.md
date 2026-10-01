@@ -26,7 +26,7 @@ Both engines follow the same contract:
 
 ### ToolLoopEngine
 
-1. Sends the model a system prompt, the task and the test command, plus five tools: `write_file`, `read_file`, `list_files`, `run_command`, `finish`. A sixth, `apply_patch`, is offered only when `BUILTIN_APPLY_PATCH=true` (off by default; see design decisions). Patches the model sends anyway are still applied.
+1. Sends the model the developer role's instructions (from the team template, [teams.md](teams.md)), the task and the test command, plus the role's tools (by default five: `write_file`, `read_file`, `list_files`, `run_command`, `finish`. A sixth, `apply_patch`, is offered only when `BUILTIN_APPLY_PATCH=true` (off by default; see design decisions). Patches the model sends anyway are still applied.
    - `apply_patch` takes OpenAI's patch format (`*** Begin Patch` … `*** End Patch`), which `gpt-oss` is trained to write: add, update with context hunks, move and delete files.
    - Once a patch is handled, its text in the conversation is replaced by a short note ("patch already handled: … read the files for their current content"). The model sometimes names the argument `patch` instead of `input`; both work.
    - If the model sends a patch through `run_command` (it often tries `apply_patch` as a shell command), the call is rewritten into a real `apply_patch` call before it runs or enters the conversation.
@@ -65,7 +65,7 @@ sequenceDiagram
 
 | File | Responsibility |
 | --- | --- |
-| `interfaces.py` | `DeveloperEngine` Protocol: `run_task(task, sandbox) -> DevResult` |
+| `interfaces.py` | `DeveloperEngine` Protocol: `run_task(task, sandbox, recorder=None) -> DevResult`; the optional `RunRecorder` receives each tool use and model call |
 | `schemas.py` | `DevTask`, `DevResult` |
 | `exceptions.py` | `IncompatibleSandboxError` |
 | `engines/tools.py` | Built-in engine's tool definitions, how each runs in the sandbox (output capped at 4,000 characters), and `normalize_call()` |
@@ -143,6 +143,8 @@ OpenHands used about 10× the tokens on this small task: its system prompt and t
 
 | Date | Change |
 | --- | --- |
+| 2026-10-01 | Built-in engine takes `tools` and `instructions` (from the team template's developer role); replaces `offer_apply_patch` |
+| 2026-10-01 | Engines record `tool.used` and `model.used` events (activity log) |
 | 2026-10-01 | `apply_patch` made opt-in via `BUILTIN_APPLY_PATCH` (default off) |
 | 2026-10-01 | Patch parser ignores repeated or joined `*** Begin/End Patch` markers (the model repeats them; rejecting them made it loop) |
 | 2026-10-01 | Applied patches compacted in the conversation; `patch` accepted as an alias for `input` |

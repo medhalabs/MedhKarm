@@ -21,7 +21,7 @@ flowchart LR
     F --> E((end))
 ```
 
-1. **plan** — the model writes a short numbered plan from the request.
+1. **plan** — the CTO's model writes a short numbered plan from the request, following the CTO role's instructions in the team template ([teams.md](teams.md)).
 2. **develop** — creates the run's sandbox (or re-attaches by id) and calls the `DeveloperEngine` with the request + plan.
 3. **verify** — asks the run's `WorkChecker` whether the work is good. For software that's `TestCommandChecker`: it re-runs the test command in the same sandbox. QA never trusts the developer's report. Human review (content team) and approval rules (operations team) will be other checkers.
 4. **approval** — only reached if tests pass. `interrupt()` saves the run and stops, returning the gate details (summary, files changed, test output). Resuming with `Command(resume={"approved": ..., "feedback": ...})` continues from here.
@@ -46,6 +46,7 @@ The run id is LangGraph's `thread_id`; each checkpoint is stored under it.
 | `checkpointer.py` | Opens the Postgres checkpointer and creates its tables |
 | `service.py` | `WorkflowService`: `start`, `resume`, `get`; reports each step through a callback |
 | `schemas.py` | `CheckResult`, `StepUpdate`, `RunOutcome` |
+| `activity.py` | `record_step()`: what each step means in the activity log |
 | `app/workers/build_run.py` | Command-line entry point |
 | `app/workers/wiring.py` | `build_engine()`: picks the developer engine and sandbox from settings (shared by `build_run` and `run_evals`) |
 
@@ -77,6 +78,7 @@ LangGraph creates and owns its tables in our Postgres (`checkpoints`, `checkpoin
 
 ## Design decisions
 
+- 2026-10-01 — Every step is recorded in the activity log ([events.md](events.md)): `WorkflowService` takes an optional `EventStore` and records start, plan, work, check, approvals and finish; the develop node records `work.started` and passes a `RunRecorder` to the engine. `run_id` is stored in the state so nodes can record against it.
 - 2026-10-01 — The checking step is an interface (`WorkChecker`), so each kind of team can check work its own way. `build_app_graph(..., checker=...)` defaults to `TestCommandChecker`.
 - 2026-10-01 — `WorkflowService.start(..., sandbox_id=...)` can run in an existing, prepared sandbox (used by the eval runner to seed a starting project).
 - 2026-10-01 — Nodes are built by factory functions that receive their dependencies (`make_develop_node(engine, sandboxes)`), so the graph never creates concrete classes and tests run it with fakes.
@@ -108,6 +110,8 @@ LangGraph creates and owns its tables in our Postgres (`checkpoints`, `checkpoin
 
 | Date | Change |
 | --- | --- |
+| 2026-10-01 | Planner takes its instructions from the team template (`planner_instructions`) |
+| 2026-10-01 | Activity log: steps and approvals recorded as events |
 | 2026-10-01 | `WorkChecker` interface and `TestCommandChecker`; `start()` accepts a prepared sandbox; wiring moved to `app/workers/wiring.py` |
 | 2026-10-01 | `--engine` option; engine and sandbox chosen together in `build_engine()` |
 | 2026-10-01 | Created: build graph with plan, develop, verify, release gate and finish; Postgres checkpoints; CLI |

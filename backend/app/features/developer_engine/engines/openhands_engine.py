@@ -18,6 +18,8 @@ from openhands.tools.preset.default import get_default_tools
 from app.features.developer_engine.engines.workspace_snapshot import changed_files, snapshot
 from app.features.developer_engine.exceptions import IncompatibleSandboxError
 from app.features.developer_engine.schemas import DevResult, DevTask
+from app.features.events.schemas import Actor, EventType
+from app.features.events.service import RunRecorder
 from app.features.models.schemas import ModelConfig
 from app.features.sandbox.interfaces import AgentServerSandbox, Sandbox
 
@@ -37,7 +39,9 @@ class OpenHandsEngine:
         self._model = model
         self._max_iterations = max_iterations  # bounds the run; the SDK also stops at 1 hour
 
-    async def run_task(self, task: DevTask, sandbox: Sandbox) -> DevResult:
+    async def run_task(
+        self, task: DevTask, sandbox: Sandbox, recorder: RunRecorder | None = None
+    ) -> DevResult:
         if not isinstance(sandbox, AgentServerSandbox):
             raise IncompatibleSandboxError(
                 "OpenHandsEngine needs a sandbox running an OpenHands agent server "
@@ -46,6 +50,15 @@ class OpenHandsEngine:
 
         before = await snapshot(sandbox)
         summary, tokens, steps = await asyncio.to_thread(self._run_agent, task, sandbox)
+        if recorder:
+            # The OpenHands agent runs inside its own server; we record its totals.
+            await recorder.record(
+                Actor.DEVELOPER,
+                EventType.MODEL_USED,
+                f"OpenHands worked through {steps} actions ({tokens:,} tokens)",
+                {"model": self._model.model, "engine": "openhands", "actions": steps},
+                tokens=tokens,
+            )
         test = await sandbox.run(task.test_command)
         after = await snapshot(sandbox)
 

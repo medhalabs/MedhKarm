@@ -61,6 +61,8 @@ uv run uvicorn app.main:app --reload --port 8000
    uv run python -m app.workers.build_run resume <run_id> --approve
    ```
 
+See everything the team did, step by step: `uv run python -m app.workers.build_run events <run_id>`.
+
 The first run pulls the `python:3.13-slim` image. Details: [features/workflows.md](features/workflows.md).
 
 ### Run the eval suite

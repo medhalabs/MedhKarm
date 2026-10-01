@@ -4,6 +4,7 @@ from typing import Any, TypedDict
 class BuildState(TypedDict, total=False):
     """Everything a build run knows. Saved in a checkpoint after every node: keep it JSON-like."""
 
+    run_id: str  # the run's id, so nodes can record activity against it
     request: str  # what the founder asked for
     test_command: str  # shell command that decides "done"
     plan: str  # the planner's short plan

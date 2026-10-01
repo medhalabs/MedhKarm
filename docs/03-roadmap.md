@@ -47,10 +47,10 @@ Goal: know who we build for and what "working" means before building the product
 
 Goal: a general engine where a team is defined by config, its work is checked, and every step is recorded.
 
-- [ ] Team templates as config: roles, tools, workflow, checking method
-- [ ] Swappable checking step: tests, human review, approval rules
+- [x] Team templates as config: roles, tools, workflow, checking method. Done Oct 1, 2026: software team in `teams/templates/software.toml`
+- [ ] Swappable checking step: tests, human review, approval rules (interface and tests checker done; human review and approval rules come with later teams)
 - [ ] Team Lead agent that plans, assigns and reviews
-- [ ] Append-only event log: actions, messages, tool calls, costs, approvals; detailed enough to drive the animated office (who is doing what, task hand-offs, messages)
+- [x] Append-only event log: actions, messages, tool calls, costs, approvals; detailed enough to drive the animated office (who is doing what, task hand-offs, messages). Done Oct 1, 2026: API with live stream
 - [ ] Daily standup generated from the event log (done, planned, blocked, needs approval)
 - [ ] API endpoints and a job queue, so runs start and approvals happen over HTTP, not the command line
 - [ ] Approval rules on top of fixed gates

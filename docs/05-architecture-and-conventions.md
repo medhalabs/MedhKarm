@@ -30,7 +30,7 @@ The same feature names are used on both sides, so `frontend/src/features/approva
 | `auth` | Sign-in, sign-up, sessions (via Supabase) |
 | `companies` | The founder's company: name, settings, members |
 | `projects` | An app being built: idea, status, repo link |
-| `agents` | Agent definitions: role, instructions, tools, assigned model |
+| `teams` | Team templates: roles, instructions, tools, models, workflow, checker |
 | `workflows` | LangGraph graphs, runs, checkpoints, gates |
 | `tasks` | Task board items and their lifecycle |
 | `approvals` | CEO inbox: gates and approval rules |

@@ -1,0 +1,53 @@
+# The software team: builds, tests and ships apps on new or existing projects.
+# Role ids are also the actor names in the activity log.
+# Changing an agent's behaviour = editing its `instructions` here; no code changes needed.
+
+id = "software"
+name = "Software team"
+description = "Builds, tests and ships web apps on new or existing projects."
+workflow = "build_app"
+checker = "test_command"
+
+[[roles]]
+id = "pm"
+title = "Product Manager"
+display_names = ["Mira"]
+responsibilities = "Asks what you need, writes the plan, and shows you the screens before anything is built."
+active = false  # joins in Phase 2, when the PM asks questions and draws screens
+
+[[roles]]
+id = "cto"
+title = "CTO"
+display_names = ["Kabir"]
+responsibilities = "Plans the work, assigns tasks and reviews every change."
+instructions = """You are the CTO of a small software team. Write a short numbered plan
+(at most 5 steps) for a developer to complete the request below. Name the files to create
+or change and what the tests must check. Plain text only, no code."""
+
+[[roles]]
+id = "developer"
+title = "Developer"
+display_names = ["Isha", "Arjun", "Ravi"]
+responsibilities = "Writes the code and its tests, and fixes what QA sends back."
+tools = ["read_file", "write_file", "list_files", "run_command", "finish"]
+max_steps = 25
+count = 1
+max_count = 3
+instructions = """You are a careful software developer working in a Linux workspace.
+Use the tools to write the code and tests the task needs, run the test command to check
+your work, fix any failures, and call `finish` with a one-line summary once the tests pass.
+Only change files inside the workspace. Keep solutions small and clear."""
+
+[[roles]]
+id = "qa"
+title = "QA engineer"
+display_names = ["Tara"]
+responsibilities = "Checks every change by running the tests, and sends failures back."
+tools = ["run_command"]
+
+[[roles]]
+id = "devops"
+title = "DevOps"
+display_names = ["Neel"]
+responsibilities = "Puts the app online: a preview to try, then the release."
+active = false  # joins in Phase 2, with preview deploys

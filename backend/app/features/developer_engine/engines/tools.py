@@ -121,6 +121,30 @@ def compacted_patch_arguments(result: str) -> dict[str, str]:
     return {"input": note}
 
 
+def describe_tool_use(name: str, arguments: dict[str, Any], result: str) -> str:
+    """One plain line for the activity feed: what the developer just did."""
+    path = str(arguments.get("path", ""))
+    if name == "write_file":
+        return f"Wrote {path}"
+    if name == "read_file":
+        return f"Read {path}"
+    if name == "list_files":
+        return "Looked through the project files"
+    if name == "run_command":
+        command = (
+            str(arguments.get("command", "")).strip().splitlines()[0][:80]
+            if arguments.get("command")
+            else ""
+        )
+        code = result.split("\n", 1)[0].removeprefix("exit code ").strip()
+        return f"Ran `{command}` (exit {code})"
+    if name == APPLY_PATCH:
+        if result.startswith("Patch applied: "):
+            return "Edited files: " + result.removeprefix("Patch applied: ")
+        return "Tried an edit that didn't apply"
+    return f"Used {name}"
+
+
 async def _apply_patch(text: str, sandbox: Sandbox) -> str:
     ops = parse_patch(text)
     done: list[str] = []

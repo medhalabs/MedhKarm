@@ -26,11 +26,10 @@ from app.features.evals.report import save, summary_markdown, validation_markdow
 from app.features.evals.runner import EvalRunner
 from app.features.evals.schemas import EvalReport, TaskOutcome
 from app.features.evals.validator import TaskValidator
-from app.features.models.service import build_provider
 from app.features.sandbox.providers.docker_provider import DockerSandboxProvider
 from app.features.workflows.graphs.build_app import build_app_graph
 from app.features.workflows.service import WorkflowService
-from app.workers.wiring import build_engine
+from app.workers.wiring import build_team_runtime
 
 BACKEND_DIR = Path(__file__).resolve().parents[2]
 EVALS_DIR = BACKEND_DIR / "evals"
@@ -80,9 +79,15 @@ async def run(settings: Settings, only: list[str] | None, parallel: int) -> int:
         settings = settings.model_copy(update={"sandbox_image": settings.eval_sandbox_image})
 
     tasks = load_tasks(EVALS_DIR, only)
-    llm = build_provider(settings)
-    engine, sandboxes = build_engine(settings, llm)
-    graph = build_app_graph(llm, engine, sandboxes, InMemorySaver())
+    team = build_team_runtime(settings)
+    sandboxes = team.sandboxes
+    graph = build_app_graph(
+        team.planner,
+        team.engine,
+        sandboxes,
+        InMemorySaver(),
+        planner_instructions=team.planner_instructions,
+    )
     runner = EvalRunner(WorkflowService(graph), sandboxes, prepare_command=prepare)
 
     started = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")

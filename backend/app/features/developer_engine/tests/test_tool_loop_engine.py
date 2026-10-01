@@ -95,9 +95,9 @@ async def test_apply_patch_is_offered_only_when_enabled() -> None:
 
     sandbox = await InMemorySandboxProvider().create()
     await ToolLoopEngine(Spy([_call("finish", summary="x")])).run_task(TASK, sandbox)
-    await ToolLoopEngine(Spy([_call("finish", summary="x")]), offer_apply_patch=True).run_task(
-        TASK, sandbox
-    )
+    await ToolLoopEngine(
+        Spy([_call("finish", summary="x")]), tools=["write_file", "apply_patch"]
+    ).run_task(TASK, sandbox)
 
     assert "apply_patch" not in seen[0]
     assert "apply_patch" in seen[1]

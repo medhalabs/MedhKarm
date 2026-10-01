@@ -30,6 +30,9 @@ class Settings(BaseSettings):
     # Python + Node + test tools, built from backend/sandbox-image/ (see features/evals.md)
     eval_sandbox_image: str = "medhkarm-sandbox:dev"
 
+    # Which team template runs builds (app/features/teams/templates/<id>.toml)
+    team_template: str = "software"
+
     # Developer engine: "builtin" (ToolLoopEngine + plain Docker sandbox)
     # or "openhands" (OpenHands agent + OpenHands agent-server sandbox)
     developer_engine: Literal["builtin", "openhands"] = "builtin"
@@ -37,7 +40,7 @@ class Settings(BaseSettings):
     openhands_server_image: str = "ghcr.io/openhands/agent-server:1.50.1-python"
     openhands_max_iterations: int = 50
     # Built-in engine: most tasks need 6-10 steps; 15 cut off several (eval run, 2026-10-01).
-    builtin_max_steps: int = 25
+    builtin_max_steps: int = 25  # used when the team template sets no max_steps
     # Offer the apply_patch tool (OpenAI patch format). Off: doubled tokens on gpt-oss:120b.
     builtin_apply_patch: bool = False
 

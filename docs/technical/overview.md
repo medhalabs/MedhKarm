@@ -30,7 +30,9 @@ Solid lines exist today; dotted lines are planned. Build runs are started from t
 | Models | `backend/app/features/models/` | Running | LiteLLM; default `gpt-oss:20b` on Ollama Cloud |
 | Sandbox | `backend/app/features/sandbox/` | Running (Docker) | One isolated container per build run: plain Docker, or an OpenHands agent server |
 | Developer engine | `backend/app/features/developer_engine/` | Running | Built-in tool loop or OpenHands, chosen by `DEVELOPER_ENGINE` |
-| Postgres | `docker-compose.yml` locally, Supabase in production | Running locally | All data, LangGraph checkpoints, embeddings (pgvector) |
+| Team templates | `backend/app/features/teams/` | Running | Teams as settings files; the software team's CTO and developer are built from it |
+| Activity log | `backend/app/features/events/` | Running | Append-only `events` table; every step, tool use and model call; API with live stream |
+| Postgres | `docker-compose.yml` locally, Supabase in production | Running locally | All data, LangGraph checkpoints, the activity log, embeddings (pgvector) |
 | Redis | `docker-compose.yml` | Running locally, unused yet | Job queue and caching |
 
 ## How a request flows today
@@ -60,7 +62,7 @@ Both sides are organised by feature, with the same feature names on each side. F
 
 | Side | File | Key settings |
 | --- | --- | --- |
-| Backend | `backend/.env` (from `.env.example`), read by `app/core/config.py` | `DATABASE_URL`, `REDIS_URL`, `CORS_ORIGINS`, `ENVIRONMENT`, `DEFAULT_MODEL`, `OLLAMA_API_BASE`, `OLLAMA_API_KEY`, `SANDBOX_IMAGE`, `DEVELOPER_ENGINE`, `BUILTIN_MAX_STEPS`, `OPENHANDS_SERVER_IMAGE`, `OPENHANDS_MAX_ITERATIONS`, `EVAL_SANDBOX_IMAGE` |
+| Backend | `backend/.env` (from `.env.example`), read by `app/core/config.py` | `DATABASE_URL`, `REDIS_URL`, `CORS_ORIGINS`, `ENVIRONMENT`, `DEFAULT_MODEL`, `OLLAMA_API_BASE`, `OLLAMA_API_KEY`, `SANDBOX_IMAGE`, `TEAM_TEMPLATE`, `DEVELOPER_ENGINE`, `BUILTIN_MAX_STEPS`, `OPENHANDS_SERVER_IMAGE`, `OPENHANDS_MAX_ITERATIONS`, `EVAL_SANDBOX_IMAGE` |
 | Frontend | `frontend/.env.local` (from `.env.example`) | `NEXT_PUBLIC_API_URL` |
 
 ## Features

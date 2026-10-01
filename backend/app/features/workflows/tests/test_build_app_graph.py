@@ -3,6 +3,7 @@
 from langgraph.checkpoint.memory import InMemorySaver
 
 from app.features.developer_engine.engines.tool_loop_engine import ToolLoopEngine
+from app.features.events.stores.memory_store import InMemoryEventStore
 from app.features.models.providers.scripted_provider import ScriptedLLMProvider
 from app.features.models.schemas import LLMResponse, ToolCall
 from app.features.sandbox.providers.memory_provider import InMemorySandboxProvider
@@ -75,3 +76,32 @@ async def test_reports_each_step() -> None:
     await service.start("run-4", "Build app", "pytest", on_step=lambda s: seen.append(s.node))
 
     assert seen == ["plan", "develop", "verify"]
+
+
+async def test_activity_log_tells_the_story_of_a_run() -> None:
+    store = InMemoryEventStore()
+    llm = ScriptedLLMProvider(_script(write_app=True))
+    sandboxes = InMemorySandboxProvider(_tests_pass_if_app_exists)
+    graph = build_app_graph(llm, ToolLoopEngine(llm), sandboxes, InMemorySaver(), events=store)
+    service = WorkflowService(graph, store)
+
+    await service.start("run-9", "Build app", "pytest")
+    await service.resume("run-9", approved=True)
+
+    types = [e.type for e in store.events]
+    assert types == [
+        "run.started",
+        "plan.created",
+        "work.started",
+        "model.used",
+        "tool.used",
+        "model.used",
+        "work.finished",
+        "check.finished",
+        "approval.requested",
+        "approval.decided",
+        "run.finished",
+    ]
+    assert all(e.run_id == "run-9" for e in store.events)
+    assert next(e for e in store.events if e.type == "tool.used").summary == "Wrote app.py"
+    assert store.events[-1].summary == "Released"

@@ -5,12 +5,11 @@ from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
+# Import every feature's models module here so autogenerate sees its tables.
+import app.features.events.models  # noqa: F401
 from alembic import context
 from app.core.config import get_settings
 from app.shared.base_model import Base
-
-# Import every feature's models module here so autogenerate sees its tables, e.g.:
-# import app.features.projects.models
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

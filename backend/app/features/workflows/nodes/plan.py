@@ -11,11 +11,13 @@ for a developer to complete the request below. Name the files to create and what
 must check. Plain text only, no code."""
 
 
-def make_plan_node(llm: LLMProvider) -> BuildNode:
+def make_plan_node(llm: LLMProvider, instructions: str = PLANNER_PROMPT) -> BuildNode:
+    """`instructions` normally come from the CTO role in the team template."""
+
     async def plan(state: BuildState) -> dict[str, Any]:
         response = await llm.complete(
             [
-                {"role": "system", "content": PLANNER_PROMPT},
+                {"role": "system", "content": instructions.strip()},
                 {"role": "user", "content": state["request"]},
             ]
         )

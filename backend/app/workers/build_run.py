@@ -4,6 +4,7 @@
         [--engine builtin|openhands]
     uv run python -m app.workers.build_run resume <run_id> --approve   (or --reject)
     uv run python -m app.workers.build_run status <run_id>
+    uv run python -m app.workers.build_run events <run_id>     (the run's activity log)
 
 Each command is a separate process: `resume` proves a paused run survives a restart,
 because everything it needs is in the Postgres checkpoint and the sandbox id.
@@ -18,22 +19,41 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 from app.core.config import Settings, get_settings
+from app.core.database import session_factory
 from app.core.logging import configure_logging
-from app.features.models.service import build_provider
+from app.features.events.service import EventService
+from app.features.events.stores.sql_store import SqlEventStore
 from app.features.workflows.checkpointer import postgres_checkpointer
 from app.features.workflows.graphs.build_app import build_app_graph
 from app.features.workflows.schemas import RunOutcome, StepUpdate
 from app.features.workflows.service import WorkflowService
-from app.workers.wiring import build_engine
+from app.workers.wiring import build_team_runtime
 
 
 @asynccontextmanager
 async def workflow_service(settings: Settings) -> AsyncIterator[WorkflowService]:
-    llm = build_provider(settings)
-    engine, sandboxes = build_engine(settings, llm)
+    team = build_team_runtime(settings)
+    events = SqlEventStore(session_factory)
     async with postgres_checkpointer(settings) as checkpointer:
-        graph = build_app_graph(llm, engine, sandboxes, checkpointer)
-        yield WorkflowService(graph)
+        graph = build_app_graph(
+            team.planner,
+            team.engine,
+            team.sandboxes,
+            checkpointer,
+            events=events,
+            planner_instructions=team.planner_instructions,
+        )
+        yield WorkflowService(graph, events)
+
+
+async def print_events(run_id: str) -> None:
+    service = EventService(SqlEventStore(session_factory))
+    for event in await service.list_for_run(run_id):
+        tokens = f"  [{event.tokens:,} tokens]" if event.tokens else ""
+        when = f"{event.occurred_at:%H:%M:%S}"
+        print(f"{when}  {event.actor:<9} {event.type:<19} {event.summary}{tokens}")
+    totals = await service.totals_for_run(run_id)
+    print(f"\n{totals.events} events · {totals.tokens:,} tokens")
 
 
 def print_step(step: StepUpdate) -> None:
@@ -85,9 +105,14 @@ async def main() -> None:
     resume.add_argument("--feedback", default="")
     status = commands.add_parser("status")
     status.add_argument("run_id")
+    events = commands.add_parser("events")
+    events.add_argument("run_id")
     args = parser.parse_args()
 
     configure_logging("WARNING")
+    if args.command == "events":
+        await print_events(args.run_id)
+        return
     settings = get_settings()
     if getattr(args, "engine", None):
         settings = settings.model_copy(update={"developer_engine": args.engine})
