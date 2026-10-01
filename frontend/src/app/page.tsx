@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { BackendStatus } from "@/features/health";
 
 export default function Home() {
@@ -6,6 +8,9 @@ export default function Home() {
       <h1 className="text-3xl font-semibold tracking-tight">MedhKarm</h1>
       <p className="text-zinc-600 dark:text-zinc-400">Your AI software company.</p>
       <BackendStatus />
+      <Link href="/admin" className="text-sm font-medium underline">
+        Open the admin page →
+      </Link>
     </main>
   );
 }

@@ -1,7 +1,7 @@
 # Events (activity log)
 
 **Status:** Done (Phase 1, step 1)  
-**Code:** `backend/app/features/events/` · migrations `backend/alembic/versions/0001_events.py`, `0002_events_time_index.py`  
+**Code:** `backend/app/features/events/` · `frontend/src/features/events/` · migrations `backend/alembic/versions/0001_events.py`, `0002_events_time_index.py`  
 **Last updated:** 2026-10-01
 
 ## What it is
@@ -51,6 +51,10 @@ A real run, from the CLI:
 
 20 events · 9,234 tokens
 ```
+
+## Activity feed (frontend)
+
+`frontend/src/features/events/`: `ActivityFeed` shows a run's events newest first, with the developer's own name ("Isha") or the role ("Kabir (CTO)"), times in IST and tokens. It starts from the events the server rendered and then follows `/runs/{run_id}/events/stream` in the browser (`EventSource`, one listener per event type). When the backend ends the stream (quiet for 10 minutes), the feed reconnects itself from the last event it has, every 3 s, instead of letting the browser restart from the beginning; it stops once `run.finished` arrives. Steps that can change the run's status (`approval.requested`, `approval.decided`, `run.finished`, `run.resumed`, `plan.created`) refresh the page around it, so the approval panel appears and disappears on its own. "Show model calls" reveals the `model.used` events, hidden by default. Helpers: `describeEvent.ts` (`actorLabel`, `mergeEvents`, `totalTokens`, `isFinished`).
 
 ## Code map
 
@@ -136,6 +140,7 @@ This feature *is* the event log. Other features call `RunRecorder.record()`.
 
 | Date | Change |
 | --- | --- |
+| 2026-10-01 | Live activity feed in the admin page (frontend `events` feature) |
 | 2026-10-01 | `approval.decided` by `system` for decisions made by approval rules; reasons in `approval.requested` |
 | 2026-10-01 | `run.resumed` now recorded (run picked up after an interruption); `run.finished` can carry status `error` |
 | 2026-10-01 | `run_ids_between` and `latest_per_run` store queries and an `occurred_at` index (migration `0002`) for the daily standup; `InMemoryEventStore.now` lets tests set event times |

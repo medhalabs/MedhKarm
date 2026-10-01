@@ -1,7 +1,7 @@
 # Standups (daily standup)
 
 **Status:** Done (Phase 1, steps 4–5): on request by API and command line, and sent every morning by the worker (to its log until email and WhatsApp)  
-**Code:** `backend/app/features/standups/` · `backend/app/workers/standup.py` · no frontend yet (comes with the admin page)  
+**Code:** `backend/app/features/standups/` · `backend/app/workers/standup.py` · `frontend/src/features/standups/` (page `/admin/standup`)  
 **Last updated:** 2026-10-01
 
 ## What it is
@@ -63,6 +63,10 @@ flowchart LR
     Builder --> Standup[Standup JSON]
     Standup --> Text[to_text]
 ```
+
+## Standup page (frontend)
+
+`/admin/standup?day=YYYY-MM-DD` (default: this morning's) shows the headline, the window in IST, tokens and sent-back count, and the four sections side by side, grouped per run with links to each run. Arrows move a day back or forward, up to "Since 09:00 today": tomorrow's standup so far, which is where today's afternoon work appears. The labels say so, because a standup for a day covers the 24 hours **before** 09:00 that morning.
 
 ## Code map
 
@@ -140,6 +144,7 @@ Consumes: `run.started` (project name), `task.assigned`, `work.started`, `work.f
 
 | Date | Change |
 | --- | --- |
+| 2026-10-01 | Standup page in the admin (`/admin/standup`) |
 | 2026-10-01 | "Needs you" says why when an approval rule asked |
 | 2026-10-01 | Sent every morning by the worker (`standup.send` job, `StandupDelivery`, `LogDelivery`); `error` runs listed under Blocked |
 | 2026-10-01 | Created: standup from the event log (needs you, done, planned, blocked), API, plain text, command line |

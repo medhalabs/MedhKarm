@@ -1,7 +1,7 @@
 # Runs (build runs over HTTP)
 
 **Status:** Done (Phase 1, step 5): start, list, get and approve runs over HTTP  
-**Code:** `backend/app/features/runs/` · migration `backend/alembic/versions/0003_jobs_and_runs.py` · no frontend yet (comes with the admin page)  
+**Code:** `backend/app/features/runs/` · `frontend/src/features/runs/` · pages `frontend/src/app/admin/` · migration `backend/alembic/versions/0003_jobs_and_runs.py`  
 **Last updated:** 2026-10-01
 
 ## What it is
@@ -28,6 +28,18 @@ stateDiagram-v2
 3. `POST /runs/{id}/approval` with `approved` and optional `feedback`. This moves the run from `waiting_for_approval` to `queued` in one conditional update, so a double click or two people approving at once queues only one decision (the other gets 409), and queues a `build.resume` job.
 4. A worker resumes the graph with the decision and sets `released` or `rejected`.
 
+## The admin page (frontend)
+
+A bare page to start runs, watch them and approve releases: http://localhost:3000/admin (no sign-in yet; local only).
+
+| Page | What it shows |
+| --- | --- |
+| `/admin` | A form to start a run (request + test command), and every run with its status. Refreshes every 5 s while a run is queued or working |
+| `/admin/runs/[runId]` | The request, status and any error; when waiting, the **approval panel** (why you're asked, summary, files, tokens, QA's test output, an optional note, Approve / Reject); the live activity feed ([events.md](events.md)) |
+| `/admin/standup` | The daily standup ([standups.md](standups.md)) |
+
+Forms are React forms with **server actions** (`api/actions.ts`): the Next.js server checks the input (`parseForms.ts`), calls the backend (`POST /runs`, `POST /runs/{id}/approval`) and then opens the new run or refreshes the page. Errors from the backend (e.g. 409 already decided) show under the form.
+
 ## Code map
 
 | File | Responsibility |
@@ -40,6 +52,12 @@ stateDiagram-v2
 | `service.py` | `RunService`: start (row + job), decide (guarded), get, list, `set_status` for workers; job kind names `START_JOB`, `RESUME_JOB` |
 | `exceptions.py` | `RunNotFoundError` (404), `RunNotWaitingError` (409) |
 | `dependencies.py`, `router.py` | API |
+| `frontend/…/runs/types.ts` | `Run`, `RunStatus`, `Gate` (mirror the backend schemas) |
+| `frontend/…/runs/describeStatus.ts` | Status label, colour and whether it's still active; `shortRequest()` |
+| `frontend/…/runs/parseForms.ts` | Checks the start and approval forms |
+| `frontend/…/runs/api/` | `listRuns`, `getRun`, server actions `startRunAction`, `decideAction` |
+| `frontend/…/runs/components/` | `RunsOverview`, `RunsTable`, `RunStatusBadge`, `StartRunForm`, `RunPage`, `RunHeader`, `ApprovalPanel` |
+| `frontend/src/app/admin/` | Thin route files and the admin layout (nav: Runs, Standup) |
 
 ## API
 
@@ -85,11 +103,12 @@ None of its own. The workflow records the run's events ([workflows.md](workflows
 ## How to run and test
 
 - Run the API and a worker (see [jobs.md](jobs.md)), then use the `curl` lines above.
-- Tests: `uv run pytest app/features/runs tests/test_build_jobs.py`; database: `uv run pytest -m integration app/features/runs`.
+- Tests: `uv run pytest app/features/runs tests/test_build_jobs.py`; database: `uv run pytest -m integration app/features/runs` (deletes the run it creates). Frontend: `npm test` (`describeStatus`, `parseForms`).
+- Admin page: start the API, a worker and `npm run dev`, then open http://localhost:3000/admin.
 
 ## Known limitations and gotchas
 
-- No sign-in or companies yet: anyone who can reach the API can start and approve runs. Keep it on localhost until auth lands.
+- No sign-in or companies yet: anyone who can reach the API or the admin page can start and approve runs (server actions are reachable by POST too). Keep both on localhost until auth lands.
 - The default test command `pytest -q` relies on the default sandbox image (`medhkarm-sandbox:dev`), which has pytest. With another `SANDBOX_IMAGE`, install the test tools in the test command.
 - Cancelling a running build isn't supported yet.
 - Runs started from the command line (`build_run start`) have no `runs` row, so they don't appear in `GET /runs` (their events and standup still work).
@@ -106,5 +125,6 @@ None of its own. The workflow records the run's events ([workflows.md](workflows
 
 | Date | Change |
 | --- | --- |
+| 2026-10-01 | Admin page: start, list, watch and approve runs in the browser |
 | 2026-10-01 | `gate` carries the approval rules' reasons; runs the rules approve or reject never wait ([approvals.md](approvals.md)) |
 | 2026-10-01 | Created: runs table, start/list/get/approve API, statuses kept up to date by workers |

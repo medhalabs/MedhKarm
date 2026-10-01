@@ -55,7 +55,7 @@ Goal: a general engine where a team is defined by config, its work is checked, a
 - [x] API endpoints and a job queue, so runs start and approvals happen over HTTP, not the command line. Done Oct 1, 2026: `POST /runs`, approval over HTTP, Postgres job queue; a worker killed mid-run is taken over by another and the build carries on; standup sent every morning ([jobs.md](technical/features/jobs.md), [runs.md](technical/features/runs.md))
 - [x] Approval rules on top of fixed gates. Done Oct 1, 2026: rules in the team template decide ask / approve / reject at the release gate (strictest wins) and say why; the software team asks every time and flags secrets, dependencies, migrations, large or expensive changes ([approvals.md](technical/features/approvals.md))
 - [ ] Tools through MCP, with per-agent access limits
-- [ ] Bare admin page to watch runs
+- [x] Bare admin page to watch runs. Done Oct 1, 2026: `/admin` to start runs and see their status, each run's live activity and the approval panel (approve or reject, with the rules' reasons), and the standup ([runs.md](technical/features/runs.md))
 
 **Gate 1:** a team defined in config finishes a 10-step task, pauses at an approval, survives a worker restart, logs every step and its cost, and produces a standup.
 

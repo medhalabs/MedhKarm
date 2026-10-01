@@ -107,6 +107,8 @@ npm run dev
 ```
 
 - App: http://localhost:3000. The home page shows **"Backend OK · MedhKarm API v0.1.0 (development)"** when the backend is reachable.
+- Admin page: http://localhost:3000/admin. Start runs, watch them live and approve releases. Needs the API and a worker running (section 2).
+- In Claude Code's desktop app, `.claude/launch.json` starts the API (`api`) and the frontend (`frontend`) in the browser pane; start the worker in a terminal.
 - Before pushing: `npm run lint && npm run typecheck && npm test && npm run format:check`
 
 ## Troubleshooting

@@ -3,9 +3,11 @@
 import uuid
 
 import pytest
+from sqlalchemy import delete
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 from app.core.config import get_settings
+from app.features.runs.models import RunRow
 from app.features.runs.repository import SqlRunRepository
 from app.features.runs.schemas import RunStatus
 
@@ -13,8 +15,17 @@ pytestmark = pytest.mark.integration
 
 
 async def test_create_update_and_transition() -> None:
-    repo = SqlRunRepository(async_sessionmaker(create_async_engine(get_settings().database_url)))
+    sessions = async_sessionmaker(create_async_engine(get_settings().database_url))
+    repo = SqlRunRepository(sessions)
     run_id = f"test-{uuid.uuid4().hex[:8]}"
+    try:
+        await _check(repo, run_id)
+    finally:  # never leave test runs in the development database (the admin page lists them)
+        async with sessions() as session, session.begin():
+            await session.execute(delete(RunRow).where(RunRow.id == run_id))
+
+
+async def _check(repo: SqlRunRepository, run_id: str) -> None:
 
     run = await repo.create(run_id, "Build it", "pytest")
     await repo.set_status(run_id, RunStatus.WAITING_FOR_APPROVAL, gate={"question": "Ship?"})

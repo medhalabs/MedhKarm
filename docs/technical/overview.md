@@ -23,7 +23,7 @@ Solid lines exist today; dotted lines are planned. The API never does long work:
 
 | Component | Where | Status | Role |
 | --- | --- | --- | --- |
-| Frontend | `frontend/` | Running | UI. Server components call the API through `src/shared/api/client.ts` |
+| Frontend | `frontend/` | Running | UI. Server components call the API through `src/shared/api/client.ts`. Admin page at `/admin`: start, watch and approve runs, live activity, standup |
 | Backend API | `backend/app/` | Running | HTTP API; one router per feature, assembled in `app/main.py` |
 | Workers | `backend/app/workers/` | Running | `main.py` claims jobs from the Postgres job queue: build start/resume, the morning standup. Also command-line tools (`build_run`, `run_evals`, `standup`) |
 | Runs and jobs | `backend/app/features/runs/`, `backend/app/features/jobs/` | Running | Start and approve runs over HTTP; durable job queue with leases and retries |

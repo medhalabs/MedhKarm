@@ -33,6 +33,11 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return (await response.json()) as T;
 }
 
+/** Full URL of a backend path, for things that can't go through `request` (e.g. EventSource). */
+export function apiUrl(path: string): string {
+  return `${API_URL}${path}`;
+}
+
 export function apiGet<T>(path: string, init?: RequestInit): Promise<T> {
   return request<T>(path, { ...init, method: "GET" });
 }
