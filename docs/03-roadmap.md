@@ -50,7 +50,7 @@ Goal: a general engine where a team is defined by config, its work is checked, a
 - [ ] Team templates as config: roles, tools, workflow, checking method
 - [ ] Swappable checking step: tests, human review, approval rules
 - [ ] Team Lead agent that plans, assigns and reviews
-- [ ] Append-only event log: actions, messages, tool calls, costs, approvals
+- [ ] Append-only event log: actions, messages, tool calls, costs, approvals; detailed enough to drive the animated office (who is doing what, task hand-offs, messages)
 - [ ] Daily standup generated from the event log (done, planned, blocked, needs approval)
 - [ ] API endpoints and a job queue, so runs start and approvals happen over HTTP, not the command line
 - [ ] Approval rules on top of fixed gates
@@ -79,7 +79,9 @@ Goal: the software team delivers working, tested changes on new and existing pro
 
 Goal: solo builders in India use the software team on real projects and pay for it.
 
-- [ ] Office floor, meeting-room feed, task board, built from the event log
+- [ ] Animated 2D office: each agent has a desk and a character; status bubbles ("Writing the expense form…"); characters move when the CTO assigns work or QA sends a bug back; a meeting room for agent discussions. Every movement is driven by real events from the log, never decoration
+- [ ] Replay timeline: agents finish tasks in seconds, so activity is paced and can be scrubbed like a time-lapse; plus the task board
+- [ ] Product demo for the customer: live preview link plus a screen recording from QA's end-to-end browser test, before the release approval
 - [ ] CEO inbox for approvals and questions; message any agent
 - [ ] Standup every morning by email or WhatsApp; weekly report
 - [ ] Bring your own: own API keys and local models (Ollama via a small connector), at a lower price
@@ -117,7 +119,7 @@ Goal: businesses hand routine work to an AI team, safely.
 - Curated team marketplace, then open listings
 - More stacks and mobile apps for the software team
 - Human developers and editors joining the office alongside agents
-- Animated office view
+- Richer office: detailed rooms, character customisation, possibly 3D
 
 ## Team and assumptions
 
@@ -138,6 +140,7 @@ Two full-time builders using AI coding tools, starting Oct 5, 2026. With one bui
 | No beta commitments | 0–3 | Fewer than 5 by Oct 16, or 10 by Jan 15 | Free beta for a real project; recruit from creator and freelancer communities |
 | Dots, Grok Bot or Cursor add project management | Any | Competitor launch | Lean on specific teams, Indian pricing and languages, model choice, checked work |
 | Content team too costly per video | 4 | Generation cost above what creators pay | Cheaper formats (images + narration); BYO video model keys |
+| Animated office takes longer than planned | 3 | Not usable by Jan 25 | Start the beta on a card layout and switch to the animated office mid-beta; the event log drives both |
 | Spreading too thin | 4–5 | Software team quality drops while building the next team | Next team waits until the current one holds its gate |
 
 ## Decisions

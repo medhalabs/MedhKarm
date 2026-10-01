@@ -35,6 +35,8 @@ class Settings(BaseSettings):
     # Keep the image tag equal to the installed openhands-sdk version.
     openhands_server_image: str = "ghcr.io/openhands/agent-server:1.50.1-python"
     openhands_max_iterations: int = 50
+    # Built-in engine: most tasks need 6-10 steps; 15 cut off several (eval run, 2026-10-01).
+    builtin_max_steps: int = 25
 
     @property
     def psycopg_database_url(self) -> str:

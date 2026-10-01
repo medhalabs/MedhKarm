@@ -60,7 +60,7 @@ Both sides are organised by feature, with the same feature names on each side. F
 
 | Side | File | Key settings |
 | --- | --- | --- |
-| Backend | `backend/.env` (from `.env.example`), read by `app/core/config.py` | `DATABASE_URL`, `REDIS_URL`, `CORS_ORIGINS`, `ENVIRONMENT`, `DEFAULT_MODEL`, `OLLAMA_API_BASE`, `OLLAMA_API_KEY`, `SANDBOX_IMAGE`, `DEVELOPER_ENGINE`, `OPENHANDS_SERVER_IMAGE`, `OPENHANDS_MAX_ITERATIONS` |
+| Backend | `backend/.env` (from `.env.example`), read by `app/core/config.py` | `DATABASE_URL`, `REDIS_URL`, `CORS_ORIGINS`, `ENVIRONMENT`, `DEFAULT_MODEL`, `OLLAMA_API_BASE`, `OLLAMA_API_KEY`, `SANDBOX_IMAGE`, `DEVELOPER_ENGINE`, `BUILTIN_MAX_STEPS`, `OPENHANDS_SERVER_IMAGE`, `OPENHANDS_MAX_ITERATIONS`, `EVAL_SANDBOX_IMAGE` |
 | Frontend | `frontend/.env.local` (from `.env.example`) | `NEXT_PUBLIC_API_URL` |
 
 ## Features

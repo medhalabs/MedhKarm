@@ -26,4 +26,5 @@ def build_engine(settings: Settings, llm: LLMProvider) -> tuple[DeveloperEngine,
     from app.features.developer_engine.engines.tool_loop_engine import ToolLoopEngine
     from app.features.sandbox.providers.docker_provider import DockerSandboxProvider
 
-    return ToolLoopEngine(llm), DockerSandboxProvider(settings.sandbox_image)
+    builtin = ToolLoopEngine(llm, max_steps=settings.builtin_max_steps)
+    return builtin, DockerSandboxProvider(settings.sandbox_image)

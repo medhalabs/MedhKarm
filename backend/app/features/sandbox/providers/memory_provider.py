@@ -1,5 +1,6 @@
 """In-memory sandbox for tests: files live in a dict, commands return prepared results."""
 
+import hashlib
 import uuid
 from collections.abc import Callable
 
@@ -27,6 +28,13 @@ class InMemorySandbox:
 
     async def run(self, command: str, timeout_seconds: int = 120) -> CommandResult:
         self.commands.append(command)
+        if "sha1sum" in command:  # workspace snapshot: answer like the real `find | sha1sum`
+            lines = [
+                f"{hashlib.sha1(content.encode()).hexdigest()}  {path}"
+                for path, content in sorted(self.files.items())
+                if not any(part.startswith(".") for part in path.split("/"))
+            ]
+            return CommandResult(exit_code=0, output="\n".join(lines))
         return self._on_command(command, self.files)
 
     async def write_file(self, path: str, content: str) -> None:

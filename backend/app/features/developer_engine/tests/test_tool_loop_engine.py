@@ -1,3 +1,5 @@
+import json
+
 from app.features.developer_engine.engines.tool_loop_engine import ToolLoopEngine
 from app.features.developer_engine.schemas import DevTask
 from app.features.models.providers.scripted_provider import ScriptedLLMProvider
@@ -28,7 +30,7 @@ async def test_writes_files_and_succeeds_when_our_test_run_passes() -> None:
     assert result.summary == "Done"
     assert result.files_changed == ["app.py"]
     assert result.steps == 2
-    assert sandbox.commands[-1] == "pytest -q"
+    assert "pytest -q" in sandbox.commands
 
 
 async def test_fails_when_tests_fail_even_if_model_claims_success() -> None:
@@ -61,3 +63,23 @@ async def test_tool_errors_go_back_to_the_model_instead_of_crashing() -> None:
     tool_reply = llm.calls[1][-1]
     assert tool_reply["role"] == "tool"
     assert "Could not read missing.py" in tool_reply["content"]
+
+
+async def test_applied_patches_are_compacted_in_the_conversation() -> None:
+    patch = "*** Begin Patch\n*** Add File: app.py\n+x = 1\n*** End Patch"
+    llm = ScriptedLLMProvider(
+        [
+            LLMResponse(
+                tool_calls=[ToolCall(id="p1", name="apply_patch", arguments={"input": patch})]
+            ),
+            _call("finish", summary="Done"),
+        ]
+    )
+    sandbox = await InMemorySandboxProvider(_tests_pass_if_app_exists).create()
+
+    result = await ToolLoopEngine(llm).run_task(TASK, sandbox)
+
+    assert result.success
+    sent_back = json.dumps(llm.calls[1])
+    assert "*** Begin Patch" not in sent_back
+    assert "patch already handled" in sent_back

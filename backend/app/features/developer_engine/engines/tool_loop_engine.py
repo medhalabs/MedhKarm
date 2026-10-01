@@ -5,7 +5,15 @@ Success is decided by running the task's test command ourselves, never by the mo
 
 import json
 
-from app.features.developer_engine.engines.tools import FINISH, TOOL_SPECS, execute_tool
+from app.features.developer_engine.engines.tools import (
+    APPLY_PATCH,
+    FINISH,
+    TOOL_SPECS,
+    compacted_patch_arguments,
+    execute_tool,
+    normalize_call,
+)
+from app.features.developer_engine.engines.workspace_snapshot import changed_files, snapshot
 from app.features.developer_engine.schemas import DevResult, DevTask
 from app.features.models.interfaces import LLMProvider
 from app.features.models.schemas import LLMResponse, Message
@@ -14,11 +22,12 @@ from app.features.sandbox.interfaces import Sandbox
 SYSTEM_PROMPT = """You are a careful software developer working in a Linux workspace.
 Use the tools to write the code and tests the task needs, run the test command to check
 your work, fix any failures, and call `finish` with a one-line summary once the tests pass.
+Edit existing files with `apply_patch`; use `write_file` only for new files or full rewrites.
 Only change files inside the workspace. Keep solutions small and clear."""
 
 
 class ToolLoopEngine:
-    def __init__(self, llm: LLMProvider, max_steps: int = 15) -> None:
+    def __init__(self, llm: LLMProvider, max_steps: int = 25) -> None:
         self._llm = llm
         self._max_steps = max_steps
 
@@ -30,7 +39,7 @@ class ToolLoopEngine:
                 "content": f"Task: {task.description}\n\nTest command: {task.test_command}",
             },
         ]
-        files_before = set(await sandbox.list_files())
+        before = await snapshot(sandbox)
         summary = "Stopped: step limit reached before `finish` was called."
         tokens = 0
         steps = 0
@@ -38,7 +47,9 @@ class ToolLoopEngine:
         for steps in range(1, self._max_steps + 1):  # noqa: B007 — steps is reported after the loop
             response = await self._llm.complete(messages, TOOL_SPECS)
             tokens += response.usage.total_tokens
-            messages.append(_assistant_message(response))
+            response.tool_calls = [normalize_call(call) for call in response.tool_calls]
+            assistant = _assistant_message(response)
+            messages.append(assistant)
 
             if not response.tool_calls:
                 messages.append(
@@ -54,20 +65,28 @@ class ToolLoopEngine:
                     result = "Finishing."
                 else:
                     result = await execute_tool(call.name, call.arguments, sandbox)
+                    if call.name == APPLY_PATCH:
+                        _replace_arguments(assistant, call.id, compacted_patch_arguments(result))
                 messages.append({"role": "tool", "tool_call_id": call.id, "content": result})
             if finished:
                 break
 
         test = await sandbox.run(task.test_command)
-        files_after = set(await sandbox.list_files())
+        after = await snapshot(sandbox)
         return DevResult(
             success=test.ok,
             summary=summary,
-            files_changed=sorted((files_after - files_before) | _written(messages)),
+            files_changed=changed_files(before, after),
             test_output=test.output[-4000:],
             steps=steps,
             total_tokens=tokens,
         )
+
+
+def _replace_arguments(assistant: Message, call_id: str, arguments: dict[str, str]) -> None:
+    for tool_call in assistant.get("tool_calls", []):
+        if tool_call["id"] == call_id:
+            tool_call["function"]["arguments"] = json.dumps(arguments)
 
 
 def _assistant_message(response: LLMResponse) -> Message:
@@ -82,15 +101,3 @@ def _assistant_message(response: LLMResponse) -> Message:
             for call in response.tool_calls
         ]
     return message
-
-
-def _written(messages: list[Message]) -> set[str]:
-    """Paths the model wrote, including ones that existed before (modified files)."""
-    paths: set[str] = set()
-    for message in messages:
-        for call in message.get("tool_calls", []):
-            if call["function"]["name"] == "write_file":
-                path = json.loads(call["function"]["arguments"]).get("path")
-                if path:
-                    paths.add(str(path).removeprefix("./"))
-    return paths

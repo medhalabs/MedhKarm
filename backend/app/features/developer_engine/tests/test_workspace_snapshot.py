@@ -1,6 +1,5 @@
 from app.features.developer_engine.engines.workspace_snapshot import changed_files, snapshot
 from app.features.sandbox.providers.memory_provider import InMemorySandboxProvider
-from app.features.sandbox.schemas import CommandResult
 
 
 def test_lists_new_and_modified_files_only() -> None:
@@ -10,10 +9,15 @@ def test_lists_new_and_modified_files_only() -> None:
     assert changed_files(before, after) == ["edit.py", "new.py"]
 
 
-async def test_parses_sha1sum_output() -> None:
-    def fake_hashes(command: str, files: dict[str, str]) -> CommandResult:
-        return CommandResult(exit_code=0, output="abc123  app.py\ndef456  src/util.py\n")
+async def test_snapshot_hashes_files_and_skips_hidden_ones() -> None:
+    sandbox = await InMemorySandboxProvider().create()
+    await sandbox.write_file("app.py", "x = 1")
+    await sandbox.write_file("src/util.py", "y = 2")
+    await sandbox.write_file(".eval_checks/test_hidden.py", "secret")
 
-    sandbox = await InMemorySandboxProvider(fake_hashes).create()
+    first = await snapshot(sandbox)
+    await sandbox.write_file("app.py", "x = 2")
+    second = await snapshot(sandbox)
 
-    assert await snapshot(sandbox) == {"app.py": "abc123", "src/util.py": "def456"}
+    assert sorted(first) == ["app.py", "src/util.py"]
+    assert changed_files(first, second) == ["app.py"]

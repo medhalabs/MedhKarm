@@ -145,6 +145,8 @@ None.
 
 | Date | Engine | Model | Passed | Notes |
 | --- | --- | --- | --- | --- |
+| 2026-10-01 | builtin | gpt-oss:120b | 13/16 run, 4 errored | `apply_patch` + compaction, but with a parser bug (rejected repeated End markers): agent looped, median tokens doubled to 48k. Not representative |
+| 2026-10-01 | builtin | gpt-oss:120b | 15/15 run, 5 errored | 25-step limit, before `apply_patch`; the errors were `gpt-oss:120b` choking on patch-in-shell history |
 | 2026-10-01 | builtin | gpt-oss:120b | 15/15 run, 5 errored | Second full run, after adding retries with growing waits |
 | 2026-10-01 | builtin | gpt-oss:120b | 3/4 run, 1 errored | Rerun of the 5 errored tasks, one at a time |
 | 2026-10-01 | builtin | gpt-oss:120b | 13/15 run, 5 errored | First full run (errors were counted as failures then) |

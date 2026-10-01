@@ -26,8 +26,11 @@ Both engines follow the same contract:
 
 ### ToolLoopEngine
 
-1. Sends the model a system prompt, the task and the test command, plus five tools: `write_file`, `read_file`, `list_files`, `run_command`, `finish`.
-2. Loops up to `max_steps` (default 15): each tool call runs in the sandbox and its result goes back as a `tool` message. Tool errors are returned as text so the model can recover.
+1. Sends the model a system prompt, the task and the test command, plus six tools: `write_file`, `read_file`, `list_files`, `apply_patch`, `run_command`, `finish`.
+   - `apply_patch` takes OpenAI's patch format (`*** Begin Patch` … `*** End Patch`), which `gpt-oss` is trained to write: add, update with context hunks, move and delete files.
+   - Once a patch is handled, its text in the conversation is replaced by a short note ("patch already handled: … read the files for their current content"). The model sometimes names the argument `patch` instead of `input`; both work.
+   - If the model sends a patch through `run_command` (it often tries `apply_patch` as a shell command), the call is rewritten into a real `apply_patch` call before it runs or enters the conversation.
+2. Loops up to `max_steps` (`BUILTIN_MAX_STEPS`, default 25): each tool call runs in the sandbox and its result goes back as a `tool` message. Tool errors are returned as text so the model can recover.
 3. Stops at `finish` or the step limit.
 
 ### OpenHandsEngine
@@ -65,7 +68,8 @@ sequenceDiagram
 | `interfaces.py` | `DeveloperEngine` Protocol: `run_task(task, sandbox) -> DevResult` |
 | `schemas.py` | `DevTask`, `DevResult` |
 | `exceptions.py` | `IncompatibleSandboxError` |
-| `engines/tools.py` | Built-in engine's tool definitions and how each runs in the sandbox (output capped at 4,000 characters) |
+| `engines/tools.py` | Built-in engine's tool definitions, how each runs in the sandbox (output capped at 4,000 characters), and `normalize_call()` |
+| `engines/patch.py` | Parser and applier for the `apply_patch` format (pure functions) |
 | `engines/tool_loop_engine.py` | `ToolLoopEngine` |
 | `engines/openhands_engine.py` | `OpenHandsEngine` |
 | `engines/workspace_snapshot.py` | Hash the workspace; list new or modified files |
@@ -89,7 +93,7 @@ None yet. OpenHands produces a detailed event stream (every action and observati
 - **Other features used:** `models` (`LLMProvider`, `ModelConfig`), `sandbox` (`Sandbox`, `AgentServerSandbox`), through their interfaces
 - **Interfaces defined:** `DeveloperEngine` → `ToolLoopEngine`, `OpenHandsEngine`
 - **Libraries:** `openhands-sdk`, `openhands-tools` (OpenHands engine only; imported only when chosen)
-- **Config:** `DEVELOPER_ENGINE`, `OPENHANDS_MAX_ITERATIONS`, `OPENHANDS_SUPPRESS_BANNER`
+- **Config:** `DEVELOPER_ENGINE`, `BUILTIN_MAX_STEPS`, `OPENHANDS_MAX_ITERATIONS`, `OPENHANDS_SUPPRESS_BANNER`
 
 ## Design decisions
 
@@ -97,6 +101,10 @@ None yet. OpenHands produces a detailed event stream (every action and observati
 - 2026-10-01 — Success is decided by running the tests ourselves, for every engine.
 - 2026-10-01 — OpenHands runs *inside the sandbox* (its agent server), not on our machine, so its terminal and file tools touch only the sandbox. Hence the `AgentServerSandbox` requirement.
 - 2026-10-01 — The OpenHands SDK (`openhands-sdk` 1.50), not the full OpenHands app: it's the embeddable library.
+- 2026-10-01 — Added `apply_patch`. Root cause of the eval suite's "Ollama outages": `gpt-oss` ran `apply_patch` as a shell command, which doesn't exist; the conversation filled with failed patches, and Ollama Cloud then returned HTTP 500 for it every time (0/3 on replay; 3/3 once the same history used a real `apply_patch` tool). The notes-API and reminders tasks triggered it in every run.
+- 2026-10-01 — Applied patches are compacted in the conversation. Even successful `apply_patch` calls left in the history made Ollama Cloud's `gpt-oss:120b` return HTTP 500 (0/3 on replay); compacted, 3/3. `gpt-oss:20b` and `gemma4:31b` handled the same history fine, so it's specific to that endpoint. Compacting also stops big patches being resent every step.
+- 2026-10-01 — Changed-file detection uses workspace hashes for both engines (patched files count).
+- 2026-10-01 — Built-in step limit raised from 15 to 25 and made a setting: in the eval suite, most genuine failures (and 6 passes) hit 15 steps.
 - 2026-10-01 — Changed files are found by hashing, so modified files count too, not just new ones.
 
 ## How to run and test
@@ -125,7 +133,7 @@ OpenHands used about 10× the tokens on this small task: its system prompt and t
 
 | Symptom | Likely cause | Fix |
 | --- | --- | --- |
-| "step limit reached" summary (built-in) | Model looped or the task is too big | Split the task, raise `max_steps`, or try a stronger model |
+| "step limit reached" summary (built-in) | Model looped or the task is too big | Split the task, raise `BUILTIN_MAX_STEPS`, or try a stronger model |
 | `IncompatibleSandboxError` | OpenHands engine paired with the plain Docker sandbox | Use `DEVELOPER_ENGINE=openhands` (wires both together) |
 | Tests never run | Test command needs a tool missing from the image (e.g. pytest) | Install it in the test command or use an image that has it |
 | OpenHands run ends with an empty summary | Agent hit the iteration limit | Raise `OPENHANDS_MAX_ITERATIONS` or split the task |
@@ -134,5 +142,9 @@ OpenHands used about 10× the tokens on this small task: its system prompt and t
 
 | Date | Change |
 | --- | --- |
+| 2026-10-01 | Patch parser ignores repeated or joined `*** Begin/End Patch` markers (the model repeats them; rejecting them made it loop) |
+| 2026-10-01 | Applied patches compacted in the conversation; `patch` accepted as an alias for `input` |
+| 2026-10-01 | `apply_patch` tool and patch-in-shell rewrite; hash-based changed files for the built-in engine |
+| 2026-10-01 | Built-in step limit 15 → 25, configurable via `BUILTIN_MAX_STEPS` |
 | 2026-10-01 | Added `OpenHandsEngine`, `IncompatibleSandboxError`, hash-based change detection |
 | 2026-10-01 | Created: `DeveloperEngine` interface and built-in `ToolLoopEngine` |

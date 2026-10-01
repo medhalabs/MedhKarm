@@ -28,7 +28,7 @@ Every team is a **template** with four parts:
 | **Workflow** | Spec → plan → build → test → release | Brief → script → produce → review → publish | Job-specific, with approval rules |
 | **How work is checked** | **Automatically:** tests must pass | **By the creator:** review before anything is published | **By rules:** approval thresholds ("refunds over ₹2,000 need my OK") plus an audit log |
 
-What every team shares: the lead agent, the event log, the live office, the CEO inbox for approvals, the **daily standup**, model choice and cost tracking.
+What every team shares: the lead agent, the event log, the **animated live office** (agents as characters at desks, moving and talking as they really work; in the beta from Phase 3), the CEO inbox for approvals, the **daily standup**, model choice and cost tracking.
 
 ## Launch order
 
