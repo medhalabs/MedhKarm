@@ -22,18 +22,30 @@ from app.features.sandbox.interfaces import Sandbox
 SYSTEM_PROMPT = """You are a careful software developer working in a Linux workspace.
 Use the tools to write the code and tests the task needs, run the test command to check
 your work, fix any failures, and call `finish` with a one-line summary once the tests pass.
-Edit existing files with `apply_patch`; use `write_file` only for new files or full rewrites.
 Only change files inside the workspace. Keep solutions small and clear."""
+
+PATCH_HINT = "\nEdit existing files with `apply_patch`; use `write_file` for new files or rewrites."
 
 
 class ToolLoopEngine:
-    def __init__(self, llm: LLMProvider, max_steps: int = 25) -> None:
+    def __init__(
+        self, llm: LLMProvider, max_steps: int = 25, offer_apply_patch: bool = False
+    ) -> None:
+        """`offer_apply_patch` adds the patch tool to the menu. Off by default: in the eval
+        suite (gpt-oss:120b) it doubled tokens without improving results. Patches the model
+        sends anyway (often through run_command) are still applied and compacted."""
         self._llm = llm
         self._max_steps = max_steps
+        self._tools = (
+            TOOL_SPECS
+            if offer_apply_patch
+            else [spec for spec in TOOL_SPECS if spec["function"]["name"] != APPLY_PATCH]
+        )
+        self._system_prompt = SYSTEM_PROMPT + (PATCH_HINT if offer_apply_patch else "")
 
     async def run_task(self, task: DevTask, sandbox: Sandbox) -> DevResult:
         messages: list[Message] = [
-            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "system", "content": self._system_prompt},
             {
                 "role": "user",
                 "content": f"Task: {task.description}\n\nTest command: {task.test_command}",
@@ -45,7 +57,7 @@ class ToolLoopEngine:
         steps = 0
 
         for steps in range(1, self._max_steps + 1):  # noqa: B007 — steps is reported after the loop
-            response = await self._llm.complete(messages, TOOL_SPECS)
+            response = await self._llm.complete(messages, self._tools)
             tokens += response.usage.total_tokens
             response.tool_calls = [normalize_call(call) for call in response.tool_calls]
             assistant = _assistant_message(response)

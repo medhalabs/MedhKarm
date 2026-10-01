@@ -83,3 +83,21 @@ async def test_applied_patches_are_compacted_in_the_conversation() -> None:
     sent_back = json.dumps(llm.calls[1])
     assert "*** Begin Patch" not in sent_back
     assert "patch already handled" in sent_back
+
+
+async def test_apply_patch_is_offered_only_when_enabled() -> None:
+    seen: list[list[str]] = []
+
+    class Spy(ScriptedLLMProvider):
+        async def complete(self, messages, tools=None):  # type: ignore[no-untyped-def]
+            seen.append([t["function"]["name"] for t in tools or []])
+            return await super().complete(messages, tools)
+
+    sandbox = await InMemorySandboxProvider().create()
+    await ToolLoopEngine(Spy([_call("finish", summary="x")])).run_task(TASK, sandbox)
+    await ToolLoopEngine(Spy([_call("finish", summary="x")]), offer_apply_patch=True).run_task(
+        TASK, sandbox
+    )
+
+    assert "apply_patch" not in seen[0]
+    assert "apply_patch" in seen[1]

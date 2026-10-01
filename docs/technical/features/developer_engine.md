@@ -26,7 +26,7 @@ Both engines follow the same contract:
 
 ### ToolLoopEngine
 
-1. Sends the model a system prompt, the task and the test command, plus six tools: `write_file`, `read_file`, `list_files`, `apply_patch`, `run_command`, `finish`.
+1. Sends the model a system prompt, the task and the test command, plus five tools: `write_file`, `read_file`, `list_files`, `run_command`, `finish`. A sixth, `apply_patch`, is offered only when `BUILTIN_APPLY_PATCH=true` (off by default; see design decisions). Patches the model sends anyway are still applied.
    - `apply_patch` takes OpenAI's patch format (`*** Begin Patch` … `*** End Patch`), which `gpt-oss` is trained to write: add, update with context hunks, move and delete files.
    - Once a patch is handled, its text in the conversation is replaced by a short note ("patch already handled: … read the files for their current content"). The model sometimes names the argument `patch` instead of `input`; both work.
    - If the model sends a patch through `run_command` (it often tries `apply_patch` as a shell command), the call is rewritten into a real `apply_patch` call before it runs or enters the conversation.
@@ -93,7 +93,7 @@ None yet. OpenHands produces a detailed event stream (every action and observati
 - **Other features used:** `models` (`LLMProvider`, `ModelConfig`), `sandbox` (`Sandbox`, `AgentServerSandbox`), through their interfaces
 - **Interfaces defined:** `DeveloperEngine` → `ToolLoopEngine`, `OpenHandsEngine`
 - **Libraries:** `openhands-sdk`, `openhands-tools` (OpenHands engine only; imported only when chosen)
-- **Config:** `DEVELOPER_ENGINE`, `BUILTIN_MAX_STEPS`, `OPENHANDS_MAX_ITERATIONS`, `OPENHANDS_SUPPRESS_BANNER`
+- **Config:** `DEVELOPER_ENGINE`, `BUILTIN_MAX_STEPS`, `BUILTIN_APPLY_PATCH`, `OPENHANDS_MAX_ITERATIONS`, `OPENHANDS_SUPPRESS_BANNER`
 
 ## Design decisions
 
@@ -102,6 +102,7 @@ None yet. OpenHands produces a detailed event stream (every action and observati
 - 2026-10-01 — OpenHands runs *inside the sandbox* (its agent server), not on our machine, so its terminal and file tools touch only the sandbox. Hence the `AgentServerSandbox` requirement.
 - 2026-10-01 — The OpenHands SDK (`openhands-sdk` 1.50), not the full OpenHands app: it's the embeddable library.
 - 2026-10-01 — Added `apply_patch`. Root cause of the eval suite's "Ollama outages": `gpt-oss` ran `apply_patch` as a shell command, which doesn't exist; the conversation filled with failed patches, and Ollama Cloud then returned HTTP 500 for it every time (0/3 on replay; 3/3 once the same history used a real `apply_patch` tool). The notes-API and reminders tasks triggered it in every run.
+- 2026-10-01 — `apply_patch` is off by default (`BUILTIN_APPLY_PATCH`). With it on, the eval suite on `gpt-oss:120b` scored 13/16 at a median of 51k tokens per task, against 15/15 at 24k with whole-file edits. The patch handling stays as a safety net for patches the model sends without being offered the tool.
 - 2026-10-01 — Applied patches are compacted in the conversation. Even successful `apply_patch` calls left in the history made Ollama Cloud's `gpt-oss:120b` return HTTP 500 (0/3 on replay); compacted, 3/3. `gpt-oss:20b` and `gemma4:31b` handled the same history fine, so it's specific to that endpoint. Compacting also stops big patches being resent every step.
 - 2026-10-01 — Changed-file detection uses workspace hashes for both engines (patched files count).
 - 2026-10-01 — Built-in step limit raised from 15 to 25 and made a setting: in the eval suite, most genuine failures (and 6 passes) hit 15 steps.
@@ -142,6 +143,7 @@ OpenHands used about 10× the tokens on this small task: its system prompt and t
 
 | Date | Change |
 | --- | --- |
+| 2026-10-01 | `apply_patch` made opt-in via `BUILTIN_APPLY_PATCH` (default off) |
 | 2026-10-01 | Patch parser ignores repeated or joined `*** Begin/End Patch` markers (the model repeats them; rejecting them made it loop) |
 | 2026-10-01 | Applied patches compacted in the conversation; `patch` accepted as an alias for `input` |
 | 2026-10-01 | `apply_patch` tool and patch-in-shell rewrite; hash-based changed files for the built-in engine |

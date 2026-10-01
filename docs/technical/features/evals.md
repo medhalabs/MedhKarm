@@ -145,13 +145,14 @@ None.
 
 | Date | Engine | Model | Passed | Notes |
 | --- | --- | --- | --- | --- |
+| 2026-10-01 | builtin | gpt-oss:120b | 13/16 run, 4 errored | `apply_patch` + compaction, parser fixed. Median tokens 51k (about 2× the run without `apply_patch`); two booking tasks hit the 25-step limit; errors persist from other `gpt-oss:120b` triggers. Conclusion: whole-file edits work better with this model |
 | 2026-10-01 | builtin | gpt-oss:120b | 13/16 run, 4 errored | `apply_patch` + compaction, but with a parser bug (rejected repeated End markers): agent looped, median tokens doubled to 48k. Not representative |
 | 2026-10-01 | builtin | gpt-oss:120b | 15/15 run, 5 errored | 25-step limit, before `apply_patch`; the errors were `gpt-oss:120b` choking on patch-in-shell history |
 | 2026-10-01 | builtin | gpt-oss:120b | 15/15 run, 5 errored | Second full run, after adding retries with growing waits |
 | 2026-10-01 | builtin | gpt-oss:120b | 3/4 run, 1 errored | Rerun of the 5 errored tasks, one at a time |
 | 2026-10-01 | builtin | gpt-oss:120b | 13/15 run, 5 errored | First full run (errors were counted as failures then) |
 
-**Baseline (second run + rerun): 18 of 19 scored tasks pass (95%)**; `notes-feature-pagination` errored twice but passed in the first run. Gate 2 asks for 12 of 20.
+**Best result so far: 25-step limit without `apply_patch`, 15 of 15 scored tasks pass, median about 24,000 tokens.** Earlier baseline (second run + rerun): 18 of 19 scored tasks pass (95%); `notes-feature-pagination` errored twice but passed in the first run. Gate 2 asks for 12 of 20.
 
 What the runs show:
 
