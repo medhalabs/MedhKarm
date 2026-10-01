@@ -38,6 +38,7 @@ def make_develop_node(
             DevTask(
                 description=_brief(state, task, index, len(tasks)),
                 test_command=state["test_command"],
+                existing_project=bool(state.get("codebase_map")),
             ),
             sandbox,
             recorder,
@@ -61,8 +62,13 @@ def make_develop_node(
 
 
 def _brief(state: BuildState, task: dict[str, Any], index: int, count: int) -> str:
+    project = (
+        f"About the project (mapped before work started):\n{state['codebase_map']}\n\n"
+        if state.get("codebase_map")
+        else ""
+    )
     brief = (
-        f"{state['request']}\n\nThe CTO's plan:\n{state.get('plan', '')}\n\n"
+        f"{state['request']}\n\n{project}The CTO's plan:\n{state.get('plan', '')}\n\n"
         f"Your task ({index + 1} of {count}): {task['title']}\n{task.get('description', '')}\n"
         "Earlier tasks may already be done in this workspace; build on them."
     )

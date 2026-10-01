@@ -27,12 +27,33 @@ export function StartRunForm() {
           className="rounded-md border border-zinc-300 bg-transparent px-3 py-2 font-normal dark:border-zinc-700"
         />
       </label>
+      <div className="flex flex-wrap gap-3">
+        <label className="flex min-w-60 flex-[3] flex-col gap-1 text-sm font-medium">
+          Existing GitHub repo (optional)
+          <input
+            name="repo_url"
+            type="url"
+            maxLength={300}
+            placeholder="https://github.com/you/your-project"
+            className="rounded-md border border-zinc-300 bg-transparent px-3 py-2 font-mono text-sm font-normal dark:border-zinc-700"
+          />
+        </label>
+        <label className="flex min-w-32 flex-1 flex-col gap-1 text-sm font-medium">
+          Branch
+          <input
+            name="repo_branch"
+            maxLength={200}
+            placeholder="default"
+            className="rounded-md border border-zinc-300 bg-transparent px-3 py-2 font-mono text-sm font-normal dark:border-zinc-700"
+          />
+        </label>
+      </div>
       <div className="flex flex-wrap items-end gap-3">
         <label className="flex flex-1 flex-col gap-1 text-sm font-medium">
-          Test command (decides when it&apos;s done)
+          Test command (decides when it&apos;s done; detected for a repo if empty)
           <input
             name="test_command"
-            defaultValue="python -m pytest -q"
+            placeholder="python -m pytest -q"
             maxLength={500}
             className="rounded-md border border-zinc-300 bg-transparent px-3 py-2 font-mono text-sm font-normal dark:border-zinc-700"
           />

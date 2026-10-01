@@ -6,6 +6,8 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
+from app.features.repos.schemas import RepoSource
+
 
 class RunStatus(StrEnum):
     QUEUED = "queued"  # waiting for a worker
@@ -17,9 +19,14 @@ class RunStatus(StrEnum):
     ERROR = "error"  # something broke (model, sandbox, worker) and retries ran out
 
 
+DEFAULT_TEST_COMMAND = "pytest -q"
+
+
 class StartRun(BaseModel):
     request: str = Field(min_length=3, max_length=5000)  # what the founder wants built
-    test_command: str = Field(default="pytest -q", min_length=1, max_length=500)
+    # None: detected from the repository, or DEFAULT_TEST_COMMAND for a new project
+    test_command: str | None = Field(default=None, min_length=1, max_length=500)
+    repo: RepoSource | None = None  # an existing GitHub repository to change
 
 
 class ApprovalDecision(BaseModel):
@@ -30,9 +37,11 @@ class ApprovalDecision(BaseModel):
 class Run(BaseModel):
     id: str
     request: str
-    test_command: str
+    test_command: str  # empty: detected from the repository when the run starts
+    repo: RepoSource | None = None
     status: RunStatus
     gate: dict[str, Any] | None = None  # what the founder is asked to approve, while waiting
     error: str | None = None
+    delivery: dict[str, Any] | None = None  # the pull request with the released work, if any
     created_at: datetime
     updated_at: datetime

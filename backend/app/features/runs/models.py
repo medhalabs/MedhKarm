@@ -20,7 +20,9 @@ class RunRow(Base):
     request: Mapped[str] = mapped_column(Text, nullable=False)
     test_command: Mapped[str] = mapped_column(Text, nullable=False)
     status: Mapped[str] = mapped_column(String(30), nullable=False)
+    repo: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
     gate: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
+    delivery: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
     error: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False

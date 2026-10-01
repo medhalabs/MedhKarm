@@ -34,7 +34,7 @@ A bare page to start runs, watch them and approve releases: http://localhost:300
 
 | Page | What it shows |
 | --- | --- |
-| `/admin` | A form to start a run (request + test command), and every run with its status. Refreshes every 5 s while a run is queued or working |
+| `/admin` | A form to start a run (request, optional GitHub repo and branch, test command), and every run with its status. Refreshes every 5 s while a run is queued or working |
 | `/admin/runs/[runId]` | The request, status and any error; when waiting, the **approval panel** (why you're asked, summary, files, tokens, QA's test output, an optional note, Approve / Reject); the live activity feed ([events.md](events.md)) |
 | `/admin/standup` | The daily standup ([standups.md](standups.md)) |
 
@@ -63,7 +63,7 @@ Forms are React forms with **server actions** (`api/actions.ts`): the Next.js se
 
 | Method | Path | Purpose | Auth |
 | --- | --- | --- | --- |
-| POST | `/runs` | Start a run: `{"request": "...", "test_command": "pytest -q"}` → 202 with the run | None yet |
+| POST | `/runs` | Start a run: `{"request": "...", "test_command": "pytest -q", "repo": {"url": "https://github.com/owner/name", "branch": null}}` → 202 with the run. `repo` is optional ([repos.md](repos.md)); `test_command` is optional: `pytest -q` for a new project, detected from the project with a repo | None yet |
 | GET | `/runs?limit=50` | Runs, newest first (limit 1–200) | None yet |
 | GET | `/runs/{run_id}` | One run: status, `gate` while waiting, `error` if it broke | None yet |
 | POST | `/runs/{run_id}/approval` | `{"approved": true, "feedback": ""}` → 202 | None yet |
@@ -81,7 +81,7 @@ curl -X POST 127.0.0.1:8000/runs/<run_id>/approval -H 'content-type: application
 
 | Table | Key columns | Notes |
 | --- | --- | --- |
-| `runs` | `id` (same as the LangGraph thread id and the events' `run_id`), `request`, `test_command`, `status`, `gate` (jsonb: question, `reasons` and `rules` from the approval rules, summary, files, tokens, tests), `error`, `created_at`, `updated_at`, `company_id` (nullable) | Index on `created_at`. The detail of a run lives in the event log and the checkpoint; this row is its current status, for lists and approvals |
+| `runs` | `id` (same as the LangGraph thread id and the events' `run_id`), `request`, `test_command` (empty: detected when the run starts), `repo` (jsonb, the GitHub repository), `delivery` (jsonb, the pull request with the released work), `status`, `gate` (jsonb: question, `reasons` and `rules` from the approval rules, summary, files, tokens, tests), `error`, `created_at`, `updated_at`, `company_id` (nullable) | Index on `created_at`. The detail of a run lives in the event log and the checkpoint; this row is its current status, for lists and approvals |
 
 ## Events
 
@@ -125,6 +125,7 @@ None of its own. The workflow records the run's events ([workflows.md](workflows
 
 | Date | Change |
 | --- | --- |
+| 2026-10-01 | Runs on an existing GitHub repository: optional `repo` on start, `repo` and `delivery` on runs (migration `0004`), test command optional; admin form and run page show the repo and the pull request ([repos.md](repos.md)) |
 | 2026-10-01 | Admin page: start, list, watch and approve runs in the browser |
 | 2026-10-01 | `gate` carries the approval rules' reasons; runs the rules approve or reject never wait ([approvals.md](approvals.md)) |
 | 2026-10-01 | Created: runs table, start/list/get/approve API, statuses kept up to date by workers |

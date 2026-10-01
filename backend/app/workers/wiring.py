@@ -15,6 +15,9 @@ from app.features.developer_engine.interfaces import DeveloperEngine
 from app.features.events.stores.sql_store import SqlEventStore
 from app.features.models.interfaces import LLMProvider
 from app.features.models.service import build_provider, resolve_model_config
+from app.features.repos.code_graph import GraphifyCodeGraph
+from app.features.repos.github import GitHubRepoHost
+from app.features.repos.service import RepoService
 from app.features.sandbox.interfaces import SandboxProvider
 from app.features.teams.loader import load_templates
 from app.features.teams.schemas import RoleSpec, TeamTemplate
@@ -95,6 +98,10 @@ async def workflow_service(
             developer_names=team.developer_names,
             max_developers=team.max_developers,
             approval_policy=team.approval_policy,
+            repos=RepoService(
+                GitHubRepoHost(settings.github_token),
+                GraphifyCodeGraph() if settings.code_graph else None,
+            ),
         )
         yield WorkflowService(graph, events)
 
@@ -126,6 +133,8 @@ def build_engine(
     tools = list(role.tools) if role and role.tools else list(DEFAULT_TOOLS)
     if settings.builtin_apply_patch and "apply_patch" not in tools:
         tools.append("apply_patch")
+    if settings.code_graph and "explain_symbol" not in tools:
+        tools.append("explain_symbol")
     from app.features.integrations.service import tool_sources
 
     builtin = ToolLoopEngine(
@@ -134,5 +143,6 @@ def build_engine(
         tools=tools,
         instructions=(role.instructions if role and role.instructions else SYSTEM_PROMPT),
         tool_sources=tool_sources(role.mcp) if role else [],
+        existing_project_max_steps=role.existing_project_max_steps if role else None,
     )
     return builtin, DockerSandboxProvider(settings.sandbox_image)

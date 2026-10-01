@@ -25,6 +25,7 @@ export const STATUS_CHANGING: ReadonlySet<EventType> = new Set([
   "run.finished",
   "run.resumed",
   "plan.created",
+  "changes.delivered",
 ]);
 
 /** New events added to the ones shown: no duplicates, in the order they happened. */

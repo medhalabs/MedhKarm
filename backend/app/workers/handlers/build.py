@@ -85,7 +85,9 @@ class _BuildHandler:
             return status
         status = FINISHED.get(str(outcome.state.get("status")), RunStatus.ERROR)
         error = None if status != RunStatus.ERROR else "Run ended without a result"
-        await self._runs.set_status(outcome.run_id, status, error=error)
+        await self._runs.set_status(
+            outcome.run_id, status, error=error, delivery=outcome.state.get("delivery")
+        )
         return status
 
 
@@ -95,7 +97,8 @@ class StartBuild(_BuildHandler):
     ) -> RunOutcome:
         current = await workflow.get(run.id)
         if not current.state:
-            return await workflow.start(run.id, run.request, run.test_command)
+            repo = run.repo.model_dump(mode="json") if run.repo else None
+            return await workflow.start(run.id, run.request, run.test_command, repo=repo)
         if current.next_nodes and not current.waiting_for_approval:
             return await workflow.continue_run(run.id)
         return current

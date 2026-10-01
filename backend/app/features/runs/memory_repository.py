@@ -3,6 +3,7 @@
 from datetime import UTC, datetime
 from typing import Any
 
+from app.features.repos.schemas import RepoSource
 from app.features.runs.schemas import Run, RunStatus
 
 
@@ -10,12 +11,15 @@ class InMemoryRunRepository:
     def __init__(self) -> None:
         self.runs: dict[str, Run] = {}
 
-    async def create(self, run_id: str, request: str, test_command: str) -> Run:
+    async def create(
+        self, run_id: str, request: str, test_command: str, repo: RepoSource | None = None
+    ) -> Run:
         now = datetime.now(UTC)
         run = Run(
             id=run_id,
             request=request,
             test_command=test_command,
+            repo=repo,
             status=RunStatus.QUEUED,
             created_at=now,
             updated_at=now,
@@ -37,9 +41,12 @@ class InMemoryRunRepository:
         status: RunStatus,
         gate: dict[str, Any] | None = None,
         error: str | None = None,
+        delivery: dict[str, Any] | None = None,
     ) -> None:
         run = self.runs[run_id]
         run.status, run.gate, run.error = status, gate, error
+        if delivery is not None:
+            run.delivery = delivery
         run.updated_at = datetime.now(UTC)
 
     async def transition(self, run_id: str, from_status: RunStatus, to_status: RunStatus) -> bool:

@@ -14,9 +14,40 @@ export function RunHeader({ run }: { run: Run }) {
         </span>
       </div>
       <p className="text-lg leading-snug font-medium whitespace-pre-line">{run.request}</p>
+      {run.repo && (
+        <p className="text-sm text-zinc-500">
+          On{" "}
+          <a href={run.repo.url} className="font-mono underline" target="_blank" rel="noreferrer">
+            {run.repo.url.replace("https://github.com/", "")}
+          </a>
+          {run.repo.branch && <span className="font-mono"> ({run.repo.branch})</span>}
+        </p>
+      )}
       <p className="text-sm text-zinc-500">
-        Done when <code className="font-mono">{run.test_command}</code> passes.
+        {run.test_command ? (
+          <>
+            Done when <code className="font-mono">{run.test_command}</code> passes.
+          </>
+        ) : (
+          "Test command: detected from the project when work starts."
+        )}
       </p>
+      {run.delivery?.pull_request_url && (
+        <p className="rounded-md bg-emerald-50 p-3 text-sm text-emerald-900 dark:bg-emerald-950 dark:text-emerald-200">
+          Pull request opened:{" "}
+          <a
+            href={run.delivery.pull_request_url}
+            className="underline"
+            target="_blank"
+            rel="noreferrer"
+          >
+            {run.delivery.pull_request_url}
+          </a>
+        </p>
+      )}
+      {run.delivery && !run.delivery.pull_request_url && (
+        <p className="text-sm text-zinc-500">No pull request: {run.delivery.reason}</p>
+      )}
       {run.error && (
         <p
           role="alert"

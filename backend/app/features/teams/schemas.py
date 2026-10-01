@@ -17,6 +17,8 @@ class RoleSpec(BaseModel):
     mcp: list[McpAccess] = Field(default_factory=list)  # MCP servers it may use, with limits
     model: str | None = None  # LiteLLM model name; None = the default model
     max_steps: int | None = Field(default=None, ge=1, le=200)
+    # Step limit on an existing project (more to read first); default max_steps
+    existing_project_max_steps: int | None = Field(default=None, ge=1, le=200)
     count: int = Field(default=1, ge=1)  # how many the team starts with
     max_count: int = Field(default=1, ge=1)  # how many the CTO may add
     active: bool = True  # False = defined, not yet part of the workflow

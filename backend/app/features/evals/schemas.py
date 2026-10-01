@@ -46,6 +46,7 @@ class EvalReport(BaseModel):
     engine: str
     model: str
     outcomes: list[TaskOutcome]
+    variant: str = ""  # what this run tries, e.g. "code-graph" (in the file name and summary)
 
     @property
     def passed(self) -> int:

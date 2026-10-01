@@ -4,6 +4,7 @@ export const EVENT_TYPES = [
   "run.started",
   "run.resumed",
   "run.finished",
+  "codebase.mapped",
   "plan.created",
   "task.assigned",
   "review.finished",
@@ -14,6 +15,7 @@ export const EVENT_TYPES = [
   "check.finished",
   "approval.requested",
   "approval.decided",
+  "changes.delivered",
 ] as const;
 
 export type EventType = (typeof EVENT_TYPES)[number];

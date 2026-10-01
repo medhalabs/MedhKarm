@@ -32,6 +32,11 @@ class Settings(BaseSettings):
     # Python + Node + test tools, built from backend/sandbox-image/ (see features/evals.md)
     eval_sandbox_image: str = "medhkarm-sandbox:dev"
 
+    # GitHub: clone founders' private repositories and open pull requests with released work.
+    # A fine-grained token with Contents and Pull requests (read and write) on those repos.
+    # Without it, public repositories still clone; released work isn't pushed.
+    github_token: SecretStr | None = None
+
     # Which team template runs builds (app/features/teams/templates/<id>.toml)
     team_template: str = "software"
 
@@ -58,6 +63,9 @@ class Settings(BaseSettings):
     openhands_max_iterations: int = 50
     # Built-in engine: most tasks need 6-10 steps; 15 cut off several (eval run, 2026-10-01).
     builtin_max_steps: int = 25  # used when the team template sets no max_steps
+    # Code graph (Graphify, in the sandbox image): adds the most connected code to the codebase
+    # map and gives developers `explain_symbol`. An experiment: compare evals with and without.
+    code_graph: bool = False
     # Offer the apply_patch tool (OpenAI patch format). Off: doubled tokens on gpt-oss:120b.
     builtin_apply_patch: bool = False
 

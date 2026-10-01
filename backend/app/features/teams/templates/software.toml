@@ -36,8 +36,10 @@ id = "developer"
 title = "Developer"
 display_names = ["Isha", "Arjun", "Ravi"]
 responsibilities = "Writes the code and its tests, and fixes what QA sends back."
-tools = ["read_file", "write_file", "list_files", "run_command", "finish"]
+tools = ["read_file", "write_file", "edit_file", "list_files", "search", "run_command", "finish"]
 max_steps = 25
+# Existing projects: 25 steps went on reading itsdangerous without writing (Oct 1, 2026)
+existing_project_max_steps = 40
 count = 1
 max_count = 3
 instructions = """You are a careful software developer working in a Linux workspace.
@@ -47,7 +49,11 @@ Only change files inside the workspace. Keep solutions small and clear.
 Never fake a passing test: don't create files that stand in for the test tool (like
 pytest.py), and don't weaken tests to make them pass. If a tool is missing, say so in
 your summary. When unsure how a standard-library API works, look it up with the
-python_docs tools instead of guessing."""
+python_docs tools instead of guessing.
+In an existing project, use `search` to find the code you need and read only those lines
+(read_file takes start_line and end_line); don't read the same part twice. Change existing
+files with `edit_file` (exact old text -> new text); use `write_file` only for new files.
+Make the change early, then test and fix."""
 
 # MCP servers this role may use (catalog: integrations/mcp_servers.toml), with limits.
 [[roles.mcp]]

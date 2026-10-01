@@ -22,6 +22,7 @@ from app.core.database import session_factory
 from app.core.logging import configure_logging
 from app.features.events.service import EventService
 from app.features.events.stores.sql_store import SqlEventStore
+from app.features.repos.schemas import RepoSource
 from app.features.workflows.schemas import RunOutcome, StepUpdate
 from app.workers.wiring import ensure_sandbox_image, workflow_service
 
@@ -59,8 +60,13 @@ def print_step(step: StepUpdate) -> None:
         print("  " + str(data.get("verify_output", "")).strip().replace("\n", "\n  "))
     elif step.node == "approval":
         print(f"\n[approval] approved={data.get('approved')}")
+    elif step.node == "connect" and data.get("codebase_map"):
+        print(f"\n[connect] tests: {data.get('test_command', '(given)')}")
+        print(str(data["codebase_map"])[:800])
     elif step.node == "finish":
         print(f"\n[finish] status={data.get('status')}")
+        if data.get("delivery"):
+            print(f"[finish] delivery: {data['delivery']}")
 
 
 def print_outcome(outcome: RunOutcome) -> None:
@@ -80,7 +86,9 @@ async def main() -> None:
     commands = parser.add_subparsers(dest="command", required=True)
     start = commands.add_parser("start")
     start.add_argument("--request", required=True)
-    start.add_argument("--test-command", required=True)
+    start.add_argument("--test-command", default="", help="Detected from --repo if empty")
+    start.add_argument("--repo", help="GitHub repository to change: https://github.com/owner/name")
+    start.add_argument("--branch", help="Branch to start from (default: the repo's default)")
     start.add_argument(
         "--engine", choices=["builtin", "openhands"], help="Overrides DEVELOPER_ENGINE"
     )
@@ -109,7 +117,18 @@ async def main() -> None:
         if args.command == "start":
             run_id = uuid.uuid4().hex[:12]
             print(f"Run {run_id} ({settings.developer_engine} engine): {args.request}")
-            outcome = await service.start(run_id, args.request, args.test_command, print_step)
+            repo = (
+                RepoSource(url=args.repo, branch=args.branch).model_dump(mode="json")
+                if args.repo
+                else None
+            )
+            outcome = await service.start(
+                run_id,
+                args.request,
+                args.test_command or ("" if repo else "pytest -q"),
+                print_step,
+                repo=repo,
+            )
         elif args.command == "resume":
             outcome = await service.resume(args.run_id, args.approve, args.feedback, print_step)
         else:

@@ -6,7 +6,11 @@ class BuildState(TypedDict, total=False):
 
     run_id: str  # the run's id, so nodes can record activity against it
     request: str  # what the founder asked for
-    test_command: str  # shell command that decides "done"
+    test_command: str  # shell command that decides "done" (detected from the repo if empty)
+    repo: dict[str, Any]  # the founder's GitHub repository (RepoSource-shaped), if any
+    repo_commit: str  # the commit the team started from
+    codebase_map: str  # what the team learned about the project before changing it
+    setup_ok: bool  # installing the project's dependencies worked
     plan: str  # the CTO's plan, as text for people
     tasks: list[dict[str, Any]]  # the CTO's tasks: id, title, description, owner, status, ...
     current_task: int  # index of the task being worked on or reviewed
@@ -20,4 +24,5 @@ class BuildState(TypedDict, total=False):
     approved: bool  # the founder's decision at the release gate
     feedback: str  # the founder's note at the gate, if any
     approval: dict[str, Any]  # the approval rules' verdict at the gate (Verdict-shaped)
+    delivery: dict[str, Any]  # how released work went back to the repo (Delivery-shaped)
     status: str  # "released" | "rejected" | "failed"

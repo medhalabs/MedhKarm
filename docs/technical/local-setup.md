@@ -78,11 +78,13 @@ Or from the command line, without the API or a worker:
    uv run python -m app.workers.build_run resume <run_id> --approve
    ```
 
+To work on an existing GitHub repository, add `--repo https://github.com/owner/name` (and `--branch` if not the default); the test command is then detected. For private repositories, and to get a pull request on release, set `GITHUB_TOKEN` in `backend/.env`: a fine-grained token with Contents and Pull requests read and write on those repositories ([features/repos.md](features/repos.md)).
+
 See everything the team did, step by step: `uv run python -m app.workers.build_run events <run_id>`.
 
 Check a finished run against Gate 1 (team from config, 10+ steps, approval, restart, logging, cost, standup): `uv run python -m app.workers.gate_check <run_id>`.
 
-The first run builds the `medhkarm-sandbox:dev` image (Python, Node, pytest; about a minute, once). Details: [features/workflows.md](features/workflows.md).
+The first run builds the `medhkarm-sandbox:dev` image (Python, Node, pytest, Graphify; a minute or two, once). After pulling changes to `backend/sandbox-image/`, rebuild it: `docker build -t medhkarm-sandbox:dev backend/sandbox-image`. Details: [features/workflows.md](features/workflows.md).
 
 ### Run the eval suite
 

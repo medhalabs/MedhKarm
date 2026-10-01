@@ -1,4 +1,4 @@
-"""Build graph: prepare → plan → (develop → review)* → verify → (release gate) → finish.
+"""Build graph: prepare → connect → plan → (develop → review)* → verify → (release gate) → finish.
 
 The CTO plans tasks; for each task the assigned developer works and the CTO reviews, sending
 it back with changes if needed. Failed verification skips the gate: the founder is only asked
@@ -15,10 +15,12 @@ from app.features.approvals.schemas import ApprovalPolicy
 from app.features.developer_engine.interfaces import DeveloperEngine
 from app.features.events.interfaces import EventStore
 from app.features.models.interfaces import LLMProvider
+from app.features.repos.service import RepoService
 from app.features.sandbox.interfaces import SandboxProvider
 from app.features.workflows.checkers.test_command import TestCommandChecker
 from app.features.workflows.interfaces import WorkChecker
 from app.features.workflows.nodes.approval import make_approval_node
+from app.features.workflows.nodes.connect import make_connect_node
 from app.features.workflows.nodes.develop import make_develop_node
 from app.features.workflows.nodes.finish import make_finish_node
 from app.features.workflows.nodes.plan import PLANNER_PROMPT, make_plan_node
@@ -45,12 +47,16 @@ def build_app_graph(
     max_developers: int = 1,
     max_revisions: int = 1,
     approval_policy: ApprovalPolicy | None = None,
+    repos: RepoService | None = None,
 ) -> CompiledStateGraph[BuildState, None, BuildState, BuildState]:
     """`planner` is the CTO's model: it plans and reviews. The role settings normally come from
     the team template (see app/workers/wiring.py). `approval_policy` decides the release gate:
-    without one, every release asks the founder."""
+    without one, every release asks the founder. `repos` clones founders' repositories and
+    opens pull requests; without one, runs can't use a repository (new projects still work)."""
+    repos = repos or RepoService()
     graph = StateGraph(BuildState)
     graph.add_node("prepare", make_prepare_node(sandboxes))
+    graph.add_node("connect", make_connect_node(sandboxes, repos))
     graph.add_node(
         "plan",
         make_plan_node(
@@ -64,10 +70,11 @@ def build_app_graph(
     )
     graph.add_node("verify", make_verify_node(sandboxes, checker or TestCommandChecker()))
     graph.add_node("approval", make_approval_node(approval_policy))
-    graph.add_node("finish", make_finish_node(sandboxes))
+    graph.add_node("finish", make_finish_node(sandboxes, repos))
 
     graph.add_edge(START, "prepare")
-    graph.add_edge("prepare", "plan")
+    graph.add_edge("prepare", "connect")
+    graph.add_edge("connect", "plan")
     graph.add_edge("plan", "develop")
     graph.add_edge("develop", "review")
     graph.add_conditional_edges("review", after_review, ["develop", "verify"])

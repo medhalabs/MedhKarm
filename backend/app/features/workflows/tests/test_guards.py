@@ -2,6 +2,7 @@
 
 from typing import Any
 
+import pytest
 from langgraph.checkpoint.memory import InMemorySaver
 
 from app.features.developer_engine.engines.tool_loop_engine import ToolLoopEngine
@@ -11,7 +12,7 @@ from app.features.sandbox.providers.memory_provider import InMemorySandboxProvid
 from app.features.sandbox.schemas import CommandResult
 from app.features.workflows.checkers.test_command import TestCommandChecker
 from app.features.workflows.graphs.build_app import build_app_graph
-from app.features.workflows.guards import shadowed_test_tools
+from app.features.workflows.guards import asks_for_tests, is_test_file, shadowed_test_tools
 from app.features.workflows.service import WorkflowService
 
 
@@ -57,3 +58,30 @@ async def test_review_sends_a_fake_pytest_back_without_asking_the_model() -> Non
     assert "replaces the real test tool" in state["last_review"]["feedback"]
     assert state["verified"] is False  # QA refuses it too, so the founder is never asked
     assert state["status"] == "failed"
+
+
+@pytest.mark.parametrize(
+    ("path", "expected"),
+    [
+        ("tests/test_itsdangerous/test_serializer.py", True),
+        ("test_cart.py", True),
+        ("cart_test.py", True),
+        ("src/cart.test.ts", True),
+        ("src/ui/Button.spec.tsx", True),
+        ("src/__tests__/cart.js", True),
+        ("src/itsdangerous/serializer.py", False),
+        ("src/contest.py", False),
+        ("latest.py", False),
+    ],
+)
+def test_recognises_test_files(path: str, expected: bool) -> None:
+    assert is_test_file(path) is expected
+
+
+def test_recognises_requests_for_tests() -> None:
+    assert asks_for_tests("Add peek(). Add tests in tests/test_serializer.py.")
+    assert asks_for_tests("Create slugify.py with pytest tests in test_slugify.py")
+    assert asks_for_tests("Fix it and add a test")
+    assert asks_for_tests("Add a /health endpoint\nAdd tests")
+    assert not asks_for_tests("Rename the latest() helper in contest.py")
+    assert not asks_for_tests("Behaviour must not change and the existing tests must pass")

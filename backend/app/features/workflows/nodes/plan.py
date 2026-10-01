@@ -26,6 +26,11 @@ def make_plan_node(
         team = (
             f"You can use up to {min(max_developers, len(names))} developers: {', '.join(names)}."
         )
+        if state.get("codebase_map"):  # an existing project: plan changes to it, not a rewrite
+            team = (
+                f"{state['codebase_map']}\n\nChange this existing project; keep its structure "
+                f"and style. Tests run with: {state['test_command']}\n\n{team}"
+            )
         response = await llm.complete(
             [
                 {"role": "system", "content": instructions.strip()},

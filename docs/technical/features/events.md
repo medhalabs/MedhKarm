@@ -25,6 +25,7 @@ The log is **append-only**: the database refuses to change or delete an event, s
 | Develop node (workflows) | `work.started` |
 | `WorkflowService.continue_run` (workflows) | `run.resumed` ("Picked up again after an interruption") when a worker carries on a run another worker didn't finish |
 | Release gate (workflows) | `approval.decided` from `system` when the team's approval rules approve or reject on their own ("Approved the release by your rules: …"); `approval.requested` ends with the rules' reasons when a rule asked ([approvals.md](approvals.md)) |
+| Repos (workflows) | `codebase.mapped` from `cto` after the project is mapped ("Read the project before planning: Existing project: 40 files…"); `changes.delivered` from `devops` with the pull request on a released repo run ([repos.md](repos.md)) |
 | Build job handlers (worker) | `run.finished` with `status: error` ("Stopped: something went wrong") when a build runs out of retries |
 | Developer engines | `tool.used` (one per tool call, e.g. "Wrote calc.py", "Ran `python -m pytest -q` (exit 0)"), `model.used` (one per model call, with tokens; OpenHands records its total once) |
 
@@ -140,6 +141,7 @@ This feature *is* the event log. Other features call `RunRecorder.record()`.
 
 | Date | Change |
 | --- | --- |
+| 2026-10-01 | `codebase.mapped` and `changes.delivered` event types; `changes.delivered` refreshes the run page |
 | 2026-10-01 | Live activity feed in the admin page (frontend `events` feature) |
 | 2026-10-01 | `approval.decided` by `system` for decisions made by approval rules; reasons in `approval.requested` |
 | 2026-10-01 | `run.resumed` now recorded (run picked up after an interruption); `run.finished` can carry status `error` |

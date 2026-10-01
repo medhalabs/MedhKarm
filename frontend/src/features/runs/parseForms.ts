@@ -1,15 +1,30 @@
 /** Reads and checks the admin forms before anything is sent to the backend. */
 
-export type StartRunInput = { request: string; test_command: string };
+export type StartRunInput = {
+  request: string;
+  test_command?: string; // omitted with a repo: the backend detects it
+  repo?: { url: string; branch: string | null };
+};
+
+const GITHUB_URL = /^https:\/\/github\.com\/[A-Za-z0-9-]{1,39}\/[A-Za-z0-9._-]{1,100}?(\.git)?\/?$/;
 export type DecisionInput = { approved: boolean; feedback: string };
 
 export function parseStartRun(form: FormData): StartRunInput | { error: string } {
   const request = String(form.get("request") ?? "").trim();
-  const testCommand = String(form.get("test_command") ?? "").trim() || "pytest -q";
+  const repoUrl = String(form.get("repo_url") ?? "").trim();
+  const branch = String(form.get("repo_branch") ?? "").trim() || null;
+  const testCommand = String(form.get("test_command") ?? "").trim();
   if (request.length < 3) return { error: "Say what the team should build." };
   if (request.length > 5000) return { error: "Keep the request under 5,000 characters." };
   if (testCommand.length > 500) return { error: "Keep the test command under 500 characters." };
-  return { request, test_command: testCommand };
+  if (repoUrl && !GITHUB_URL.test(repoUrl))
+    return { error: "Use the repository's GitHub address: https://github.com/owner/name" };
+  if (!repoUrl) return { request, test_command: testCommand || "pytest -q" };
+  return {
+    request,
+    ...(testCommand ? { test_command: testCommand } : {}),
+    repo: { url: repoUrl, branch },
+  };
 }
 
 export function parseDecision(form: FormData): DecisionInput | { error: string } {

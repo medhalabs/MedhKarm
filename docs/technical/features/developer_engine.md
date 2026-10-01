@@ -26,7 +26,7 @@ Both engines follow the same contract:
 
 ### ToolLoopEngine
 
-1. Sends the model the developer role's instructions (from the team template, [teams.md](teams.md)), the task and the test command, plus the role's tools (by default five: `write_file`, `read_file`, `list_files`, `run_command`, `finish`. A sixth, `apply_patch`, is offered only when `BUILTIN_APPLY_PATCH=true` (off by default; see design decisions). Patches the model sends anyway are still applied.
+1. Sends the model the developer role's instructions (from the team template, [teams.md](teams.md)), the task and the test command, plus the role's tools (by default seven: `write_file` (new files or complete rewrites; refuses to shrink a file of 40+ lines to under half), `edit_file` (replace one exact piece of text), `read_file` (numbered lines, 150 at a time; `start_line`/`end_line` for a part), `list_files`, `search` (grep across the workspace, up to 60 matches), `run_command`, `finish`. A sixth, `apply_patch`, is offered only when `BUILTIN_APPLY_PATCH=true` (off by default; see design decisions). Patches the model sends anyway are still applied.
    - `apply_patch` takes OpenAI's patch format (`*** Begin Patch` … `*** End Patch`), which `gpt-oss` is trained to write: add, update with context hunks, move and delete files.
    - Once a patch is handled, its text in the conversation is replaced by a short note ("patch already handled: … read the files for their current content"). The model sometimes names the argument `patch` instead of `input`; both work.
    - If the model sends a patch through `run_command` (it often tries `apply_patch` as a shell command), the call is rewritten into a real `apply_patch` call before it runs or enters the conversation.
@@ -147,6 +147,9 @@ OpenHands used about 10× the tokens on this small task: its system prompt and t
 
 | Date | Change |
 | --- | --- |
+| 2026-10-01 | `explain_symbol` tool (with `CODE_GRAPH=true`): rebuilds Graphify's code graph (about half a second) and explains a class, function or method: its file and line, methods, what it calls and uses, and what uses it; an ambiguous name is explained for each match (up to 3); without Graphify it points to `search` |
+| 2026-10-01 | `edit_file` tool and a `write_file` guard (a second live run replaced the 400-line `serializer.py` with a fragment); other argument names accepted (`file_path`, `contents`, …) |
+| 2026-10-01 | `search` tool; `read_file` returns numbered lines in parts (was cut at 4,000 characters, so long files were re-read over and over); `DevTask.existing_project` and `existing_project_max_steps`; a nudge to write when 5 steps are left and nothing is changed. From a live run on `pallets/itsdangerous`: 25 steps of reading, 13 calls to a `search` tool that didn't exist, nothing written |
 | 2026-10-01 | `tool_sources` (MCP tools, per-role limits); only offered tools run, others are refused and logged |
 | 2026-10-01 | Built-in engine takes `tools` and `instructions` (from the team template's developer role); replaces `offer_apply_patch` |
 | 2026-10-01 | Engines record `tool.used` and `model.used` events (activity log) |

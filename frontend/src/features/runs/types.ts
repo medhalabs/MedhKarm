@@ -15,13 +15,27 @@ export type Gate = {
   tests: string;
 };
 
+/** A founder's GitHub repository (backend: repos/schemas.py RepoSource). */
+export type RepoSource = { url: string; branch: string | null };
+
+/** How released work went back to the repository (backend: repos/schemas.py Delivery). */
+export type Delivery = {
+  status: "opened" | "no_changes" | "skipped";
+  branch: string;
+  commit: string;
+  pull_request_url: string;
+  reason: string;
+};
+
 export type Run = {
   id: string;
   request: string;
-  test_command: string;
+  test_command: string; // empty: detected from the repository when the run starts
+  repo: RepoSource | null;
   status: RunStatus;
   gate: Gate | null;
   error: string | null;
+  delivery: Delivery | null;
   created_at: string;
   updated_at: string;
 };

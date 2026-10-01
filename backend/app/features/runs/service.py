@@ -7,7 +7,13 @@ from typing import Any
 from app.features.jobs.interfaces import JobQueue
 from app.features.runs.exceptions import RunNotFoundError, RunNotWaitingError
 from app.features.runs.interfaces import RunRepository
-from app.features.runs.schemas import ApprovalDecision, Run, RunStatus, StartRun
+from app.features.runs.schemas import (
+    DEFAULT_TEST_COMMAND,
+    ApprovalDecision,
+    Run,
+    RunStatus,
+    StartRun,
+)
 
 START_JOB = "build.start"
 RESUME_JOB = "build.resume"
@@ -20,7 +26,9 @@ class RunService:
         self._max_attempts = max_attempts
 
     async def start(self, body: StartRun) -> Run:
-        run = await self._runs.create(uuid.uuid4().hex[:12], body.request, body.test_command)
+        # With a repository and no test command, the run detects one from the project.
+        test_command = body.test_command or ("" if body.repo else DEFAULT_TEST_COMMAND)
+        run = await self._runs.create(uuid.uuid4().hex[:12], body.request, test_command, body.repo)
         await self._jobs.enqueue(
             START_JOB,
             {"run_id": run.id},
@@ -58,6 +66,7 @@ class RunService:
         status: RunStatus,
         gate: dict[str, Any] | None = None,
         error: str | None = None,
+        delivery: dict[str, Any] | None = None,
     ) -> None:
         """Workers report progress here."""
-        await self._runs.set_status(run_id, status, gate, error)
+        await self._runs.set_status(run_id, status, gate, error, delivery)

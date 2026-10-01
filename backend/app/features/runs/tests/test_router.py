@@ -32,4 +32,10 @@ def test_start_list_get_and_approve() -> None:
     assert early.status_code == 409
     assert early.json()["error"]["code"] == "run_not_waiting_for_approval"
     assert api.post("/runs", json={"request": ""}).status_code == 422
+    bad_repo = {"request": "Add search", "repo": {"url": "https://example.com/x/y"}}
+    assert api.post("/runs", json=bad_repo).status_code == 422
     assert len(queue.jobs) == 1
+
+    repo = {"url": "https://github.com/a/notes", "branch": "dev"}
+    on_repo = api.post("/runs", json={"request": "Add search", "repo": repo}).json()
+    assert on_repo["repo"] == repo and on_repo["test_command"] == ""

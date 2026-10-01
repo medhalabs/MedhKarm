@@ -24,7 +24,7 @@ A team is a **settings file**, not code. Each template lists the team's roles (t
 | --- | --- | --- | --- |
 | `pm` Product Manager | Mira | No (Phase 2) | Will ask questions and show screens |
 | `cto` CTO | Kabir | Yes | Splits the request into tasks and assigns developers (`instructions`), reviews each task (`review_instructions`) |
-| `developer` Developer (1–3, chosen by the CTO per run) | Isha, Arjun, Ravi | Yes | Writes code and tests with `read_file`, `write_file`, `list_files`, `run_command`, `finish`, plus the `python_docs` MCP tools (read-only, 10 calls per task); up to 25 steps |
+| `developer` Developer (1–3, chosen by the CTO per run) | Isha, Arjun, Ravi | Yes | Writes code and tests with `read_file`, `write_file`, `edit_file`, `list_files`, `search`, `run_command`, `finish`, plus the `python_docs` MCP tools (read-only, 10 calls per task); up to 25 steps, 40 on an existing project (`existing_project_max_steps`) |
 | `qa` QA engineer | Tara | Yes | Runs the test command (`checker = "test_command"`) |
 | `devops` DevOps | Neel | No (Phase 2) | Will deploy previews and releases |
 
@@ -104,6 +104,7 @@ None of its own. Role ids are the `actor` values in the activity log; `Actor` in
 
 | Date | Change |
 | --- | --- |
+| 2026-10-01 | Roles may set `existing_project_max_steps`; developers get `search`, `edit_file` and 40 steps on existing projects |
 | 2026-10-01 | `[[roles.mcp]]` grants (server, tools, read-only, calls per task), validated against the MCP catalog; developers get `python_docs` |
 | 2026-10-01 | `[approval]` rules in templates, validated against `WORKFLOW_FACTS`; developer and CTO instructions forbid faking tests |
 | 2026-10-01 | `review_instructions` for the CTO; developer `max_count` used by the CTO's assignment |

@@ -16,6 +16,20 @@ describe("parseStartRun", () => {
     });
   });
 
+  it("leaves the test command to the backend for a repo", () => {
+    expect(
+      parseStartRun(
+        form({ request: "Add search", repo_url: "https://github.com/a/notes", repo_branch: "" }),
+      ),
+    ).toEqual({ request: "Add search", repo: { url: "https://github.com/a/notes", branch: null } });
+  });
+
+  it("only takes GitHub addresses", () => {
+    expect(parseStartRun(form({ request: "Add search", repo_url: "git@github.com:a/b" }))).toEqual({
+      error: "Use the repository's GitHub address: https://github.com/owner/name",
+    });
+  });
+
   it("needs a request", () => {
     expect(parseStartRun(form({ request: " " }))).toEqual({
       error: "Say what the team should build.",

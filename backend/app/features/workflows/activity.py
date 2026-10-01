@@ -15,6 +15,20 @@ async def record_step(recorder: RunRecorder, node: str, data: dict[str, Any]) ->
             "Thought about the plan" if node == "plan" else "Reviewed the work",
             tokens=int(data["cto_tokens"]),
         )
+    if node == "connect" and data.get("codebase_map"):
+        first_line = str(data["codebase_map"]).splitlines()[0]
+        await recorder.record(
+            Actor.CTO,
+            EventType.CODEBASE_MAPPED,
+            ("Read the project before planning: " + first_line)
+            + ("" if data.get("setup_ok", True) else " Installing its dependencies failed."),
+            {
+                "map": str(data["codebase_map"])[:6000],
+                "commit": data.get("repo_commit", ""),
+                "test_command": data.get("test_command", ""),
+                "setup_ok": data.get("setup_ok", True),
+            },
+        )
     if node == "plan":
         tasks = data.get("tasks", [])
         team = sorted({t["owner"] for t in tasks})
@@ -82,6 +96,16 @@ async def record_step(recorder: RunRecorder, node: str, data: dict[str, Any]) ->
             )
     elif node == "finish":
         status = data.get("status", "finished")
+        delivery = data.get("delivery")
+        if delivery:
+            await recorder.record(
+                Actor.DEVOPS,
+                EventType.CHANGES_DELIVERED,
+                f"Opened a pull request: {delivery['pull_request_url']}"
+                if delivery.get("pull_request_url")
+                else f"Didn't open a pull request: {delivery.get('reason', '')}",
+                delivery,
+            )
         summaries = {
             "released": "Released",
             "rejected": "Stopped: release not approved",

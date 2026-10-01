@@ -78,7 +78,7 @@ Goal: the software team delivers working, tested changes on new and existing pro
 
 Runs alongside Phase 0's interviews: building in the mornings, interviews and beta recruiting in the afternoons. Early sign for the gate: at least 8 of 20 evals passing by Nov 13.
 
-- [ ] Connect an existing GitHub repo; agents map the codebase before changing it (JavaScript/TypeScript and Python first)
+- [ ] Connect an existing GitHub repo; agents map the codebase before changing it (JavaScript/TypeScript and Python first). Built Oct 1, 2026: clone, map before planning, install/test detection, pull request on release ([repos.md](technical/features/repos.md)). Left: a passing live run on a real repo (first try: the free model read for 25 steps and wrote nothing), and a pull request tested against GitHub (needs `GITHUB_TOKEN`)
 - [ ] Backlog: the PM splits a goal into tasks; agents work through them across days
 - [ ] Starter repo and ready-made modules for new projects (auth, payments, reminders, dashboards)
 - [ ] QA writes and runs tests; build, type-check, lint and tests must pass

@@ -1,6 +1,7 @@
 import pytest
 
 from app.features.jobs.stores.memory_queue import InMemoryJobQueue
+from app.features.repos.schemas import RepoSource
 from app.features.runs.exceptions import RunNotFoundError, RunNotWaitingError
 from app.features.runs.memory_repository import InMemoryRunRepository
 from app.features.runs.schemas import ApprovalDecision, RunStatus, StartRun
@@ -44,3 +45,32 @@ async def test_unknown_run() -> None:
 
     with pytest.raises(RunNotFoundError):
         await runs.get("nope")
+
+
+async def test_repo_runs_keep_the_repo_and_detect_their_test_command() -> None:
+    runs, _, _ = service()
+
+    run = await runs.start(
+        StartRun(request="Add search", repo=RepoSource(url="https://github.com/a/notes"))
+    )
+    given = await runs.start(
+        StartRun(
+            request="Add search",
+            test_command="npm test",
+            repo=RepoSource(url="https://github.com/a/notes"),
+        )
+    )
+
+    assert run.repo is not None and run.repo.name == "notes"
+    assert run.test_command == ""  # detected when the run starts
+    assert given.test_command == "npm test"
+
+
+async def test_workers_record_the_delivery_and_keep_it() -> None:
+    runs, _, _ = service()
+    run = await runs.start(StartRun(request="Add search"))
+
+    await runs.set_status(run.id, RunStatus.RELEASED, delivery={"pull_request_url": "u"})
+    await runs.set_status(run.id, RunStatus.RELEASED)
+
+    assert (await runs.get(run.id)).delivery == {"pull_request_url": "u"}

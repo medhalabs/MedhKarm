@@ -82,7 +82,7 @@ None. Command line:
 ```bash
 uv run python -m app.workers.run_evals list
 uv run python -m app.workers.run_evals validate [--tasks id1,id2] [--parallel 4]
-uv run python -m app.workers.run_evals run [--engine builtin|openhands] [--model ollama_chat/gpt-oss:20b] [--tasks id1,id2] [--parallel 2]
+uv run python -m app.workers.run_evals run [--engine builtin|openhands] [--model ollama_chat/gpt-oss:20b] [--tasks id1,id2] [--parallel 2] [--code-graph on|off]
 ```
 
 ## Data model
@@ -168,5 +168,6 @@ What the runs show:
 
 | Date | Change |
 | --- | --- |
+| 2026-10-01 | `--code-graph on|off` for A/B runs; reports carry a `variant` (in the summary and the file name); the runner maps each project before planning, like real runs |
 | 2026-10-01 | Errored tasks (model or sandbox failures) reported separately and not scored; first baseline recorded |
 | 2026-10-01 | Created: 20 tasks on 4 projects, validator, runner, reports, sandbox image |

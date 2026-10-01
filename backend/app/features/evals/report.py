@@ -14,6 +14,8 @@ def summary_markdown(report: EvalReport) -> str:
         f"# Eval run {report.started_at}",
         "",
         f"Engine: **{report.engine}** · Model: **{report.model}** · "
+        + (f"Variant: **{report.variant}** · " if report.variant else "")
+        +
         f"Passed: **{report.passed}/{len(scored)}** of the tasks that ran",
     ]
     if report.errored:
@@ -61,6 +63,8 @@ def validation_markdown(results: list[ValidationOutcome]) -> str:
 def save(report: EvalReport, results_dir: Path) -> Path:
     results_dir.mkdir(parents=True, exist_ok=True)
     stem = f"{report.started_at.replace(':', '')}-{report.engine}"
+    if report.variant:
+        stem += f"-{report.variant}"
     (results_dir / f"{stem}.json").write_text(report.model_dump_json(indent=2))
     path = results_dir / f"{stem}.md"
     path.write_text(summary_markdown(report))

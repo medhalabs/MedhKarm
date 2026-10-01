@@ -11,6 +11,7 @@ class EventType(StrEnum):
     RUN_STARTED = "run.started"
     RUN_RESUMED = "run.resumed"
     RUN_FINISHED = "run.finished"
+    CODEBASE_MAPPED = "codebase.mapped"
     PLAN_CREATED = "plan.created"
     TASK_ASSIGNED = "task.assigned"
     REVIEW_FINISHED = "review.finished"
@@ -21,6 +22,7 @@ class EventType(StrEnum):
     CHECK_FINISHED = "check.finished"
     APPROVAL_REQUESTED = "approval.requested"
     APPROVAL_DECIDED = "approval.decided"
+    CHANGES_DELIVERED = "changes.delivered"
 
 
 class Actor(StrEnum):

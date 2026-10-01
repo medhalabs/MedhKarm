@@ -90,6 +90,7 @@ None yet.
 
 | Date | Change |
 | --- | --- |
+| 2026-10-01 | `medhkarm-sandbox:dev` image gains `graphifyy==0.9.73` (code graph, about 100 MB); rebuild with `docker build -t medhkarm-sandbox:dev backend/sandbox-image` |
 | 2026-10-01 | Default image is now `medhkarm-sandbox:dev` (has pytest), built automatically when missing: with plain `python:3.13-slim`, developers faked pytest |
 | 2026-10-01 | Added the OpenHands agent-server sandbox and `AgentServerSandbox` |
 | 2026-10-01 | Created: Docker and in-memory sandboxes, path guard, attach by id |

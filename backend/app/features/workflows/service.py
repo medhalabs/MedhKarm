@@ -33,16 +33,21 @@ class WorkflowService:
         test_command: str,
         on_step: OnStep | None = None,
         sandbox_id: str | None = None,
+        repo: dict[str, Any] | None = None,
     ) -> RunOutcome:
-        """Start a run. Pass `sandbox_id` to work in an existing, prepared sandbox."""
+        """Start a run. Pass `sandbox_id` to work in an existing, prepared sandbox, and `repo`
+        (RepoSource-shaped) to work on the founder's repository. An empty `test_command` is
+        detected from the project."""
         initial: BuildState = {"run_id": run_id, "request": request, "test_command": test_command}
         if sandbox_id:
             initial["sandbox_id"] = sandbox_id
+        if repo:
+            initial["repo"] = repo
         await self._recorder(run_id).record(
             Actor.FOUNDER,
             EventType.RUN_STARTED,
             f"Asked for: {request[:200]}",
-            {"request": request},
+            {"request": request, **({"repo": repo} if repo else {})},
         )
         return await self._run(run_id, initial, on_step)
 

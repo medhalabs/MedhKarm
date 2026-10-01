@@ -5,6 +5,7 @@ from typing import Any
 from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+from app.features.repos.schemas import RepoSource
 from app.features.runs.models import RunRow
 from app.features.runs.schemas import Run, RunStatus
 
@@ -13,8 +14,16 @@ class SqlRunRepository:
     def __init__(self, sessions: async_sessionmaker[AsyncSession]) -> None:
         self._sessions = sessions
 
-    async def create(self, run_id: str, request: str, test_command: str) -> Run:
-        row = RunRow(id=run_id, request=request, test_command=test_command, status=RunStatus.QUEUED)
+    async def create(
+        self, run_id: str, request: str, test_command: str, repo: RepoSource | None = None
+    ) -> Run:
+        row = RunRow(
+            id=run_id,
+            request=request,
+            test_command=test_command,
+            repo=repo.model_dump(mode="json") if repo else None,
+            status=RunStatus.QUEUED,
+        )
         async with self._sessions() as session, session.begin():
             session.add(row)
             await session.flush()
@@ -37,11 +46,13 @@ class SqlRunRepository:
         status: RunStatus,
         gate: dict[str, Any] | None = None,
         error: str | None = None,
+        delivery: dict[str, Any] | None = None,
     ) -> None:
+        values: dict[str, Any] = {"status": status, "gate": gate, "error": error}
+        if delivery is not None:
+            values["delivery"] = delivery
         statement = (
-            update(RunRow)
-            .where(RunRow.id == run_id)
-            .values(status=status, gate=gate, error=error, updated_at=func.now())
+            update(RunRow).where(RunRow.id == run_id).values(**values, updated_at=func.now())
         )
         async with self._sessions() as session, session.begin():
             await session.execute(statement)
@@ -62,9 +73,11 @@ def _to_run(row: RunRow) -> Run:
         id=row.id,
         request=row.request,
         test_command=row.test_command,
+        repo=RepoSource.model_validate(row.repo) if row.repo else None,
         status=RunStatus(row.status),
         gate=row.gate,
         error=row.error,
+        delivery=row.delivery,
         created_at=row.created_at,
         updated_at=row.updated_at,
     )

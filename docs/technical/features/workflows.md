@@ -13,7 +13,8 @@ The sequence of steps a build goes through, run by LangGraph: the CTO plans task
 ```mermaid
 flowchart LR
     S((start)) --> PR[prepare<br/>create the sandbox]
-    PR --> P[plan<br/>CTO splits into tasks,<br/>assigns developers]
+    PR --> C[connect<br/>clone the repo, map it,<br/>install it]
+    C --> P[plan<br/>CTO splits into tasks,<br/>assigns developers]
     P --> D[develop<br/>assigned developer<br/>works on current task]
     D --> R{review<br/>CTO checks the task}
     R -->|send back with changes| D
@@ -26,12 +27,13 @@ flowchart LR
 ```
 
 0. **prepare** — creates the run's sandbox (unless one was given, as the eval runner does), so its id is saved in a checkpoint before any work. A retry or another worker then re-attaches to it instead of creating a new one.
-1. **plan** — the CTO (template role `cto`: model and `instructions`) answers with the `submit_plan` tool: a summary, how many developers to use, and 1–5 tasks in order. `assign()` gives each task an id (`t1`…) and an owner, round-robin over the developers' names (up to the developer role's `max_count`). The plan is read leniently (see `cto.py`): small models name fields their own way, and if no usable plan comes back the fallback is one task covering the whole request.
+0. **connect** — gets to know the project before anyone plans: clones the founder's repository if the run has one, maps the code (files, languages, outline, how to install and test) and installs it, and fills in the test command if none was given ([repos.md](repos.md)). For a new project with an empty workspace it does nothing.
+1. **plan** — the CTO (with the codebase map, for an existing project) (template role `cto`: model and `instructions`) answers with the `submit_plan` tool: a summary, how many developers to use, and 1–5 tasks in order. `assign()` gives each task an id (`t1`…) and an owner, round-robin over the developers' names (up to the developer role's `max_count`). The plan is read leniently (see `cto.py`): small models name fields their own way, and if no usable plan comes back the fallback is one task covering the whole request.
 2. **develop** — re-attaches to the run's sandbox by id; the current task's owner works on it through the `DeveloperEngine`. The brief has the request, the CTO's plan, "your task (i of n)", and, on a second attempt, the CTO's requested changes. Tasks run one after another in the same workspace, so later tasks build on earlier ones.
 3. **review** — if the task's files include a stand-in for the test tool (e.g. `pytest.py`, see `guards.py`), or its tests failed, it goes straight back to the developer (no model call). Otherwise the CTO reads the task, the developer's summary and the changed files (up to 6, 1,500 characters each) and answers with `submit_review`: approve, or revise with specific changes. A task gets at most `max_revisions` (default 1) rounds of changes; after that the run moves on (`done_with_issues`) and QA's final check decides. A review the CTO doesn't format properly counts as approval, so a format slip never blocks a run.
 3. **verify** — asks the run's `WorkChecker` whether the work is good. For software that's `TestCommandChecker`: it re-runs the test command in the same sandbox, and fails at once if the workspace contains a stand-in for the test tool. QA never trusts the developer's report. Human review (content team) and approval rules (operations team) will be other checkers.
 4. **approval** — only reached if tests pass. The team's approval rules look at the run's facts (files changed, tokens, open review comments; see [approvals.md](approvals.md)) and either decide on their own (approve or reject, recorded as `approval.decided` by `system`) or pause: `interrupt()` saves the run and stops, returning the gate details (why it asks, summary, files changed, tokens, test output). Resuming with `Command(resume={"approved": ..., "feedback": ...})` continues from here.
-5. **finish** — destroys the sandbox and sets `status`: `released`, `rejected` or `failed`.
+5. **finish** — on a released repo run, commits the work to `medhkarm/<run_id>`, pushes it and opens a pull request (before the sandbox goes, so a failed push is retried with the work still there); then destroys the sandbox and sets `status`: `released`, `rejected` or `failed`.
 
 The run id is LangGraph's `thread_id`; each checkpoint is stored under it.
 
@@ -47,13 +49,14 @@ The run id is LangGraph's `thread_id`; each checkpoint is stored under it.
 | `nodes/base.py` | `BuildNode` Protocol: the shape every node factory returns |
 | `cto.py` | The CTO's plan and review as data: `submit_plan` / `submit_review` tools, lenient parsing, `assign()` |
 | `nodes/prepare.py` | First node: creates the sandbox |
+| `nodes/connect.py` | Clones and maps the project (`RepoService`), sets the test command if empty |
 | `nodes/plan.py` | CTO planning node |
 | `nodes/review.py` | CTO review node and `after_review` routing |
 | `nodes/develop.py` | Developer node: current task, sandbox, totals across tasks |
 | `nodes/verify.py` | QA node (re-runs tests) |
 | `nodes/approval.py` | Release gate: `approval_facts()`, approval rules, `interrupt` |
-| `guards.py` | `shadowed_test_tools()`: spots work that fakes its tests (a stand-in `pytest.py`) |
-| `nodes/finish.py` | Outcome + sandbox cleanup |
+| `guards.py` | `shadowed_test_tools()`: spots work that fakes its tests (a stand-in `pytest.py`); `asks_for_tests()` / `is_test_file()`: tests asked for but none written |
+| `nodes/finish.py` | Outcome, pull request for released repo runs, sandbox cleanup |
 | `graphs/build_app.py` | Wires the nodes and edges; takes its dependencies as arguments |
 | `checkpointer.py` | Opens the Postgres checkpointer and creates its tables |
 | `service.py` | `WorkflowService`: `start`, `resume`, `continue_run`, `get`; reports each step through a callback |
@@ -127,6 +130,9 @@ LangGraph creates and owns its tables in our Postgres (`checkpoints`, `checkpoin
 
 | Date | Change |
 | --- | --- |
+| 2026-10-01 | A request that asks for tests ("add tests", "with pytest tests") needs a test file added or changed: the review sends the last task back (no model call) and QA fails the run otherwise (`guards.py`: `asks_for_tests`, `is_test_file`). A live run on itsdangerous reached the gate with the feature but no tests |
+| 2026-10-01 | Work that changes no files is sent back by the review (no model call), and QA fails a run that changed nothing: on an existing project the old tests pass untouched, and a live run reached the gate with no changes |
+| 2026-10-01 | `connect` node (clone, map, install) between `prepare` and `plan`; the CTO and developers get the codebase map; `finish` opens a pull request for released repo runs; `build_app_graph(..., repos=...)`, `start(..., repo=...)`, `build_run start --repo/--branch` ([repos.md](repos.md)) |
 | 2026-10-01 | Approval rules at the release gate (`approval_policy`, facts, reasons in the gate); review and QA refuse stand-ins for the test tool; CTO tokens totalled (`cto_tokens_total`) |
 | 2026-10-01 | `prepare` node creates the sandbox first (retries no longer leak containers); `continue_run()` and `RunOutcome.next_nodes` for runs interrupted mid-way; runs normally start through the job queue |
 | 2026-10-01 | CTO agent: plans tasks, assigns developers by name, reviews each task and sends it back with changes; CTO tokens recorded |

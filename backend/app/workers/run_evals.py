@@ -25,6 +25,8 @@ from app.features.evals.report import save, summary_markdown, validation_markdow
 from app.features.evals.runner import EvalRunner
 from app.features.evals.schemas import EvalReport, TaskOutcome
 from app.features.evals.validator import TaskValidator
+from app.features.repos.code_graph import GraphifyCodeGraph
+from app.features.repos.service import RepoService
 from app.features.sandbox.providers.docker_provider import DockerSandboxProvider
 from app.features.workflows.graphs.build_app import build_app_graph
 from app.features.workflows.service import WorkflowService
@@ -80,13 +82,15 @@ async def run(settings: Settings, only: list[str] | None, parallel: int) -> int:
         developer_names=team.developer_names,
         max_developers=team.max_developers,
         approval_policy=team.approval_policy,
+        repos=RepoService(graph=GraphifyCodeGraph() if settings.code_graph else None),
     )
     runner = EvalRunner(WorkflowService(graph), sandboxes, prepare_command=prepare)
 
     started = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
     print(
         f"Running {len(tasks)} tasks · engine={settings.developer_engine} · "
-        f"model={settings.default_model} · parallel={parallel}\n",
+        f"model={settings.default_model} · code_graph={settings.code_graph} · "
+        f"parallel={parallel}\n",
         flush=True,
     )
     outcomes = await runner.run_all(tasks, parallel=parallel, on_outcome=print_outcome)
@@ -96,6 +100,7 @@ async def run(settings: Settings, only: list[str] | None, parallel: int) -> int:
         engine=settings.developer_engine,
         model=settings.default_model,
         outcomes=outcomes,
+        variant="code-graph" if settings.code_graph else "",
     )
     path = save(report, EVALS_DIR / "results")
     print("\n" + summary_markdown(report))
@@ -114,6 +119,9 @@ def main() -> None:
         if name == "run":
             sub.add_argument("--engine", choices=["builtin", "openhands"])
             sub.add_argument("--model", help="LiteLLM model name; overrides DEFAULT_MODEL")
+            sub.add_argument(
+                "--code-graph", choices=["on", "off"], help="Overrides CODE_GRAPH (A/B runs)"
+            )
     args = parser.parse_args()
 
     configure_logging("WARNING")
@@ -127,11 +135,13 @@ def main() -> None:
     if args.command == "validate":
         sys.exit(asyncio.run(validate(settings, only, args.parallel)))
 
-    updates: dict[str, str] = {}
+    updates: dict[str, str | bool] = {}
     if args.engine:
         updates["developer_engine"] = args.engine
     if args.model:
         updates["default_model"] = args.model
+    if args.code_graph:
+        updates["code_graph"] = args.code_graph == "on"
     sys.exit(asyncio.run(run(settings.model_copy(update=updates), only, args.parallel)))
 
 

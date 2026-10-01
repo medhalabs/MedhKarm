@@ -4,6 +4,8 @@ from pydantic import BaseModel, Field
 class DevTask(BaseModel):
     description: str
     test_command: str = Field(description="Shell command, run in the workspace, that must exit 0")
+    # An existing project: more to read before writing, so the engine allows more steps.
+    existing_project: bool = False
 
 
 class DevResult(BaseModel):

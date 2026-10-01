@@ -12,7 +12,13 @@ from app.features.models.interfaces import LLMProvider
 from app.features.sandbox.exceptions import SandboxError
 from app.features.sandbox.interfaces import Sandbox, SandboxProvider
 from app.features.workflows.cto import REVIEW_TOOL, ReviewDecision, parse_review
-from app.features.workflows.guards import shadow_feedback, shadowed_test_tools
+from app.features.workflows.guards import (
+    asks_for_tests,
+    is_test_file,
+    missing_tests_feedback,
+    shadow_feedback,
+    shadowed_test_tools,
+)
 from app.features.workflows.nodes.base import BuildNode
 from app.features.workflows.state import BuildState
 
@@ -40,6 +46,19 @@ def make_review_node(
         shadows = shadowed_test_tools(task.get("files_changed", []))
         if shadows:
             verdict = ReviewDecision(decision="revise", feedback=shadow_feedback(shadows))
+        elif not task.get("files_changed"):
+            # An existing project's tests pass untouched, so passing tests prove nothing here.
+            verdict = ReviewDecision(
+                decision="revise",
+                feedback="You didn't change any files, so the task isn't done. Make the change "
+                "it asks for (write the files), run the tests, then call finish.",
+            )
+        elif (
+            index == len(tasks) - 1  # earlier tasks may leave the tests to a later one
+            and asks_for_tests(state["request"])
+            and not any(is_test_file(f) for t in tasks for f in t.get("files_changed", []))
+        ):
+            verdict = ReviewDecision(decision="revise", feedback=missing_tests_feedback())
         elif not task.get("success"):
             verdict = ReviewDecision(
                 decision="revise",

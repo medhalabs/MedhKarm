@@ -6,6 +6,8 @@ from app.features.developer_engine.engines.tool_loop_engine import ToolLoopEngin
 from app.features.events.stores.memory_store import InMemoryEventStore
 from app.features.models.providers.scripted_provider import ScriptedLLMProvider
 from app.features.models.schemas import LLMResponse, TokenUsage, ToolCall
+from app.features.repos.service import RepoService
+from app.features.repos.tests.fakes import FakeHost
 from app.features.sandbox.providers.memory_provider import InMemorySandboxProvider
 from app.features.sandbox.schemas import CommandResult
 from app.features.workflows.graphs.build_app import build_app_graph
@@ -85,7 +87,7 @@ async def test_reports_each_step() -> None:
 
     await service.start("run-4", "Build app", "pytest", on_step=lambda s: seen.append(s.node))
 
-    assert seen == ["prepare", "plan", "develop", "review", "verify"]
+    assert seen == ["prepare", "connect", "plan", "develop", "review", "verify"]
 
 
 async def test_activity_log_tells_the_story_of_a_run() -> None:
@@ -124,3 +126,92 @@ async def test_activity_log_tells_the_story_of_a_run() -> None:
     )
     assert sum(e.tokens for e in store.events if e.actor == "cto") == 70
     assert store.events[-1].summary == "Released"
+
+
+async def test_repo_run_maps_the_project_then_opens_a_pull_request() -> None:
+    store = InMemoryEventStore()
+    llm = ScriptedLLMProvider(_script(write_app=True))
+    host = FakeHost()
+    sandboxes = InMemorySandboxProvider(_tests_pass_if_app_exists)
+    graph = build_app_graph(
+        llm, ToolLoopEngine(llm), sandboxes, InMemorySaver(), events=store, repos=RepoService(host)
+    )
+    service = WorkflowService(graph, store)
+    repo = {"url": "https://github.com/medhalabs/notes", "branch": None}
+
+    paused = await service.start("run-r", "Add search", "", repo=repo)
+
+    assert host.clones == 1
+    assert paused.state["test_command"] == "python -m pytest -q"  # detected from the repo
+    assert "Existing project" in paused.state["codebase_map"]
+    assert "Existing project" in str(llm.calls[0])  # the CTO planned with the map
+    assert "About the project" in str(llm.calls[1])  # and the developer worked with it
+
+    done = await service.resume("run-r", approved=True)
+
+    assert done.state["delivery"]["pull_request_url"] == "u"
+    assert host.delivered[0][0] == "medhkarm/run-r"
+    types = [e.type for e in store.events]
+    assert types[1] == "codebase.mapped"
+    assert types[-2:] == ["changes.delivered", "run.finished"]
+
+
+async def test_rejected_repo_run_opens_no_pull_request() -> None:
+    llm = ScriptedLLMProvider(_script(write_app=True))
+    host = FakeHost()
+    sandboxes = InMemorySandboxProvider(_tests_pass_if_app_exists)
+    graph = build_app_graph(
+        llm, ToolLoopEngine(llm), sandboxes, InMemorySaver(), repos=RepoService(host)
+    )
+    service = WorkflowService(graph)
+    await service.start("run-x", "Add search", "pytest", repo={"url": "https://github.com/a/b"})
+
+    done = await service.resume("run-x", approved=False)
+
+    assert done.state["status"] == "rejected" and host.delivered == []
+    assert "delivery" not in done.state
+
+
+async def test_work_that_changes_nothing_is_sent_back_and_never_reaches_the_gate() -> None:
+    """On an existing project the old tests pass untouched: that must not count as done."""
+    llm = ScriptedLLMProvider(
+        [
+            LLMResponse(content="1. Add search"),
+            _call("finish", summary="Looked around"),
+            _call("finish", summary="Still looking"),
+        ]
+    )
+    sandboxes = InMemorySandboxProvider()  # every test command passes
+    graph = build_app_graph(
+        llm, ToolLoopEngine(llm), sandboxes, InMemorySaver(), repos=RepoService(FakeHost())
+    )
+
+    done = await WorkflowService(graph).start(
+        "run-n", "Add search", "", repo={"url": "https://github.com/a/b"}
+    )
+
+    [task] = done.state["tasks"]
+    assert task["attempts"] == 2  # sent back once without asking the CTO's model
+    assert "didn't change any files" in done.state["last_review"]["feedback"]
+    assert not done.waiting_for_approval
+    assert done.state["status"] == "failed"
+    assert done.state["verify_output"].startswith("No files were changed")
+
+
+async def test_asked_for_tests_but_wrote_none_is_sent_back_and_fails() -> None:
+    llm = ScriptedLLMProvider(
+        [
+            LLMResponse(content="1. Add peek"),
+            _call("write_file", path="app.py", content="def peek(): ..."),
+            _call("finish", summary="Added peek"),
+            _call("finish", summary="Done, really"),
+        ]
+    )
+    sandboxes = InMemorySandboxProvider(_tests_pass_if_app_exists)
+    graph = build_app_graph(llm, ToolLoopEngine(llm), sandboxes, InMemorySaver())
+
+    done = await WorkflowService(graph).start("run-t", "Add peek() with tests", "pytest")
+
+    assert "no test file" in done.state["last_review"]["feedback"]  # no CTO model call
+    assert not done.waiting_for_approval and done.state["status"] == "failed"
+    assert done.state["verify_output"].startswith("The request asks for tests")

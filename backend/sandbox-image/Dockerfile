@@ -9,4 +9,7 @@ RUN apt-get update \
 
 RUN pip install --no-cache-dir pytest fastapi httpx2 pydantic
 
+# Code graph for the codebase map and explain_symbol (CODE_GRAPH=true); tree-sitter, no models
+RUN pip install --no-cache-dir graphifyy==0.9.73
+
 WORKDIR /workspace
