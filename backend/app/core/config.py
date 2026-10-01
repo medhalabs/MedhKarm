@@ -38,6 +38,15 @@ class Settings(BaseSettings):
     standup_hour: int = 9
     # A run with no activity for this long (and not waiting for approval) is reported as stalled
     standup_stall_minutes: int = 120
+    # The worker queues each day's standup once it's past STANDUP_HOUR
+    standup_schedule: bool = True
+
+    # Background jobs (Postgres job queue, see docs/technical/features/jobs.md)
+    worker_concurrency: int = 2  # jobs one worker process runs at once
+    worker_poll_seconds: float = 2.0
+    job_lease_seconds: int = 60  # a dead worker's job is picked up again after this
+    job_retry_seconds: int = 30  # first retry delay; doubles each attempt
+    build_max_attempts: int = 3  # tries per build job (each continues from the last checkpoint)
 
     # Developer engine: "builtin" (ToolLoopEngine + plain Docker sandbox)
     # or "openhands" (OpenHands agent + OpenHands agent-server sandbox)

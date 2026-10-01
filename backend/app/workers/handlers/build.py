@@ -1,0 +1,115 @@
+"""Job handlers for build runs: start a run, and resume it after the founder's decision.
+
+Both are safe to repeat. Before doing anything they look at the run's checkpoint: a fresh run
+starts, a run interrupted mid-way (worker died, deploy) carries on from its last finished
+step, and a run already at the gate or finished is only reported.
+"""
+
+from collections.abc import Callable
+from contextlib import AbstractAsyncContextManager
+from typing import Any
+
+from app.features.events.interfaces import EventStore
+from app.features.events.schemas import Actor, EventType
+from app.features.events.service import RunRecorder
+from app.features.jobs.exceptions import PermanentJobError
+from app.features.runs.exceptions import RunNotFoundError
+from app.features.runs.schemas import Run, RunStatus
+from app.features.runs.service import RunService
+from app.features.sandbox.interfaces import SandboxProvider
+from app.features.workflows.schemas import RunOutcome
+from app.features.workflows.service import WorkflowService
+
+WorkflowFactory = Callable[[], AbstractAsyncContextManager[WorkflowService]]
+
+FINISHED = {
+    "released": RunStatus.RELEASED,
+    "rejected": RunStatus.REJECTED,
+    "failed": RunStatus.FAILED,
+}
+
+
+class _BuildHandler:
+    def __init__(
+        self,
+        runs: RunService,
+        workflow: WorkflowFactory,
+        sandboxes: SandboxProvider,
+        events: EventStore | None = None,
+    ) -> None:
+        self._runs = runs
+        self._workflow = workflow
+        self._sandboxes = sandboxes
+        self._events = events
+
+    async def run(self, payload: dict[str, Any]) -> dict[str, Any] | None:
+        run = await self._load(payload)
+        await self._runs.set_status(run.id, RunStatus.RUNNING)
+        async with self._workflow() as workflow:
+            outcome = await self._advance(workflow, run, payload)
+        status = await self._report(outcome)
+        return {"run_id": run.id, "status": status}
+
+    async def _advance(
+        self, workflow: WorkflowService, run: Run, payload: dict[str, Any]
+    ) -> RunOutcome:
+        raise NotImplementedError
+
+    async def give_up(self, payload: dict[str, Any], error: str) -> None:
+        """Out of retries: mark the run, tell the log, and remove its sandbox."""
+        run_id = str(payload.get("run_id", ""))
+        if not run_id:
+            return
+        await self._runs.set_status(run_id, RunStatus.ERROR, error=error)
+        await RunRecorder(self._events, run_id).record(
+            Actor.SYSTEM,
+            EventType.RUN_FINISHED,
+            "Stopped: something went wrong",
+            {"status": "error", "error": error[:500]},
+        )
+        async with self._workflow() as workflow:
+            sandbox_id = (await workflow.get(run_id)).state.get("sandbox_id")
+        if sandbox_id:
+            await self._sandboxes.destroy(sandbox_id)
+
+    async def _load(self, payload: dict[str, Any]) -> Run:
+        try:
+            return await self._runs.get(str(payload["run_id"]))
+        except (KeyError, RunNotFoundError) as error:
+            raise PermanentJobError(f"Unknown run in job payload: {payload}") from error
+
+    async def _report(self, outcome: RunOutcome) -> RunStatus:
+        if outcome.waiting_for_approval:
+            status = RunStatus.WAITING_FOR_APPROVAL
+            await self._runs.set_status(outcome.run_id, status, gate=outcome.gate)
+            return status
+        status = FINISHED.get(str(outcome.state.get("status")), RunStatus.ERROR)
+        error = None if status != RunStatus.ERROR else "Run ended without a result"
+        await self._runs.set_status(outcome.run_id, status, error=error)
+        return status
+
+
+class StartBuild(_BuildHandler):
+    async def _advance(
+        self, workflow: WorkflowService, run: Run, payload: dict[str, Any]
+    ) -> RunOutcome:
+        current = await workflow.get(run.id)
+        if not current.state:
+            return await workflow.start(run.id, run.request, run.test_command)
+        if current.next_nodes and not current.waiting_for_approval:
+            return await workflow.continue_run(run.id)
+        return current
+
+
+class ResumeBuild(_BuildHandler):
+    async def _advance(
+        self, workflow: WorkflowService, run: Run, payload: dict[str, Any]
+    ) -> RunOutcome:
+        current = await workflow.get(run.id)
+        if current.waiting_for_approval:
+            return await workflow.resume(
+                run.id, bool(payload.get("approved")), str(payload.get("feedback", ""))
+            )
+        if current.next_nodes:
+            return await workflow.continue_run(run.id)
+        return current

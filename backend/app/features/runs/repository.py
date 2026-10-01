@@ -1,0 +1,70 @@
+"""RunRepository on Postgres."""
+
+from typing import Any
+
+from sqlalchemy import func, select, update
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+
+from app.features.runs.models import RunRow
+from app.features.runs.schemas import Run, RunStatus
+
+
+class SqlRunRepository:
+    def __init__(self, sessions: async_sessionmaker[AsyncSession]) -> None:
+        self._sessions = sessions
+
+    async def create(self, run_id: str, request: str, test_command: str) -> Run:
+        row = RunRow(id=run_id, request=request, test_command=test_command, status=RunStatus.QUEUED)
+        async with self._sessions() as session, session.begin():
+            session.add(row)
+            await session.flush()
+            await session.refresh(row)
+            return _to_run(row)
+
+    async def get(self, run_id: str) -> Run | None:
+        async with self._sessions() as session:
+            row = await session.get(RunRow, run_id)
+            return _to_run(row) if row else None
+
+    async def list(self, limit: int = 50) -> list[Run]:
+        query = select(RunRow).order_by(RunRow.created_at.desc()).limit(limit)
+        async with self._sessions() as session:
+            return [_to_run(row) for row in (await session.scalars(query)).all()]
+
+    async def set_status(
+        self,
+        run_id: str,
+        status: RunStatus,
+        gate: dict[str, Any] | None = None,
+        error: str | None = None,
+    ) -> None:
+        statement = (
+            update(RunRow)
+            .where(RunRow.id == run_id)
+            .values(status=status, gate=gate, error=error, updated_at=func.now())
+        )
+        async with self._sessions() as session, session.begin():
+            await session.execute(statement)
+
+    async def transition(self, run_id: str, from_status: RunStatus, to_status: RunStatus) -> bool:
+        statement = (
+            update(RunRow)
+            .where(RunRow.id == run_id, RunRow.status == from_status)
+            .values(status=to_status, updated_at=func.now())
+            .returning(RunRow.id)
+        )
+        async with self._sessions() as session, session.begin():
+            return (await session.scalars(statement)).one_or_none() is not None
+
+
+def _to_run(row: RunRow) -> Run:
+    return Run(
+        id=row.id,
+        request=row.request,
+        test_command=row.test_command,
+        status=RunStatus(row.status),
+        gate=row.gate,
+        error=row.error,
+        created_at=row.created_at,
+        updated_at=row.updated_at,
+    )

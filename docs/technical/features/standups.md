@@ -1,6 +1,6 @@
 # Standups (daily standup)
 
-**Status:** Done (Phase 1, step 4): built on request by API and command line; sending every morning comes with the job queue  
+**Status:** Done (Phase 1, steps 4–5): on request by API and command line, and sent every morning by the worker (to its log until email and WhatsApp)  
 **Code:** `backend/app/features/standups/` · `backend/app/workers/standup.py` · no frontend yet (comes with the admin page)  
 **Last updated:** 2026-10-01
 
@@ -50,10 +50,11 @@ Model use: 416,095 tokens.
 | Needs you | Runs whose last event is `approval.requested`: "Approve the release" |
 | Done | Tasks the CTO approved (`review.finished`, approve); runs released or stopped by the founder (`run.finished`) |
 | Planned today | Tasks of open runs that aren't done yet, with their state: to do, working, in review, changes requested |
-| Blocked | Tasks accepted with review comments still open (revision limit reached); runs stopped because the final checks failed; **stalled** runs (open, not waiting for approval, no events for `STANDUP_STALL_MINUTES`; usually a worker that stopped) |
+| Blocked | Tasks accepted with review comments still open (revision limit reached); runs stopped because the final checks failed; runs that broke and ran out of retries (`run.finished` status `error`); **stalled** runs (open, not waiting for approval, no events for `STANDUP_STALL_MINUTES`; usually a worker that stopped) |
 
 5. **Totals:** a one-line headline ("2 tasks done, 1 waiting for your approval, nothing blocked."), tasks sent back by the CTO, tokens used in the window, and one summary per project (status, tasks done of total, tokens).
 6. `render.py` turns it into plain text grouped by project: for the terminal now, for email and WhatsApp later.
+7. **Every morning:** the worker checks once a minute and, once it's past `STANDUP_HOUR`, queues a `standup.send` job for the day with a unique key (one per day, however many workers). The job builds the standup and hands it to a `StandupDelivery`: `LogDelivery` (the worker's log) for now. The job's `result` keeps the headline and where it went ([jobs.md](jobs.md)).
 
 ```mermaid
 flowchart LR
@@ -74,6 +75,8 @@ flowchart LR
 | `render.py` | `to_text()`: plain-text standup |
 | `router.py`, `dependencies.py` | API, wired to the Postgres event store and the standup settings |
 | `exceptions.py` | `StandupDayInFutureError` (400) |
+| `interfaces.py` · `delivery/log_delivery.py` | `StandupDelivery` Protocol; `LogDelivery` writes the standup to the worker's log |
+| `app/workers/handlers/standup.py` | `SendStandup` job and `standup_schedule()` (queues today's standup after the hour) |
 | `app/workers/standup.py` | Command line: print a standup |
 
 ## API
@@ -118,7 +121,7 @@ Consumes: `run.started` (project name), `task.assigned`, `work.started`, `work.f
 
 ## Known limitations and gotchas
 
-- Not sent anywhere yet: scheduling it every morning needs the job queue (next Phase 1 item); email and WhatsApp come in Phase 2.
+- Sent to the worker's log only: email and WhatsApp deliveries come in Phase 2 (new `StandupDelivery` classes). Turn the morning job off with `STANDUP_SCHEDULE=false`.
 - Not filtered by company yet: it covers every run. Add `company_id` filtering when the companies feature lands.
 - Runs from before the CTO step have one task ("Build the request"); runs from before the title clean-up show titles like "Task 1 – …". That's the log being faithful.
 - Abandoned runs (never approved, never rejected) stay under "Needs you" or "Blocked" until someone finishes them, which is deliberate. Close old test runs with `build_run resume <id> --reject`.
@@ -137,4 +140,5 @@ Consumes: `run.started` (project name), `task.assigned`, `work.started`, `work.f
 
 | Date | Change |
 | --- | --- |
+| 2026-10-01 | Sent every morning by the worker (`standup.send` job, `StandupDelivery`, `LogDelivery`); `error` runs listed under Blocked |
 | 2026-10-01 | Created: standup from the event log (needs you, done, planned, blocked), API, plain text, command line |

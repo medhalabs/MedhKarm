@@ -32,6 +32,11 @@ class StandupService:
     def today(self) -> date:
         return self._clock().astimezone(self._zone).date()
 
+    def due_day(self) -> date | None:
+        """Today, once it's past the standup hour (when today's standup should go out)."""
+        now = self._clock().astimezone(self._zone)
+        return now.date() if now.hour >= self._hour else None
+
     def window(self, day: date) -> tuple[datetime, datetime]:
         """The 24 hours up to `hour` on `day`, local time; cut off at now for today."""
         end = datetime.combine(day, time(self._hour), self._zone)

@@ -15,6 +15,7 @@ class ProjectStatus(StrEnum):
     RELEASED = "released"
     REJECTED = "rejected"
     FAILED = "failed"
+    ERROR = "error"  # something broke and the worker gave up
 
 
 class StandupItem(BaseModel):

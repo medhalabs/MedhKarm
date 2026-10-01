@@ -8,6 +8,7 @@ from app.core.errors import register_error_handlers
 from app.core.logging import configure_logging
 from app.features.events.router import router as events_router
 from app.features.health.router import router as health_router
+from app.features.runs.router import router as runs_router
 from app.features.standups.router import router as standups_router
 from app.features.teams.router import router as teams_router
 
@@ -28,6 +29,7 @@ def create_app() -> FastAPI:
 
     # Feature routers — add one line per feature.
     app.include_router(health_router)
+    app.include_router(runs_router)
     app.include_router(events_router)
     app.include_router(teams_router)
     app.include_router(standups_router)

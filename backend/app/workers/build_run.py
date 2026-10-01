@@ -15,39 +15,15 @@ import argparse
 import asyncio
 import json
 import uuid
-from collections.abc import AsyncIterator
-from contextlib import asynccontextmanager
 from typing import Any
 
-from app.core.config import Settings, get_settings
+from app.core.config import get_settings
 from app.core.database import session_factory
 from app.core.logging import configure_logging
 from app.features.events.service import EventService
 from app.features.events.stores.sql_store import SqlEventStore
-from app.features.workflows.checkpointer import postgres_checkpointer
-from app.features.workflows.graphs.build_app import build_app_graph
 from app.features.workflows.schemas import RunOutcome, StepUpdate
-from app.features.workflows.service import WorkflowService
-from app.workers.wiring import build_team_runtime
-
-
-@asynccontextmanager
-async def workflow_service(settings: Settings) -> AsyncIterator[WorkflowService]:
-    team = build_team_runtime(settings)
-    events = SqlEventStore(session_factory)
-    async with postgres_checkpointer(settings) as checkpointer:
-        graph = build_app_graph(
-            team.planner,
-            team.engine,
-            team.sandboxes,
-            checkpointer,
-            events=events,
-            planner_instructions=team.planner_instructions,
-            review_instructions=team.review_instructions,
-            developer_names=team.developer_names,
-            max_developers=team.max_developers,
-        )
-        yield WorkflowService(graph, events)
+from app.workers.wiring import workflow_service
 
 
 async def print_events(run_id: str) -> None:

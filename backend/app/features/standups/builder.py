@@ -17,7 +17,11 @@ from app.features.standups.schemas import (
 )
 
 NAME_LENGTH = 50
-FINISHED = {"released": ProjectStatus.RELEASED, "rejected": ProjectStatus.REJECTED}
+FINISHED = {
+    "released": ProjectStatus.RELEASED,
+    "rejected": ProjectStatus.REJECTED,
+    "error": ProjectStatus.ERROR,
+}
 
 
 @dataclass
@@ -128,6 +132,8 @@ def _replay(
                 report.done.append(item("Released", event))
             elif status == "rejected":
                 report.done.append(item("Stopped at your request", event))
+            elif status == "error":
+                report.blocked.append(item("Stopped: something went wrong", event))
             else:
                 report.blocked.append(item("Stopped: the final checks did not pass", event))
 

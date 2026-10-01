@@ -1,4 +1,4 @@
-"""Build graph: plan → (develop → review)* → verify → (release gate) → finish.
+"""Build graph: prepare → plan → (develop → review)* → verify → (release gate) → finish.
 
 The CTO plans tasks; for each task the assigned developer works and the CTO reviews, sending
 it back with changes if needed. Failed verification skips the gate: the founder is only asked
@@ -21,6 +21,7 @@ from app.features.workflows.nodes.approval import approval
 from app.features.workflows.nodes.develop import make_develop_node
 from app.features.workflows.nodes.finish import make_finish_node
 from app.features.workflows.nodes.plan import PLANNER_PROMPT, make_plan_node
+from app.features.workflows.nodes.prepare import make_prepare_node
 from app.features.workflows.nodes.review import REVIEW_PROMPT, after_review, make_review_node
 from app.features.workflows.nodes.verify import make_verify_node
 from app.features.workflows.state import BuildState
@@ -46,6 +47,7 @@ def build_app_graph(
     """`planner` is the CTO's model: it plans and reviews. The role settings normally come from
     the team template (see app/workers/wiring.py)."""
     graph = StateGraph(BuildState)
+    graph.add_node("prepare", make_prepare_node(sandboxes))
     graph.add_node(
         "plan",
         make_plan_node(
@@ -61,7 +63,8 @@ def build_app_graph(
     graph.add_node("approval", approval)
     graph.add_node("finish", make_finish_node(sandboxes))
 
-    graph.add_edge(START, "plan")
+    graph.add_edge(START, "prepare")
+    graph.add_edge("prepare", "plan")
     graph.add_edge("plan", "develop")
     graph.add_edge("develop", "review")
     graph.add_conditional_edges("review", after_review, ["develop", "verify"])

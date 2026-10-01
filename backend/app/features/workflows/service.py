@@ -59,6 +59,14 @@ class WorkflowService:
         )
         return await self._run(run_id, decision, on_step)
 
+    async def continue_run(self, run_id: str, on_step: OnStep | None = None) -> RunOutcome:
+        """Carry on from the last checkpoint after a worker stopped mid-run. The interrupted
+        step starts again from its beginning, in the same sandbox."""
+        await self._recorder(run_id).record(
+            Actor.SYSTEM, EventType.RUN_RESUMED, "Picked up again after an interruption"
+        )
+        return await self._run(run_id, None, on_step)
+
     async def get(self, run_id: str) -> RunOutcome:
         return await self._outcome(run_id)
 
@@ -92,5 +100,6 @@ class WorkflowService:
             run_id=run_id,
             waiting_for_approval=bool(interrupts),
             gate=interrupts[0].value if interrupts else None,
+            next_nodes=list(snapshot.next),
             state=dict(snapshot.values),
         )

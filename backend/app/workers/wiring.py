@@ -2,16 +2,23 @@
 API, workers) call this; features only ever see interfaces (dependency inversion)."""
 
 import os
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from dataclasses import dataclass
 
 from app.core.config import Settings
+from app.core.database import session_factory
 from app.features.developer_engine.interfaces import DeveloperEngine
+from app.features.events.stores.sql_store import SqlEventStore
 from app.features.models.interfaces import LLMProvider
 from app.features.models.service import build_provider, resolve_model_config
 from app.features.sandbox.interfaces import SandboxProvider
 from app.features.teams.loader import load_templates
 from app.features.teams.schemas import RoleSpec, TeamTemplate
 from app.features.teams.service import TeamService
+from app.features.workflows.checkpointer import postgres_checkpointer
+from app.features.workflows.graphs.build_app import build_app_graph
+from app.features.workflows.service import WorkflowService
 
 
 @dataclass(frozen=True)
@@ -42,6 +49,28 @@ def build_team_runtime(settings: Settings) -> TeamRuntime:
         engine=engine,
         sandboxes=sandboxes,
     )
+
+
+@asynccontextmanager
+async def workflow_service(
+    settings: Settings, team: TeamRuntime | None = None
+) -> AsyncIterator[WorkflowService]:
+    """A workflow service on Postgres (checkpoints and events), for one command or one job."""
+    team = team or build_team_runtime(settings)
+    events = SqlEventStore(session_factory)
+    async with postgres_checkpointer(settings) as checkpointer:
+        graph = build_app_graph(
+            team.planner,
+            team.engine,
+            team.sandboxes,
+            checkpointer,
+            events=events,
+            planner_instructions=team.planner_instructions,
+            review_instructions=team.review_instructions,
+            developer_names=team.developer_names,
+            max_developers=team.max_developers,
+        )
+        yield WorkflowService(graph, events)
 
 
 def build_engine(

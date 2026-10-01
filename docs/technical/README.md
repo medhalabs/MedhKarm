@@ -31,4 +31,6 @@ Knowledge transfer for anyone working on the code: what each part is, how it wor
 | teams | [features/teams.md](features/teams.md) | Team templates; software team |
 | events | [features/events.md](features/events.md) | Activity log: append-only, API with live stream |
 | evals | [features/evals.md](features/evals.md) | 20 tasks, validator, runner, reports |
-| standups | [features/standups.md](features/standups.md) | Daily standup from the activity log: API and CLI |
+| standups | [features/standups.md](features/standups.md) | Daily standup from the activity log: API, CLI, sent each morning by the worker |
+| runs | [features/runs.md](features/runs.md) | Start, list and approve build runs over HTTP |
+| jobs | [features/jobs.md](features/jobs.md) | Postgres job queue and the worker: builds and the morning standup |

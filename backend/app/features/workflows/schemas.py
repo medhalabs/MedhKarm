@@ -19,4 +19,5 @@ class RunOutcome(BaseModel):
     run_id: str
     waiting_for_approval: bool
     gate: dict[str, Any] | None = None  # what the founder is asked, when waiting
+    next_nodes: list[str] = Field(default_factory=list)  # left to run (stopped mid-way if any)
     state: dict[str, Any] = Field(default_factory=dict)

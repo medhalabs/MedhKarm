@@ -45,6 +45,23 @@ uv run uvicorn app.main:app --reload --port 8000
 
 ### Run a build (agents writing code)
 
+The normal way: the API and a worker, each in its own terminal. Both need `OLLAMA_API_KEY` in `backend/.env` and Docker running (steps 1–2 below).
+
+```bash
+uv run uvicorn app.main:app --port 8000     # terminal 1
+uv run python -m app.workers.main           # terminal 2 (run more for more capacity)
+```
+
+```bash
+curl -X POST 127.0.0.1:8000/runs -H 'content-type: application/json' \
+  -d '{"request": "Create slugify.py with slugify(text) and pytest tests in test_slugify.py", "test_command": "pip install -q pytest >/dev/null 2>&1; python -m pytest -q"}'
+curl 127.0.0.1:8000/runs/<run_id>                       # status: queued, running, waiting_for_approval, ...
+curl 127.0.0.1:8000/runs/<run_id>/events                # what the team did
+curl -X POST 127.0.0.1:8000/runs/<run_id>/approval -H 'content-type: application/json' -d '{"approved": true}'
+```
+
+Or from the command line, without the API or a worker:
+
 1. Get an Ollama Cloud key at https://ollama.com/settings/keys and set `OLLAMA_API_KEY` in `backend/.env`. Never commit it.
 2. Make sure Docker Desktop and Postgres (`docker compose up -d`) are running.
 3. Start a run. It plans, writes code in a fresh Docker sandbox, re-runs the tests, then pauses at the release gate:

@@ -51,8 +51,8 @@ Goal: a general engine where a team is defined by config, its work is checked, a
 - [ ] Swappable checking step: tests, human review, approval rules (interface and tests checker done; human review and approval rules come with later teams)
 - [x] Team Lead agent that plans, assigns and reviews. Done Oct 1, 2026: Kabir (CTO) splits work into tasks, assigns developers by name, reviews each task and sends it back with changes
 - [x] Append-only event log: actions, messages, tool calls, costs, approvals; detailed enough to drive the animated office (who is doing what, task hand-offs, messages). Done Oct 1, 2026: API with live stream
-- [x] Daily standup generated from the event log (done, planned, blocked, needs approval). Done Oct 1, 2026: built from the log with no model call, by API and command line; sending it every morning comes with the job queue ([standups.md](technical/features/standups.md))
-- [ ] API endpoints and a job queue, so runs start and approvals happen over HTTP, not the command line
+- [x] Daily standup generated from the event log (done, planned, blocked, needs approval). Done Oct 1, 2026: built from the log with no model call, by API and command line, and sent every morning by the worker ([standups.md](technical/features/standups.md))
+- [x] API endpoints and a job queue, so runs start and approvals happen over HTTP, not the command line. Done Oct 1, 2026: `POST /runs`, approval over HTTP, Postgres job queue; a worker killed mid-run is taken over by another and the build carries on; standup sent every morning ([jobs.md](technical/features/jobs.md), [runs.md](technical/features/runs.md))
 - [ ] Approval rules on top of fixed gates
 - [ ] Tools through MCP, with per-agent access limits
 - [ ] Bare admin page to watch runs

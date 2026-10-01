@@ -1,7 +1,7 @@
 # Workflows
 
 **Status:** Build graph with CTO planning and review (Phase 1)  
-**Code:** `backend/app/features/workflows/` · entry point `backend/app/workers/build_run.py`  
+**Code:** `backend/app/features/workflows/` · run by the worker's build jobs (`backend/app/workers/handlers/build.py`, see [jobs.md](jobs.md)) or the command line (`backend/app/workers/build_run.py`)  
 **Last updated:** 2026-10-01
 
 ## What it is
@@ -12,7 +12,8 @@ The sequence of steps a build goes through, run by LangGraph: the CTO plans task
 
 ```mermaid
 flowchart LR
-    S((start)) --> P[plan<br/>CTO splits into tasks,<br/>assigns developers]
+    S((start)) --> PR[prepare<br/>create the sandbox]
+    PR --> P[plan<br/>CTO splits into tasks,<br/>assigns developers]
     P --> D[develop<br/>assigned developer<br/>works on current task]
     D --> R{review<br/>CTO checks the task}
     R -->|send back with changes| D
@@ -24,14 +25,17 @@ flowchart LR
     F --> E((end))
 ```
 
+0. **prepare** — creates the run's sandbox (unless one was given, as the eval runner does), so its id is saved in a checkpoint before any work. A retry or another worker then re-attaches to it instead of creating a new one.
 1. **plan** — the CTO (template role `cto`: model and `instructions`) answers with the `submit_plan` tool: a summary, how many developers to use, and 1–5 tasks in order. `assign()` gives each task an id (`t1`…) and an owner, round-robin over the developers' names (up to the developer role's `max_count`). The plan is read leniently (see `cto.py`): small models name fields their own way, and if no usable plan comes back the fallback is one task covering the whole request.
-2. **develop** — creates the run's sandbox (or re-attaches by id); the current task's owner works on it through the `DeveloperEngine`. The brief has the request, the CTO's plan, "your task (i of n)", and, on a second attempt, the CTO's requested changes. Tasks run one after another in the same workspace, so later tasks build on earlier ones.
+2. **develop** — re-attaches to the run's sandbox by id; the current task's owner works on it through the `DeveloperEngine`. The brief has the request, the CTO's plan, "your task (i of n)", and, on a second attempt, the CTO's requested changes. Tasks run one after another in the same workspace, so later tasks build on earlier ones.
 3. **review** — if the task's tests failed, it goes straight back to the developer with the test output (no model call). Otherwise the CTO reads the task, the developer's summary and the changed files (up to 6, 1,500 characters each) and answers with `submit_review`: approve, or revise with specific changes. A task gets at most `max_revisions` (default 1) rounds of changes; after that the run moves on (`done_with_issues`) and QA's final check decides. A review the CTO doesn't format properly counts as approval, so a format slip never blocks a run.
 3. **verify** — asks the run's `WorkChecker` whether the work is good. For software that's `TestCommandChecker`: it re-runs the test command in the same sandbox. QA never trusts the developer's report. Human review (content team) and approval rules (operations team) will be other checkers.
 4. **approval** — only reached if tests pass. `interrupt()` saves the run and stops, returning the gate details (summary, files changed, test output). Resuming with `Command(resume={"approved": ..., "feedback": ...})` continues from here.
 5. **finish** — destroys the sandbox and sets `status`: `released`, `rejected` or `failed`.
 
 The run id is LangGraph's `thread_id`; each checkpoint is stored under it.
+
+**After an interruption** (a worker died or was stopped mid-run), `WorkflowService.continue_run()` carries on from the last checkpoint: the interrupted step starts again from its beginning, in the same sandbox, and a `run.resumed` event is recorded. `RunOutcome.next_nodes` says whether a run stopped part-way (steps left, no gate) — the worker's build handlers use it to decide between start, continue and resume.
 
 ## Code map
 
@@ -42,6 +46,7 @@ The run id is LangGraph's `thread_id`; each checkpoint is stored under it.
 | `checkers/test_command.py` | `TestCommandChecker`: runs the test command |
 | `nodes/base.py` | `BuildNode` Protocol: the shape every node factory returns |
 | `cto.py` | The CTO's plan and review as data: `submit_plan` / `submit_review` tools, lenient parsing, `assign()` |
+| `nodes/prepare.py` | First node: creates the sandbox |
 | `nodes/plan.py` | CTO planning node |
 | `nodes/review.py` | CTO review node and `after_review` routing |
 | `nodes/develop.py` | Developer node: current task, sandbox, totals across tasks |
@@ -50,15 +55,15 @@ The run id is LangGraph's `thread_id`; each checkpoint is stored under it.
 | `nodes/finish.py` | Outcome + sandbox cleanup |
 | `graphs/build_app.py` | Wires the nodes and edges; takes its dependencies as arguments |
 | `checkpointer.py` | Opens the Postgres checkpointer and creates its tables |
-| `service.py` | `WorkflowService`: `start`, `resume`, `get`; reports each step through a callback |
+| `service.py` | `WorkflowService`: `start`, `resume`, `continue_run`, `get`; reports each step through a callback |
 | `schemas.py` | `CheckResult`, `StepUpdate`, `RunOutcome` |
 | `activity.py` | `record_step()`: what each step means in the activity log |
 | `app/workers/build_run.py` | Command-line entry point |
-| `app/workers/wiring.py` | `build_engine()`: picks the developer engine and sandbox from settings (shared by `build_run` and `run_evals`) |
+| `app/workers/wiring.py` | `build_engine()`: picks the developer engine and sandbox from settings; `workflow_service()`: the Postgres-backed service used by `build_run` and the worker |
 
 ## API
 
-No HTTP endpoints yet. Command line:
+Runs start and get approved over HTTP through the runs feature ([runs.md](runs.md)), which queues jobs for the worker ([jobs.md](jobs.md)). The command line still works, for quick local runs:
 
 ```bash
 uv run python -m app.workers.build_run start --request "..." --test-command "..." [--engine builtin|openhands]
@@ -107,7 +112,7 @@ LangGraph creates and owns its tables in our Postgres (`checkpoints`, `checkpoin
 - The eval suite's results predate the CTO step; rerun it before comparing.
 - One fixed graph; per-template graphs (PM → CTO → Dev → QA → DevOps) come in Phase 1–2.
 - No retry loop from verify back to develop yet.
-- Runs are started from the command line; API endpoints and a worker queue come in Phase 1.
+- In the default `python:3.13-slim` sandbox there is no pytest; with a bare `pytest` test command, developers have written a fake `pytest.py` to make the command pass, and the CTO approved it. Use `medhkarm-sandbox:dev` or install pytest in the test command until the review catches this.
 
 ## Troubleshooting
 
@@ -121,6 +126,7 @@ LangGraph creates and owns its tables in our Postgres (`checkpoints`, `checkpoin
 
 | Date | Change |
 | --- | --- |
+| 2026-10-01 | `prepare` node creates the sandbox first (retries no longer leak containers); `continue_run()` and `RunOutcome.next_nodes` for runs interrupted mid-way; runs normally start through the job queue |
 | 2026-10-01 | CTO agent: plans tasks, assigns developers by name, reviews each task and sends it back with changes; CTO tokens recorded |
 | 2026-10-01 | Planner takes its instructions from the team template (`planner_instructions`) |
 | 2026-10-01 | Activity log: steps and approvals recorded as events |

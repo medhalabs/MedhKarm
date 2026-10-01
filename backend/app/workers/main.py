@@ -1,25 +1,80 @@
-"""Background worker entry point.
+"""Background worker: runs queued jobs (build runs, the morning standup).
 
-Long-running work (LangGraph runs, sandbox jobs, evals) runs here, never inside an API request.
-The job queue (arq on Redis, or a Postgres job table) is chosen in Phase 1; until then this
-only proves the entry point starts.
+    uv run python -m app.workers.main
+
+Run as many as you like; they share the Postgres job queue. Ctrl+C hands running jobs back to
+the queue, and a worker that dies has its jobs picked up again once their lease runs out.
 """
 
+import asyncio
 import logging
+import os
+import signal
+import socket
+from contextlib import AbstractAsyncContextManager
+from datetime import timedelta
 
 from app.core.config import get_settings
+from app.core.database import session_factory
 from app.core.logging import configure_logging
+from app.features.events.stores.sql_store import SqlEventStore
+from app.features.jobs.interfaces import JobHandler
+from app.features.jobs.service import JobRunner
+from app.features.jobs.stores.sql_queue import SqlJobQueue
+from app.features.runs.repository import SqlRunRepository
+from app.features.runs.service import RESUME_JOB, START_JOB, RunService
+from app.features.standups.delivery.log_delivery import LogDelivery
+from app.features.standups.dependencies import get_standup_service
+from app.features.workflows.service import WorkflowService
+from app.workers.handlers.build import ResumeBuild, StartBuild
+from app.workers.handlers.standup import SEND_STANDUP, SendStandup, standup_schedule
+from app.workers.wiring import build_team_runtime, workflow_service
 
 logger = logging.getLogger(__name__)
 
 
-def main() -> None:
+async def main() -> None:
     configure_logging()
     settings = get_settings()
-    logger.info(
-        "Worker started (environment=%s). No job queue configured yet.", settings.environment
+    queue = SqlJobQueue(session_factory)
+    events = SqlEventStore(session_factory)
+    runs = RunService(SqlRunRepository(session_factory), queue, settings.build_max_attempts)
+    team = build_team_runtime(settings)
+    standups = get_standup_service()
+
+    def workflow() -> AbstractAsyncContextManager[WorkflowService]:
+        return workflow_service(settings, team)
+
+    handlers: dict[str, JobHandler] = {
+        START_JOB: StartBuild(runs, workflow, team.sandboxes, events),
+        RESUME_JOB: ResumeBuild(runs, workflow, team.sandboxes, events),
+        SEND_STANDUP: SendStandup(standups, LogDelivery()),
+    }
+    runner = JobRunner(
+        queue,
+        handlers,
+        worker_id=f"{socket.gethostname()}-{os.getpid()}",
+        lease=timedelta(seconds=settings.job_lease_seconds),
+        retry_base=timedelta(seconds=settings.job_retry_seconds),
+        concurrency=settings.worker_concurrency,
+        poll_seconds=settings.worker_poll_seconds,
+        periodic=[standup_schedule(queue, standups)] if settings.standup_schedule else [],
     )
+
+    stop = asyncio.Event()
+    loop = asyncio.get_running_loop()
+    for sig in (signal.SIGINT, signal.SIGTERM):
+        loop.add_signal_handler(sig, stop.set)
+    logger.info(
+        "Worker %s started: %s jobs at once, %s engine, team %s",
+        runner.worker_id,
+        settings.worker_concurrency,
+        settings.developer_engine,
+        team.template.id,
+    )
+    await runner.run_forever(stop)
+    logger.info("Worker %s stopped", runner.worker_id)
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
