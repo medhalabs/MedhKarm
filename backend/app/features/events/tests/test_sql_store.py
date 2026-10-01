@@ -2,6 +2,7 @@
 Skipped by default; run with `uv run pytest -m integration`."""
 
 import uuid
+from datetime import UTC, datetime, timedelta
 
 import pytest
 from sqlalchemy import text
@@ -61,3 +62,20 @@ async def test_database_refuses_updates_and_deletes() -> None:
         async with sessions() as session:
             with pytest.raises(DBAPIError, match="append-only"):
                 await session.execute(text(statement), {"id": event.id})
+
+
+async def test_runs_between_and_latest_per_run() -> None:
+    store, _ = make_store()
+    run_id = f"test-{uuid.uuid4().hex[:8]}"
+    before = datetime.now(UTC)
+    await store.append(
+        [
+            NewEvent(run_id=run_id, actor=Actor.FOUNDER, type=EventType.RUN_STARTED, summary="a"),
+            NewEvent(run_id=run_id, actor=Actor.CTO, type=EventType.PLAN_CREATED, summary="b"),
+        ]
+    )
+    after = datetime.now(UTC) + timedelta(seconds=1)
+
+    assert run_id in await store.run_ids_between(before - timedelta(seconds=1), after)
+    latest = {e.run_id: e for e in await store.latest_per_run(after)}
+    assert latest[run_id].summary == "b"

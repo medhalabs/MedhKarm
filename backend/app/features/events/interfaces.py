@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Protocol
 
 from app.features.events.schemas import Event, NewEvent, RunTotals
@@ -13,3 +14,11 @@ class EventStore(Protocol):
     ) -> list[Event]: ...
 
     async def totals_for_run(self, run_id: str) -> RunTotals: ...
+
+    async def run_ids_between(self, since: datetime, until: datetime) -> list[str]:
+        """Runs with at least one event in [since, until)."""
+        ...
+
+    async def latest_per_run(self, until: datetime) -> list[Event]:
+        """The last event of every run, counting only events before `until`."""
+        ...

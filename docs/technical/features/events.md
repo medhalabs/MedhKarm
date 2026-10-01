@@ -1,7 +1,7 @@
 # Events (activity log)
 
 **Status:** Done (Phase 1, step 1)  
-**Code:** `backend/app/features/events/` · migration `backend/alembic/versions/0001_events.py`  
+**Code:** `backend/app/features/events/` · migrations `backend/alembic/versions/0001_events.py`, `0002_events_time_index.py`  
 **Last updated:** 2026-10-01
 
 ## What it is
@@ -55,7 +55,7 @@ A real run, from the CLI:
 | --- | --- |
 | `schemas.py` | `EventType`, `Actor`, `NewEvent`, `Event`, `RunTotals`, `FINAL_TYPES` |
 | `models.py` | `EventRow`: the `events` table |
-| `interfaces.py` | `EventStore` Protocol: `append`, `list_for_run`, `totals_for_run` |
+| `interfaces.py` | `EventStore` Protocol: `append`, `list_for_run`, `totals_for_run`, and for the standup `run_ids_between` (runs active in a time window) and `latest_per_run` (each run's last event before a time) |
 | `stores/sql_store.py` | `SqlEventStore`: Postgres, one short transaction per call |
 | `stores/memory_store.py` | `InMemoryEventStore`: tests and evals |
 | `service.py` | `RunRecorder` (writing, failure-safe) and `EventService` (reading, live stream) |
@@ -78,7 +78,7 @@ Table `events` (migration `0001_events`, which also enables the `vector` extensi
 | Column | Type | Notes |
 | --- | --- | --- |
 | `id` | bigint, primary key | Increases with every event: the order things happened |
-| `occurred_at` | timestamptz | Set by the database |
+| `occurred_at` | timestamptz | Set by the database. Index `ix_events_occurred_at` (migration `0002`) for time-window queries |
 | `company_id` | uuid, nullable | Becomes required, with row-level security, when the companies feature lands |
 | `run_id` | varchar(100) | Index `(run_id, id)` for fast "events of this run after X" |
 | `actor` | varchar(40) | `founder`, `system`, or a team role id: `pm`, `cto`, `developer`, `qa`, `devops` |
@@ -95,7 +95,7 @@ This feature *is* the event log. Other features call `RunRecorder.record()`.
 
 ## Dependencies
 
-- **Used by:** `workflows`, `developer_engine` (through `RunRecorder` and `EventStore`)
+- **Used by:** `workflows`, `developer_engine` (through `RunRecorder` and `EventStore`); `standups` (reads through its own `ActivityLog` Protocol, which `EventStore` satisfies)
 - **External services:** Postgres
 - **Config:** `DATABASE_URL`
 
@@ -133,5 +133,6 @@ This feature *is* the event log. Other features call `RunRecorder.record()`.
 
 | Date | Change |
 | --- | --- |
+| 2026-10-01 | `run_ids_between` and `latest_per_run` store queries and an `occurred_at` index (migration `0002`) for the daily standup; `InMemoryEventStore.now` lets tests set event times |
 | 2026-10-01 | `task.assigned` and `review.finished` events; `member`/`task_id` context on task events; CTO tokens recorded |
 | 2026-10-01 | Created: append-only events table, recorder, store, API with live stream, CLI view; workflow and engines record events |

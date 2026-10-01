@@ -1,5 +1,7 @@
 """EventStore on Postgres. One short transaction per call: safe from the API and workers alike."""
 
+from datetime import datetime
+
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
@@ -38,6 +40,28 @@ class SqlEventStore:
         async with self._sessions() as session:
             count, tokens = (await session.execute(query)).one()
         return RunTotals(run_id=run_id, events=int(count), tokens=int(tokens))
+
+    async def run_ids_between(self, since: datetime, until: datetime) -> list[str]:
+        query = (
+            select(EventRow.run_id)
+            .where(EventRow.occurred_at >= since, EventRow.occurred_at < until)
+            .group_by(EventRow.run_id)
+            .order_by(func.min(EventRow.id))
+        )
+        async with self._sessions() as session:
+            return list((await session.scalars(query)).all())
+
+    async def latest_per_run(self, until: datetime) -> list[Event]:
+        last_ids = (
+            select(func.max(EventRow.id))
+            .where(EventRow.occurred_at < until)
+            .group_by(EventRow.run_id)
+            .scalar_subquery()
+        )
+        query = select(EventRow).where(EventRow.id.in_(last_ids)).order_by(EventRow.id)
+        async with self._sessions() as session:
+            rows = (await session.scalars(query)).all()
+        return [_to_event(row) for row in rows]
 
 
 def _to_event(row: EventRow) -> Event:

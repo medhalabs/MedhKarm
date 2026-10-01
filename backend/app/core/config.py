@@ -33,6 +33,12 @@ class Settings(BaseSettings):
     # Which team template runs builds (app/features/teams/templates/<id>.toml)
     team_template: str = "software"
 
+    # Daily standup: covers 24 hours up to this hour, in this time zone
+    standup_timezone: str = "Asia/Kolkata"
+    standup_hour: int = 9
+    # A run with no activity for this long (and not waiting for approval) is reported as stalled
+    standup_stall_minutes: int = 120
+
     # Developer engine: "builtin" (ToolLoopEngine + plain Docker sandbox)
     # or "openhands" (OpenHands agent + OpenHands agent-server sandbox)
     developer_engine: Literal["builtin", "openhands"] = "builtin"

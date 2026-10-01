@@ -27,4 +27,7 @@ class EventRow(Base):
     data: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, server_default="{}")
     tokens: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
 
-    __table_args__ = (Index("ix_events_run_id_id", "run_id", "id"),)
+    __table_args__ = (
+        Index("ix_events_run_id_id", "run_id", "id"),
+        Index("ix_events_occurred_at", "occurred_at"),
+    )

@@ -1,4 +1,5 @@
 import json
+from datetime import UTC, datetime, timedelta
 
 from app.features.events.schemas import Actor, EventType, NewEvent
 from app.features.events.service import EventService, RunRecorder
@@ -68,3 +69,16 @@ async def test_stream_gives_up_when_idle() -> None:
     chunks = [c async for c in service.stream("quiet-run", max_idle_seconds=0.03)]
 
     assert chunks and all(c == ": keep-alive\n\n" for c in chunks)
+
+
+async def test_memory_store_window_queries() -> None:
+    store = InMemoryEventStore()
+    store.now = datetime(2026, 10, 1, tzinfo=UTC)
+    await RunRecorder(store, "old").record(Actor.SYSTEM, EventType.RUN_STARTED, "a")
+    store.now += timedelta(days=1)
+    await RunRecorder(store, "new").record(Actor.SYSTEM, EventType.RUN_STARTED, "b")
+    await RunRecorder(store, "old").record(Actor.SYSTEM, EventType.RUN_FINISHED, "c")
+
+    assert await store.run_ids_between(store.now, store.now + timedelta(hours=1)) == ["new", "old"]
+    latest = await store.latest_per_run(store.now)  # before the second day's events
+    assert [(e.run_id, e.summary) for e in latest] == [("old", "a")]
