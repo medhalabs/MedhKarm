@@ -12,6 +12,8 @@ class EventType(StrEnum):
     RUN_RESUMED = "run.resumed"
     RUN_FINISHED = "run.finished"
     PLAN_CREATED = "plan.created"
+    TASK_ASSIGNED = "task.assigned"
+    REVIEW_FINISHED = "review.finished"
     WORK_STARTED = "work.started"
     TOOL_USED = "tool.used"
     MODEL_USED = "model.used"

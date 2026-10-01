@@ -87,6 +87,9 @@ async def run(settings: Settings, only: list[str] | None, parallel: int) -> int:
         sandboxes,
         InMemorySaver(),
         planner_instructions=team.planner_instructions,
+        review_instructions=team.review_instructions,
+        developer_names=team.developer_names,
+        max_developers=team.max_developers,
     )
     runner = EvalRunner(WorkflowService(graph), sandboxes, prepare_command=prepare)
 

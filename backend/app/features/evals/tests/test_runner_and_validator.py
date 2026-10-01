@@ -69,6 +69,7 @@ async def test_pass_needs_visible_and_hidden(tmp_path: Path) -> None:
             call("write_file", path="fixed.py", content="ok"),
             call("write_file", path="done.txt", content="ok"),
             call("finish", summary="Fixed"),
+            call("submit_review", decision="approve", feedback=""),
         ]
     )
 
@@ -85,6 +86,7 @@ async def test_visible_pass_but_hidden_fail(tmp_path: Path) -> None:
             LLMResponse(content="plan"),
             call("write_file", path="fixed.py", content="ok"),
             call("finish", summary="Fixed"),
+            call("submit_review", decision="approve", feedback=""),
         ]
     )
 
@@ -95,7 +97,11 @@ async def test_visible_pass_but_hidden_fail(tmp_path: Path) -> None:
 
 async def test_visible_fail_skips_hidden(tmp_path: Path) -> None:
     runner, sandboxes = make_runner(
-        [LLMResponse(content="plan"), call("finish", summary="Nothing")]
+        [
+            LLMResponse(content="plan"),
+            call("finish", summary="Nothing"),
+            call("finish", summary="Again"),
+        ]
     )
 
     outcome = await runner.run(make_task(tmp_path))

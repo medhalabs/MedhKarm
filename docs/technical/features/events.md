@@ -21,9 +21,11 @@ The log is **append-only**: the database refuses to change or delete an event, s
 
 | Recorded by | Events |
 | --- | --- |
-| `WorkflowService` (workflows) | `run.started`, `plan.created`, `work.finished`, `check.finished`, `approval.requested`, `approval.decided`, `run.finished` |
+| `WorkflowService` (workflows) | `run.started`, `plan.created`, `task.assigned` (one per task: "Assigned “CSV export” to Isha”), `work.finished`, `review.finished` ("Approved …" or "Sent … back to Isha: …"), `check.finished`, `approval.requested`, `approval.decided`, `run.finished`; `model.used` for the CTO's plan and review calls |
 | Develop node (workflows) | `work.started` |
 | Developer engines | `tool.used` (one per tool call, e.g. "Wrote calc.py", "Ran `python -m pytest -q` (exit 0)"), `model.used` (one per model call, with tokens; OpenHands records its total once) |
+
+Events about one developer's task carry `member` (e.g. "Isha") and `task_id` in `data` (`RunRecorder.with_context()`), so the office knows who to animate.
 
 Token counts live **only** on `model.used` events, so summing `tokens` gives a run's true cost with no double counting.
 
@@ -131,4 +133,5 @@ This feature *is* the event log. Other features call `RunRecorder.record()`.
 
 | Date | Change |
 | --- | --- |
+| 2026-10-01 | `task.assigned` and `review.finished` events; `member`/`task_id` context on task events; CTO tokens recorded |
 | 2026-10-01 | Created: append-only events table, recorder, store, API with live stream, CLI view; workflow and engines record events |

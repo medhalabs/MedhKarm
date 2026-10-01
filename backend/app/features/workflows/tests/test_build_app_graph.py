@@ -5,7 +5,7 @@ from langgraph.checkpoint.memory import InMemorySaver
 from app.features.developer_engine.engines.tool_loop_engine import ToolLoopEngine
 from app.features.events.stores.memory_store import InMemoryEventStore
 from app.features.models.providers.scripted_provider import ScriptedLLMProvider
-from app.features.models.schemas import LLMResponse, ToolCall
+from app.features.models.schemas import LLMResponse, TokenUsage, ToolCall
 from app.features.sandbox.providers.memory_provider import InMemorySandboxProvider
 from app.features.sandbox.schemas import CommandResult
 from app.features.workflows.graphs.build_app import build_app_graph
@@ -17,9 +17,19 @@ def _call(name: str, **arguments: str) -> LLMResponse:
 
 
 def _script(write_app: bool) -> list[LLMResponse]:
-    plan = LLMResponse(content="1. Write app.py")
-    work = [_call("write_file", path="app.py", content="x = 1")] if write_app else []
-    return [plan, *work, _call("finish", summary="Done")]
+    """Plan (numbered text: one task) → developer → CTO review. Without app.py the tests fail,
+    so the CTO sends it back once (no model call) and the developer tries again."""
+    plan = LLMResponse(content="1. Write app.py", usage=TokenUsage(prompt_tokens=40))
+    if not write_app:
+        return [plan, _call("finish", summary="Done"), _call("finish", summary="Still done")]
+    approve = _call("submit_review", decision="approve", feedback="")
+    approve.usage = TokenUsage(prompt_tokens=30)
+    return [
+        plan,
+        _call("write_file", path="app.py", content="x = 1"),
+        _call("finish", summary="Done"),
+        approve,
+    ]
 
 
 def _tests_pass_if_app_exists(command: str, files: dict[str, str]) -> CommandResult:
@@ -75,7 +85,7 @@ async def test_reports_each_step() -> None:
 
     await service.start("run-4", "Build app", "pytest", on_step=lambda s: seen.append(s.node))
 
-    assert seen == ["plan", "develop", "verify"]
+    assert seen == ["plan", "develop", "review", "verify"]
 
 
 async def test_activity_log_tells_the_story_of_a_run() -> None:
@@ -91,12 +101,16 @@ async def test_activity_log_tells_the_story_of_a_run() -> None:
     types = [e.type for e in store.events]
     assert types == [
         "run.started",
+        "model.used",  # CTO plans
         "plan.created",
+        "task.assigned",
         "work.started",
         "model.used",
         "tool.used",
         "model.used",
         "work.finished",
+        "model.used",  # CTO reviews
+        "review.finished",
         "check.finished",
         "approval.requested",
         "approval.decided",
@@ -104,4 +118,9 @@ async def test_activity_log_tells_the_story_of_a_run() -> None:
     ]
     assert all(e.run_id == "run-9" for e in store.events)
     assert next(e for e in store.events if e.type == "tool.used").summary == "Wrote app.py"
+    assert next(e for e in store.events if e.type == "task.assigned").data["member"] == "Developer"
+    assert next(e for e in store.events if e.type == "review.finished").summary.startswith(
+        "Approved"
+    )
+    assert sum(e.tokens for e in store.events if e.actor == "cto") == 70
     assert store.events[-1].summary == "Released"

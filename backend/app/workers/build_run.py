@@ -17,6 +17,7 @@ import json
 import uuid
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from typing import Any
 
 from app.core.config import Settings, get_settings
 from app.core.database import session_factory
@@ -42,6 +43,9 @@ async def workflow_service(settings: Settings) -> AsyncIterator[WorkflowService]
             checkpointer,
             events=events,
             planner_instructions=team.planner_instructions,
+            review_instructions=team.review_instructions,
+            developer_names=team.developer_names,
+            max_developers=team.max_developers,
         )
         yield WorkflowService(graph, events)
 
@@ -61,12 +65,19 @@ def print_step(step: StepUpdate) -> None:
     if step.node == "plan":
         print(f"\n[plan]\n{data.get('plan', '')}")
     elif step.node == "develop":
-        dev = data.get("dev_result", {})
+        tasks: list[dict[str, Any]] = data.get("tasks", [])
+        task: dict[str, Any] = next((t for t in tasks if t.get("status") == "review"), {})
         print(
-            f"\n[develop] success={dev.get('success')} steps={dev.get('steps')} "
-            f"tokens={dev.get('total_tokens')}\n  summary: {dev.get('summary')}\n"
-            f"  files: {', '.join(dev.get('files_changed', []))}"
+            f'\n[develop] {task.get("owner")} on "{task.get("title")}" '
+            f"(attempt {task.get('attempts')}): tests passed={task.get('success')}\n"
+            f"  summary: {task.get('summary')}\n  files: {', '.join(task.get('files_changed', []))}"
         )
+    elif step.node == "review":
+        review = data.get("last_review", {})
+        verdict = "approved" if review.get("decision") == "approve" else "sent back"
+        print(f'\n[review] Kabir {verdict} "{review.get("title")}"')
+        if review.get("decision") != "approve":
+            print("  " + str(review.get("feedback", ""))[:300].replace("\n", "\n  "))
     elif step.node == "verify":
         print(f"\n[verify] tests passed={data.get('verified')}")
         print("  " + str(data.get("verify_output", "")).strip().replace("\n", "\n  "))

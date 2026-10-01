@@ -9,6 +9,7 @@ class RoleSpec(BaseModel):
     display_names: list[str] = Field(min_length=1)  # names shown in the office, in order
     responsibilities: str  # one line for the founder
     instructions: str = ""  # the agent's system prompt; empty for roles that don't use a model
+    review_instructions: str = ""  # for roles that review others' work (the CTO)
     tools: list[str] = Field(default_factory=list)
     model: str | None = None  # LiteLLM model name; None = the default model
     max_steps: int | None = Field(default=None, ge=1, le=200)

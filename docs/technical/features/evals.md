@@ -125,6 +125,7 @@ None.
 
 ## Known limitations and gotchas
 
+- All results above predate the CTO planning and review step (Oct 1, 2026); rerun the suite before comparing.
 - Model outages are reported as **errored**, not failed, and aren't scored. The summary prints the command to rerun them.
 
 - 20 tasks is small: one task is 5 percentage points, so compare runs on the same model and engine, and watch for noise between runs.

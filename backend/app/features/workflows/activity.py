@@ -8,24 +8,59 @@ from app.features.events.service import RunRecorder
 
 
 async def record_step(recorder: RunRecorder, node: str, data: dict[str, Any]) -> None:
+    if node in ("plan", "review") and data.get("cto_tokens"):
+        await recorder.record(
+            Actor.CTO,
+            EventType.MODEL_USED,
+            "Thought about the plan" if node == "plan" else "Reviewed the work",
+            tokens=int(data["cto_tokens"]),
+        )
     if node == "plan":
+        tasks = data.get("tasks", [])
+        team = sorted({t["owner"] for t in tasks})
         await recorder.record(
-            Actor.CTO, EventType.PLAN_CREATED, "Wrote the plan", {"plan": data.get("plan", "")}
+            Actor.CTO,
+            EventType.PLAN_CREATED,
+            f"Split the work into {len(tasks)} task{'s' if len(tasks) != 1 else ''} "
+            f"for {', '.join(team) or 'the team'}",
+            {"plan": data.get("plan", ""), "tasks": [_task_brief(t) for t in tasks]},
         )
+        for task in tasks:
+            await recorder.record(
+                Actor.CTO,
+                EventType.TASK_ASSIGNED,
+                f"Assigned \u201c{task['title']}\u201d to {task['owner']}",
+                {"task_id": task["id"], "member": task["owner"], "title": task["title"]},
+            )
     elif node == "develop":
-        dev = data.get("dev_result", {})
-        files = dev.get("files_changed", [])
-        await recorder.record(
-            Actor.DEVELOPER,
-            EventType.WORK_FINISHED,
-            dev.get("summary") or "Finished working",
-            {
-                "success": dev.get("success"),
-                "files_changed": files,
-                "steps": dev.get("steps"),
-                "total_tokens": dev.get("total_tokens"),
-            },
-        )
+        task = next((t for t in data.get("tasks", []) if t.get("status") == "review"), None)
+        if task:
+            await recorder.record(
+                Actor.DEVELOPER,
+                EventType.WORK_FINISHED,
+                f"{task['owner']}: {task.get('summary') or 'finished ' + task['title']}",
+                {
+                    "task_id": task["id"],
+                    "member": task["owner"],
+                    "success": task.get("success"),
+                    "files_changed": task.get("files_changed", []),
+                    "attempt": task.get("attempts"),
+                },
+            )
+    elif node == "review":
+        review = data.get("last_review")
+        if review:
+            if review["decision"] == "approve":
+                title = review["title"]
+                summary = f"Approved \u201c{title}\u201d"
+                if review.get("accepted_with_issues"):
+                    summary = f"Moved on from \u201c{title}\u201d after the last round of changes"
+            else:
+                feedback = review["feedback"][:160]
+                summary = (
+                    f"Sent \u201c{review['title']}\u201d back to {review['member']}: {feedback}"
+                )
+            await recorder.record(Actor.CTO, EventType.REVIEW_FINISHED, summary, review)
     elif node == "verify":
         passed = bool(data.get("verified"))
         await recorder.record(
@@ -44,3 +79,7 @@ async def record_step(recorder: RunRecorder, node: str, data: dict[str, Any]) ->
         await recorder.record(
             Actor.SYSTEM, EventType.RUN_FINISHED, summaries.get(status, status), {"status": status}
         )
+
+
+def _task_brief(task: dict[str, Any]) -> dict[str, Any]:
+    return {"id": task["id"], "title": task["title"], "owner": task["owner"]}

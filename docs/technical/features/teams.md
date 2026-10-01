@@ -22,8 +22,8 @@ A team is a **settings file**, not code. Each template lists the team's roles (t
 | Role | Name in the office | Active | What it does today |
 | --- | --- | --- | --- |
 | `pm` Product Manager | Mira | No (Phase 2) | Will ask questions and show screens |
-| `cto` CTO | Kabir | Yes | Writes the plan (template `instructions`) |
-| `developer` Developer (1–3) | Isha, Arjun, Ravi | Yes | Writes code and tests with `read_file`, `write_file`, `list_files`, `run_command`, `finish`; up to 25 steps |
+| `cto` CTO | Kabir | Yes | Splits the request into tasks and assigns developers (`instructions`), reviews each task (`review_instructions`) |
+| `developer` Developer (1–3, chosen by the CTO per run) | Isha, Arjun, Ravi | Yes | Writes code and tests with `read_file`, `write_file`, `list_files`, `run_command`, `finish`; up to 25 steps |
 | `qa` QA engineer | Tara | Yes | Runs the test command (`checker = "test_command"`) |
 | `devops` DevOps | Neel | No (Phase 2) | Will deploy previews and releases |
 
@@ -88,7 +88,6 @@ None of its own. Role ids are the `actor` values in the activity log; `Actor` in
 ## Known limitations and gotchas
 
 - One workflow (`build_app`) and one checker (`test_command`) exist; human review and approval rules come with later teams.
-- Only one developer works per run today; `max_count` 3 is for when the CTO splits work across developers (next Phase 1 step).
 - Templates are cached per process: restart the API or worker after editing one.
 - The OpenHands engine uses the developer's model but not its `instructions` or `tools` (OpenHands has its own).
 
@@ -104,4 +103,5 @@ None of its own. Role ids are the `actor` values in the activity log; `Actor` in
 
 | Date | Change |
 | --- | --- |
+| 2026-10-01 | `review_instructions` for the CTO; developer `max_count` used by the CTO's assignment |
 | 2026-10-01 | Created: template schema and validation, software team, API, wiring builds the CTO and developer from the template |

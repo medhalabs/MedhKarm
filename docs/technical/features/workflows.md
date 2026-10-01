@@ -1,28 +1,32 @@
 # Workflows
 
-**Status:** Build graph done (Phase 0 stack check)  
+**Status:** Build graph with CTO planning and review (Phase 1)  
 **Code:** `backend/app/features/workflows/` · entry point `backend/app/workers/build_run.py`  
 **Last updated:** 2026-10-01
 
 ## What it is
 
-The sequence of steps a build goes through, run by LangGraph: plan → develop → verify → release gate → finish. Every step's result is saved in a Postgres checkpoint, so a run can pause for the founder's approval, the process can stop, and a different process can resume it later. This is the core of the "founder approves" promise.
+The sequence of steps a build goes through, run by LangGraph: the CTO plans tasks and assigns them to developers; for each task the developer works and the CTO reviews (sending it back with changes if needed); then QA verifies, the founder approves, and the run finishes. Every step's result is saved in a Postgres checkpoint, so a run can pause for the founder's approval, the process can stop, and a different process can resume it later. This is the core of the "founder approves" promise.
 
 ## How it works
 
 ```mermaid
 flowchart LR
-    S((start)) --> P[plan<br/>tech lead writes a plan]
-    P --> D[develop<br/>engine writes code in sandbox]
-    D --> V[verify<br/>we re-run the tests]
+    S((start)) --> P[plan<br/>CTO splits into tasks,<br/>assigns developers]
+    P --> D[develop<br/>assigned developer<br/>works on current task]
+    D --> R{review<br/>CTO checks the task}
+    R -->|send back with changes| D
+    R -->|approved, more tasks| D
+    R -->|all tasks done| V[verify<br/>QA re-runs the tests]
     V -->|tests pass| A{{approval<br/>release gate: pause}}
     V -->|tests fail| F[finish]
     A -->|founder decides| F
     F --> E((end))
 ```
 
-1. **plan** — the CTO's model writes a short numbered plan from the request, following the CTO role's instructions in the team template ([teams.md](teams.md)).
-2. **develop** — creates the run's sandbox (or re-attaches by id) and calls the `DeveloperEngine` with the request + plan.
+1. **plan** — the CTO (template role `cto`: model and `instructions`) answers with the `submit_plan` tool: a summary, how many developers to use, and 1–5 tasks in order. `assign()` gives each task an id (`t1`…) and an owner, round-robin over the developers' names (up to the developer role's `max_count`). The plan is read leniently (see `cto.py`): small models name fields their own way, and if no usable plan comes back the fallback is one task covering the whole request.
+2. **develop** — creates the run's sandbox (or re-attaches by id); the current task's owner works on it through the `DeveloperEngine`. The brief has the request, the CTO's plan, "your task (i of n)", and, on a second attempt, the CTO's requested changes. Tasks run one after another in the same workspace, so later tasks build on earlier ones.
+3. **review** — if the task's tests failed, it goes straight back to the developer with the test output (no model call). Otherwise the CTO reads the task, the developer's summary and the changed files (up to 6, 1,500 characters each) and answers with `submit_review`: approve, or revise with specific changes. A task gets at most `max_revisions` (default 1) rounds of changes; after that the run moves on (`done_with_issues`) and QA's final check decides. A review the CTO doesn't format properly counts as approval, so a format slip never blocks a run.
 3. **verify** — asks the run's `WorkChecker` whether the work is good. For software that's `TestCommandChecker`: it re-runs the test command in the same sandbox. QA never trusts the developer's report. Human review (content team) and approval rules (operations team) will be other checkers.
 4. **approval** — only reached if tests pass. `interrupt()` saves the run and stops, returning the gate details (summary, files changed, test output). Resuming with `Command(resume={"approved": ..., "feedback": ...})` continues from here.
 5. **finish** — destroys the sandbox and sets `status`: `released`, `rejected` or `failed`.
@@ -37,8 +41,10 @@ The run id is LangGraph's `thread_id`; each checkpoint is stored under it.
 | `interfaces.py` | `WorkChecker` Protocol: `check(state, sandbox) -> CheckResult` |
 | `checkers/test_command.py` | `TestCommandChecker`: runs the test command |
 | `nodes/base.py` | `BuildNode` Protocol: the shape every node factory returns |
-| `nodes/plan.py` | Planner node |
-| `nodes/develop.py` | Developer node (creates / attaches the sandbox) |
+| `cto.py` | The CTO's plan and review as data: `submit_plan` / `submit_review` tools, lenient parsing, `assign()` |
+| `nodes/plan.py` | CTO planning node |
+| `nodes/review.py` | CTO review node and `after_review` routing |
+| `nodes/develop.py` | Developer node: current task, sandbox, totals across tasks |
 | `nodes/verify.py` | QA node (re-runs tests) |
 | `nodes/approval.py` | Release gate (`interrupt`) |
 | `nodes/finish.py` | Outcome + sandbox cleanup |
@@ -78,6 +84,9 @@ LangGraph creates and owns its tables in our Postgres (`checkpoints`, `checkpoin
 
 ## Design decisions
 
+- 2026-10-01 — CTO plans and reviews (Phase 1). Tasks run sequentially in one workspace: parallel developers on separate branches would need merging, which isn't worth it for small tasks yet. The office still shows each task's owner.
+- 2026-10-01 — Structured output through tool calls (`submit_plan`, `submit_review`), parsed leniently: gpt-oss:20b called the tool every time but used its own field names (`name` for `title`, extra `files`/`tests` keys) in 3 of 3 tries; strict parsing rejected every plan.
+- 2026-10-01 — Failing tests are sent back without asking the model; reviews are capped at one round of changes per task to bound cost.
 - 2026-10-01 — Every step is recorded in the activity log ([events.md](events.md)): `WorkflowService` takes an optional `EventStore` and records start, plan, work, check, approvals and finish; the develop node records `work.started` and passes a `RunRecorder` to the engine. `run_id` is stored in the state so nodes can record against it.
 - 2026-10-01 — The checking step is an interface (`WorkChecker`), so each kind of team can check work its own way. `build_app_graph(..., checker=...)` defaults to `TestCommandChecker`.
 - 2026-10-01 — `WorkflowService.start(..., sandbox_id=...)` can run in an existing, prepared sandbox (used by the eval runner to seed a starting project).
@@ -94,6 +103,8 @@ LangGraph creates and owns its tables in our Postgres (`checkpoints`, `checkpoin
 ## Known limitations and gotchas
 
 - Resume uses the current `DEVELOPER_ENGINE`. That's harmless today (after the gate only `finish` runs, and removing a container works with either provider), but a future graph that does more work after the gate should store the engine in the state.
+- **Cost grows with tasks.** A 3-part request (expense tracker: add/list, monthly totals, CSV export) became 4 tasks for 3 developers, with one send-back: about 384,000 tokens and 7 minutes on gpt-oss:20b, against about 10,000 for a one-task build. Developers re-read the project and run tests per task, and the CTO reviews each one. Fine on free models; important for pricing.
+- The eval suite's results predate the CTO step; rerun it before comparing.
 - One fixed graph; per-template graphs (PM → CTO → Dev → QA → DevOps) come in Phase 1–2.
 - No retry loop from verify back to develop yet.
 - Runs are started from the command line; API endpoints and a worker queue come in Phase 1.
@@ -110,6 +121,7 @@ LangGraph creates and owns its tables in our Postgres (`checkpoints`, `checkpoin
 
 | Date | Change |
 | --- | --- |
+| 2026-10-01 | CTO agent: plans tasks, assigns developers by name, reviews each task and sends it back with changes; CTO tokens recorded |
 | 2026-10-01 | Planner takes its instructions from the team template (`planner_instructions`) |
 | 2026-10-01 | Activity log: steps and approvals recorded as events |
 | 2026-10-01 | `WorkChecker` interface and `TestCommandChecker`; `start()` accepts a prepared sandbox; wiring moved to `app/workers/wiring.py` |

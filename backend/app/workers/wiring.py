@@ -19,8 +19,11 @@ class TeamRuntime:
     """Everything a build run needs, built from one team template."""
 
     template: TeamTemplate
-    planner: LLMProvider  # the CTO's model
+    planner: LLMProvider  # the CTO's model: plans and reviews
     planner_instructions: str
+    review_instructions: str
+    developer_names: list[str]
+    max_developers: int
     engine: DeveloperEngine  # the developer
     sandboxes: SandboxProvider
 
@@ -33,6 +36,9 @@ def build_team_runtime(settings: Settings) -> TeamRuntime:
         template=template,
         planner=build_provider(settings, cto.model),
         planner_instructions=cto.instructions,
+        review_instructions=cto.review_instructions,
+        developer_names=developer.display_names,
+        max_developers=developer.max_count,
         engine=engine,
         sandboxes=sandboxes,
     )

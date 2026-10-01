@@ -20,9 +20,16 @@ class RunRecorder:
     """Records events for one run. A failure to record is logged, never raised: losing a log
     line must not break the customer's build."""
 
-    def __init__(self, store: EventStore | None, run_id: str) -> None:
+    def __init__(
+        self, store: EventStore | None, run_id: str, context: dict[str, Any] | None = None
+    ) -> None:
         self._store = store
         self.run_id = run_id
+        self._context = context or {}
+
+    def with_context(self, **context: Any) -> "RunRecorder":
+        """A recorder that adds `context` (e.g. which team member, which task) to every event."""
+        return RunRecorder(self._store, self.run_id, {**self._context, **context})
 
     async def record(
         self,
@@ -39,7 +46,7 @@ class RunRecorder:
             actor=actor,
             type=type,
             summary=summary[:500],
-            data=data or {},
+            data={**self._context, **(data or {})},
             tokens=tokens,
         )
         try:
