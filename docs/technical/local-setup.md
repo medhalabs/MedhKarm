@@ -80,6 +80,8 @@ Or from the command line, without the API or a worker:
 
 See everything the team did, step by step: `uv run python -m app.workers.build_run events <run_id>`.
 
+Check a finished run against Gate 1 (team from config, 10+ steps, approval, restart, logging, cost, standup): `uv run python -m app.workers.gate_check <run_id>`.
+
 The first run builds the `medhkarm-sandbox:dev` image (Python, Node, pytest; about a minute, once). Details: [features/workflows.md](features/workflows.md).
 
 ### Run the eval suite

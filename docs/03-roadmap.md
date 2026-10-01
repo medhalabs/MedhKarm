@@ -57,7 +57,7 @@ Goal: a general engine where a team is defined by config, its work is checked, a
 - [x] Tools through MCP, with per-agent access limits. Done Oct 1, 2026: MCP server catalog; each role is granted servers, tools, read-only access and a call limit per task; agents only ever run tools they were offered; first server `python_docs` (GitHub and fetch listed, off) ([integrations.md](technical/features/integrations.md))
 - [x] Bare admin page to watch runs. Done Oct 1, 2026: `/admin` to start runs and see their status, each run's live activity and the approval panel (approve or reject, with the rules' reasons), and the standup ([runs.md](technical/features/runs.md))
 
-**Gate 1:** a team defined in config finishes a 10-step task, pauses at an approval, survives a worker restart, logs every step and its cost, and produces a standup.
+**Gate 1:** a team defined in config finishes a 10-step task, pauses at an approval, survives a worker restart, logs every step and its cost, and produces a standup. **Passed Oct 1, 2026** (7/7 checks, run killed mid-work and taken over; [09-gate-1-report.md](09-gate-1-report.md)). Advanced logic exceeds the free model's step limit: see the report.
 
 ## Phase 2 — Software team (Nov 16 – Dec 18, 2026, plus holiday buffer)
 
