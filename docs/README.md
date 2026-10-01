@@ -13,6 +13,7 @@ Planning documents for the AI Virtual Office product. **Start with [08-product-p
 | [06-customer-interview-guide.md](06-customer-interview-guide.md) | Phase 0 customer interviews: script, segments, notes template, scoring for Gate 0 |
 | [07-interview-findings.md](07-interview-findings.md) | Interview round 1: solo builders in India |
 | [08-product-plan-v2.md](08-product-plan-v2.md) | **Current product plan:** AI workforce, team templates, launch order |
+| [mockups/office-demo.html](mockups/office-demo.html) | Clickable prototype for interviews: idea → questions → plan → team → animated office → standup → release ([shareable link](https://claude.ai/artifact/8eBgvzgr8ycDaJd6HZnwSZ)) |
 | [technical/](technical/README.md) | Technical documentation for every feature (knowledge transfer for newcomers) |
 
 The live, editable roadmap is the Claude doc

@@ -27,7 +27,7 @@ Solid lines exist today; dotted lines are planned. Build runs are started from t
 | Backend API | `backend/app/` | Running | HTTP API; one router per feature, assembled in `app/main.py` |
 | Workers | `backend/app/workers/` | Build runs from the command line | Long-running work (agent runs, sandboxes, evals); queue chosen in Phase 1 |
 | Build workflow | `backend/app/features/workflows/` | Running | LangGraph graph: plan → develop → verify → release gate → finish, checkpointed in Postgres |
-| Models | `backend/app/features/models/` | Running | LiteLLM; default `gpt-oss:120b` on Ollama Cloud |
+| Models | `backend/app/features/models/` | Running | LiteLLM; default `gpt-oss:20b` on Ollama Cloud |
 | Sandbox | `backend/app/features/sandbox/` | Running (Docker) | One isolated container per build run: plain Docker, or an OpenHands agent server |
 | Developer engine | `backend/app/features/developer_engine/` | Running | Built-in tool loop or OpenHands, chosen by `DEVELOPER_ENGINE` |
 | Postgres | `docker-compose.yml` locally, Supabase in production | Running locally | All data, LangGraph checkpoints, embeddings (pgvector) |

@@ -43,11 +43,12 @@ None yet.
 - **Other features used:** none
 - **Interfaces defined:** `LLMProvider` → `LiteLLMProvider`, `ScriptedLLMProvider`
 - **External services:** Ollama Cloud (`https://ollama.com`); any LiteLLM-supported provider
-- **Config:** `DEFAULT_MODEL` (default `ollama_chat/gpt-oss:120b`), `OLLAMA_API_BASE`, `OLLAMA_API_KEY`
+- **Config:** `DEFAULT_MODEL` (default `ollama_chat/gpt-oss:20b`), `OLLAMA_API_BASE`, `OLLAMA_API_KEY`
 
 ## Design decisions
 
 - 2026-10-01 — Start on Ollama Cloud's free models. All six (`gpt-oss:120b`, `gpt-oss:20b`, `gemma4:31b`, `nemotron-3-nano:30b`, `nemotron-3-super`, `nemotron-3-ultra`) made correct tool calls in a direct test. `gpt-oss:120b` is the default; it completed real coding tasks through LiteLLM.
+- 2026-10-01 — Default switched from `gpt-oss:120b` to `gpt-oss:20b`. In the eval suite, 120b failed about 1 in 4 tasks with Ollama Cloud 500 errors (triggered by its own conversation history); 20b and `gemma4:31b` had none. Paid models are planned for customers later.
 - 2026-10-01 — Use `ollama_chat/` (Ollama's chat endpoint), not `ollama/` (completion endpoint): tool calling needs the chat endpoint.
 - 2026-10-01 — Retry inside the provider: Ollama Cloud returned an occasional 500 that succeeded on retry.
 - 2026-10-01 — Our own retries with growing waits instead of LiteLLM's: in the first full eval run, LiteLLM's 3 near-instant retries failed 5 of 20 tasks during a burst of Ollama Cloud 500s.
@@ -77,6 +78,7 @@ None yet.
 
 | Date | Change |
 | --- | --- |
+| 2026-10-01 | Default model `gpt-oss:20b` |
 | 2026-10-01 | Retries with growing waits (2–32 s) on temporary errors only |
 | 2026-10-01 | Added `ModelConfig` and `resolve_model_config()` for external agents |
 | 2026-10-01 | Created: LiteLLM provider, Ollama Cloud defaults, retries, scripted test provider |

@@ -39,7 +39,7 @@ Goal: know who we build for and what "working" means before building the product
 - [ ] Interview round 2: 10+ solo builders and 5+ content creators, every one ending with a beta ask
 - [ ] Pick product name and domain
 - [x] Write 20 eval tasks: 17 on 4 existing projects, 3 new modules; all validated, baseline 18/19 (Oct 1, 2026). Waiting for your review
-- [ ] Office mock-up with the standup and backlog up front, for interviews
+- [x] Office mock-up for interviews: the full expense-calculator journey, animated office, standup and release (done Oct 1, 2026: [mockups/office-demo.html](mockups/office-demo.html), [shareable link](https://claude.ai/artifact/8eBgvzgr8ycDaJd6HZnwSZ))
 
 **Gate 0:** at least 5 solo builders commit to the beta with a real project; 20 eval tasks written and reviewed.
 
@@ -147,6 +147,6 @@ Two full-time builders using AI coding tools, starting Oct 5, 2026. With one bui
 
 - [x] Launch market: India first (Oct 1, 2026)
 - [x] Launch order: software team, then content and video, then operations (Oct 1, 2026)
-- [ ] Who builds it: solo, or with a second full-time builder?
-- [ ] Monthly token and cloud budget for development
+- [x] Who builds it: Pavan alone, with AI coding tools (Oct 1, 2026). Phases 1–3 take about 1.5–2× longer than the two-builder dates; dates to be re-planned
+- [x] Development budget: ₹0 for now, free Ollama models only; paid models after a certain stage of development (Oct 1, 2026)
 - [ ] Product name and domain

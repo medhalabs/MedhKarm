@@ -1,0 +1,813 @@
+<title>MedhKarm Office Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a seven-step journey across the top; each step is one screen.
+   The office step is a floor plan drawn like an architect's sketch, with agents as markers. */
+:root {
+  --bg: #f3f1ea;        /* page: limestone floor */
+  --surface: #fbfaf6;   /* cards, panels */
+  --ink: #1f2a24;       /* text: green-black */
+  --muted: #5d6a62;     /* secondary text */
+  --line: #d8d4c7;      /* hairlines, desk outlines */
+  --accent: #d9822b;    /* marigold: actions, highlights */
+  --accent-ink: #ffffff;
+  --floor: #ebe7dc;     /* office floor */
+  --tile: #e1dccf;      /* floor grid */
+  --good: #2f8a5b;
+  --warn: #c2621f;
+  --bad: #b8433a;
+  --pm: #2c8c8c; --cto: #3d4f9f; --fe: #d9822b; --be: #b8433a; --qa: #2f8a5b; --ops: #6b5b95;
+  --font-display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --radius: 10px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #161b18; --surface: #1e2420; --ink: #e9ece6; --muted: #9aa69e; --line: #343d37;
+    --accent: #e8973f; --accent-ink: #1a1208; --floor: #1b211d; --tile: #252c27;
+    --good: #5cbf8a; --warn: #e48a4a; --bad: #e0736a;
+    --pm: #4fb3b3; --cto: #8494e0; --fe: #e8973f; --be: #e0736a; --qa: #5cbf8a; --ops: #a796d6;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #161b18; --surface: #1e2420; --ink: #e9ece6; --muted: #9aa69e; --line: #343d37;
+  --accent: #e8973f; --accent-ink: #1a1208; --floor: #1b211d; --tile: #252c27;
+  --good: #5cbf8a; --warn: #e48a4a; --bad: #e0736a;
+  --pm: #4fb3b3; --cto: #8494e0; --fe: #e8973f; --be: #e0736a; --qa: #5cbf8a; --ops: #a796d6;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { background: var(--bg); color: var(--ink); }
+body { font-family: var(--font-body); font-size: 15px; line-height: 1.5; padding-inline: 16px; padding-block: 0 48px; }
+h1, h2, h3 { font-family: var(--font-display); font-weight: 700; line-height: 1.15; text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(1.7rem, 4vw, 2.4rem); }
+h2 { font-size: 1.35rem; }
+h3 { font-size: 1.02rem; }
+p { margin: 0; }
+button { font: inherit; cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.mono { font-family: var(--font-mono); font-size: 0.86em; }
+.muted { color: var(--muted); }
+.wrap { max-width: 1120px; margin-inline: auto; }
+
+/* Top bar and stepper */
+.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--bg); padding-block: 14px 10px; border-bottom: 1px solid var(--line); margin-inline: -16px; padding-inline: 16px; }
+.brand { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.brand b { font-family: var(--font-display); font-size: 1.25rem; letter-spacing: -0.01em; }
+.tag { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 2px 8px; }
+.steps { display: flex; gap: 6px; margin-top: 10px; overflow-x: auto; scrollbar-width: none; }
+.steps button { flex: 0 0 auto; border: 1px solid var(--line); background: var(--surface); color: var(--muted); border-radius: 999px; padding: 5px 12px; font-size: 0.82rem; display: flex; gap: 6px; align-items: center; }
+.steps button .n { font-family: var(--font-mono); font-size: 0.75rem; }
+.steps button[aria-current="step"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.steps button.done { color: var(--ink); }
+.steps button.done .n { color: var(--good); }
+
+/* Generic blocks */
+main { padding-top: 24px; }
+section[data-step] { display: grid; gap: 20px; }
+.lead { display: grid; gap: 8px; max-width: 68ch; }
+.gate { display: inline-flex; gap: 8px; align-items: center; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); font-weight: 600; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; }
+.row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.btn { border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 8px; padding: 9px 16px; font-weight: 500; }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
+.btn:disabled { opacity: 0.45; cursor: default; }
+.note { font-size: 0.86rem; color: var(--muted); }
+.two { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr); gap: 20px; align-items: start; }
+@media (max-width: 820px) { .two { grid-template-columns: minmax(0, 1fr); } }
+
+/* Step 1: idea */
+.idea textarea { width: 100%; min-height: 110px; resize: vertical; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); color: var(--ink); padding: 14px; font: inherit; font-size: 1.1rem; }
+
+/* Chat */
+.chat { display: grid; gap: 10px; max-width: 680px; }
+.msg { display: flex; gap: 10px; align-items: flex-start; }
+.msg.me { justify-content: flex-end; }
+.msg .body { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 10px 13px; max-width: 78%; min-width: 0; }
+.msg.me .body { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.who { font-size: 0.74rem; color: var(--muted); margin-bottom: 2px; }
+.chips { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+.chip { border: 1px solid var(--accent); color: var(--ink); background: transparent; border-radius: 999px; padding: 5px 12px; font-size: 0.86rem; }
+.chip:hover { background: color-mix(in srgb, var(--accent) 14%, transparent); }
+.avatar { flex: 0 0 auto; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-family: var(--font-mono); font-size: 0.74rem; font-weight: 500; color: #fff; }
+.typing-dots { display: inline-flex; gap: 4px; }
+.typing-dots i { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); animation: blink 1s infinite; }
+.typing-dots i:nth-child(2) { animation-delay: .15s } .typing-dots i:nth-child(3) { animation-delay: .3s }
+@keyframes blink { 0%, 100% { opacity: .2 } 50% { opacity: 1 } }
+
+/* Plan */
+.plan ul { margin: 6px 0 0; padding-left: 18px; display: grid; gap: 4px; }
+.plan h3 { margin-top: 14px; }
+.plan h3:first-child { margin-top: 0; }
+
+/* Phone mock */
+.phone { width: min(300px, 100%); margin-inline: auto; aspect-ratio: 9 / 18; max-width: 100%; border: 10px solid var(--ink); border-radius: 34px; background: var(--surface); overflow: hidden; display: flex; flex-direction: column; position: relative; }
+.app-head { padding: 16px 16px 10px; background: color-mix(in srgb, var(--accent) 12%, var(--surface)); }
+.app-head .month { font-size: 0.74rem; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+.app-head .total { font-family: var(--font-display); font-size: 1.7rem; font-variant-numeric: tabular-nums; }
+.app-body { padding: 10px 14px; overflow-y: auto; flex: 1; display: grid; gap: 10px; align-content: start; font-size: 0.84rem; }
+.bars { display: grid; gap: 5px; }
+.bar { display: grid; grid-template-columns: 62px 1fr 56px; gap: 6px; align-items: center; font-variant-numeric: tabular-nums; }
+.bar span:nth-child(2) { height: 8px; border-radius: 4px; background: var(--line); position: relative; overflow: hidden; }
+.bar span:nth-child(2) i { position: absolute; inset: 0 auto 0 0; background: var(--accent); border-radius: 4px; transition: width .4s; }
+.bar span:last-child { text-align: right; }
+.exp { display: grid; grid-template-columns: 1fr auto; padding-block: 6px; border-top: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+.exp small { color: var(--muted); }
+.app-foot { padding: 10px 14px 14px; }
+.app-foot button { width: 100%; }
+.app-form { display: grid; gap: 8px; }
+.app-form label { display: grid; gap: 3px; font-size: 0.78rem; color: var(--muted); }
+.app-form input, .app-form select { font: inherit; font-size: 0.9rem; padding: 7px 9px; border: 1px solid var(--line); border-radius: 7px; background: var(--bg); color: var(--ink); }
+.app-err { color: var(--bad); font-size: 0.78rem; min-height: 1.2em; }
+.phone .highlight { outline: 2px solid var(--accent); outline-offset: 2px; transition: outline-color .2s; }
+.cursor { position: absolute; width: 18px; height: 18px; border-radius: 50%; background: color-mix(in srgb, var(--accent) 55%, transparent); border: 2px solid var(--accent); pointer-events: none; transition: left .5s, top .5s; z-index: 3; }
+
+/* Team */
+.team { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+.agent-card { display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: start; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px; opacity: 0; transform: translateY(6px); transition: opacity .4s, transform .4s; }
+.agent-card.show { opacity: 1; transform: none; }
+.agent-card .role { font-size: 0.78rem; color: var(--muted); }
+.agent-card .task { font-size: 0.84rem; margin-top: 4px; }
+table { border-collapse: collapse; width: 100%; font-size: 0.88rem; }
+th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); font-weight: 600; }
+.tablewrap { overflow-x: auto; }
+
+/* Office */
+.office { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 16px; align-items: start; }
+@media (max-width: 900px) { .office { grid-template-columns: minmax(0, 1fr); } }
+.floor-wrap { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 10px; }
+.floor { position: relative; width: 100%; aspect-ratio: 16 / 10; border-radius: 6px; overflow: hidden;
+  background-color: var(--floor);
+  background-image: linear-gradient(var(--tile) 1px, transparent 1px), linear-gradient(90deg, var(--tile) 1px, transparent 1px);
+  background-size: 5% 8%; }
+.room { position: absolute; border: 2px solid var(--line); border-radius: 8px; background: color-mix(in srgb, var(--surface) 70%, transparent); }
+.room-label { position: absolute; left: 8px; top: 6px; font-size: clamp(0.55rem, 1.2vw, 0.72rem); text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+.table-round { position: absolute; border-radius: 50%; border: 2px solid var(--line); background: var(--surface); }
+.desk { position: absolute; width: 13%; height: 11%; transform: translate(-50%, -50%); border: 2px solid var(--line); border-radius: 6px; background: var(--surface); }
+.monitor { position: absolute; left: 22%; right: 22%; top: 14%; height: 52%; background: var(--ink); border-radius: 3px; overflow: hidden; }
+.monitor i { position: absolute; left: 10%; height: 9%; border-radius: 2px; background: var(--accent); opacity: 0; }
+.desk.busy .monitor i { animation: code 1.6s linear infinite; }
+.monitor i:nth-child(1) { width: 60%; animation-delay: 0s !important } .monitor i:nth-child(2) { width: 40%; left: 20%; animation-delay: .4s !important }
+.monitor i:nth-child(3) { width: 70%; animation-delay: .8s !important } .monitor i:nth-child(4) { width: 30%; left: 20%; animation-delay: 1.2s !important }
+@keyframes code { 0% { top: 100%; opacity: 0 } 15% { opacity: .9 } 85% { opacity: .9 } 100% { top: -10%; opacity: 0 } }
+.plant { position: absolute; width: 3.2%; aspect-ratio: 1; border-radius: 50%; background: color-mix(in srgb, var(--good) 55%, var(--floor)); border: 2px solid color-mix(in srgb, var(--good) 70%, var(--floor)); }
+.agent { position: absolute; width: 0; height: 0; transition-property: left, top; transition-timing-function: cubic-bezier(.4,.1,.3,1); z-index: 5; }
+.agent .dot { position: absolute; left: 0; top: 0; transform: translate(-50%, -50%); width: clamp(22px, 3.6vw, 36px); height: clamp(22px, 3.6vw, 36px); border-radius: 50%; display: grid; place-items: center; color: #fff; font-family: var(--font-mono); font-size: clamp(0.55rem, 1.1vw, 0.72rem); font-weight: 500; box-shadow: 0 0 0 3px var(--floor); }
+.agent.walking .dot { animation: bob .35s ease-in-out infinite alternate; }
+@keyframes bob { to { transform: translate(-50%, -62%); } }
+.agent .label { position: absolute; left: 0; top: clamp(12px, 2.2vw, 22px); transform: translateX(-50%); font-size: clamp(0.5rem, 1vw, 0.68rem); white-space: nowrap; color: var(--ink); background: color-mix(in srgb, var(--surface) 85%, transparent); padding: 0 4px; border-radius: 4px; }
+.bubble { position: absolute; left: 0; bottom: clamp(14px, 2.4vw, 24px); transform: translateX(-50%); background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 3px 7px; font-size: clamp(0.52rem, 1.05vw, 0.7rem); white-space: nowrap; max-width: 40vw; overflow: hidden; text-overflow: ellipsis; box-shadow: 0 2px 6px rgba(0,0,0,.08); }
+.bubble.alert { border-color: var(--bad); color: var(--bad); }
+.bubble.ok { border-color: var(--good); color: var(--good); }
+.controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
+.controls input[type=range] { flex: 1 1 200px; min-width: 0; accent-color: var(--accent); }
+.clock { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 0.86rem; min-width: 11ch; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.seg button { border: 0; background: var(--surface); color: var(--muted); padding: 6px 10px; font-size: 0.82rem; }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+.side { display: grid; gap: 10px; }
+.tabs { display: flex; gap: 4px; }
+.tabs button { border: 1px solid var(--line); background: var(--surface); color: var(--muted); border-radius: 8px; padding: 6px 10px; font-size: 0.84rem; }
+.tabs button[aria-selected="true"] { color: var(--ink); border-color: var(--ink); }
+.badge { display: inline-grid; place-items: center; min-width: 18px; height: 18px; border-radius: 9px; background: var(--accent); color: var(--accent-ink); font-size: 0.7rem; padding-inline: 5px; margin-left: 4px; }
+.feed { display: grid; gap: 8px; max-height: 420px; overflow-y: auto; font-size: 0.84rem; }
+.feed .item { display: grid; grid-template-columns: auto 1fr; gap: 8px; }
+.feed .t { font-family: var(--font-mono); font-size: 0.74rem; color: var(--muted); padding-top: 1px; }
+.board { display: grid; gap: 8px; font-size: 0.82rem; }
+.col h4 { margin: 0 0 4px; font-size: 0.72rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+.card { border: 1px solid var(--line); border-left: 3px solid var(--c, var(--line)); border-radius: 6px; padding: 6px 8px; background: var(--bg); margin-bottom: 5px; }
+.status { display: inline-block; font-size: 0.7rem; padding: 1px 7px; border-radius: 999px; border: 1px solid currentColor; }
+.status.review { color: var(--warn); } .status.done { color: var(--good); } .status.prog { color: var(--accent); } .status.todo { color: var(--muted); }
+
+/* Standup */
+.standup { max-width: 560px; }
+.standup .head { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; border-bottom: 1px solid var(--line); padding-bottom: 10px; margin-bottom: 12px; }
+.standup dl { display: grid; grid-template-columns: 104px 1fr; gap: 10px 14px; margin: 0; }
+.standup dt { font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); padding-top: 2px; }
+.standup dd { margin: 0; }
+.standup ul { margin: 0; padding-left: 18px; }
+@media (max-width: 480px) { .standup dl { grid-template-columns: minmax(0, 1fr); } }
+
+/* Demo */
+.checks { display: grid; gap: 6px; font-size: 0.86rem; }
+.checks div { display: flex; gap: 8px; align-items: baseline; opacity: .35; transition: opacity .3s; }
+.checks div.on { opacity: 1; }
+.checks .mark { color: var(--good); font-family: var(--font-mono); }
+.link-box { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-family: var(--font-mono); font-size: 0.88rem; border: 1px dashed var(--line); border-radius: 8px; padding: 8px 10px; word-break: break-all; }
+.live { border-color: var(--good); }
+.success { border-left: 4px solid var(--good); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+}
+</style>
+
+<header class="top">
+  <div class="wrap">
+    <div class="brand">
+      <b>MedhKarm</b>
+      <span class="muted">Your AI software team</span>
+      <span class="tag">Prototype · sample data</span>
+    </div>
+    <nav class="steps" id="steps" aria-label="Journey"></nav>
+  </div>
+</header>
+
+<main class="wrap" id="app">
+
+  <!-- 1. Idea -->
+  <section data-step="1" class="idea">
+    <div class="lead">
+      <span class="gate">Step 1 · Your idea</span>
+      <h1>What should your team build?</h1>
+      <p class="muted">Describe it the way you'd tell a friend. Your Product Manager will ask about anything that's unclear.</p>
+    </div>
+    <label for="idea-text" class="note">Your request</label>
+    <textarea id="idea-text">I want a simple expense calculator app.</textarea>
+    <div class="row">
+      <button class="btn primary" id="send-idea">Send to my team</button>
+      <span class="note">Sample request. Edit it if you like.</span>
+    </div>
+  </section>
+
+  <!-- 2. PM questions -->
+  <section data-step="2" hidden>
+    <div class="lead">
+      <span class="gate">Step 2 · Product Manager</span>
+      <h1>Mira asks a few questions</h1>
+      <p class="muted">Tap an answer. In the product you can also type anything.</p>
+    </div>
+    <div class="chat" id="pm-chat"></div>
+    <div class="row"><button class="btn primary" id="to-plan" hidden>See the plan</button></div>
+  </section>
+
+  <!-- 3. Plan + preview (Gate 1) -->
+  <section data-step="3" hidden>
+    <div class="lead">
+      <span class="gate">Approval 1 of 3 · Plan and screens</span>
+      <h1>Here's what Mira will build</h1>
+      <p class="muted">Try the screens on the right. They use sample data so you can see the app before anyone writes code.</p>
+    </div>
+    <div class="two">
+      <div class="panel plan">
+        <h3>Expense Calculator · first version</h3>
+        <ul id="plan-features"></ul>
+        <h3>Not in this version</h3>
+        <ul>
+          <li>Bank or UPI import</li>
+          <li>Shared budgets with other people</li>
+          <li>Export to Excel (easy to add later)</li>
+        </ul>
+        <h3>Built with</h3>
+        <p class="note">Next.js and Supabase, from MedhKarm's starter template. Code goes to your own GitHub.</p>
+      </div>
+      <div class="phone" id="phone-preview"></div>
+    </div>
+    <div class="row">
+      <button class="btn" id="ask-change">Ask for changes</button>
+      <button class="btn primary" id="approve-plan">Approve plan</button>
+      <span class="note" id="change-note" hidden>In the product you'd type the change here, and Mira updates the plan and screens.</span>
+    </div>
+  </section>
+
+  <!-- 4. Team (Gate 2) -->
+  <section data-step="4" hidden>
+    <div class="lead">
+      <span class="gate">Approval 2 of 3 · Team and schedule</span>
+      <h1>Kabir, your CTO, sets up the team</h1>
+      <p class="muted" id="cto-line">Kabir read the approved plan, picked the people this app needs and split the work into tasks.</p>
+    </div>
+    <div class="team" id="team"></div>
+    <div class="panel">
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>Task</th><th>Owner</th><th>Checked by</th></tr></thead>
+          <tbody id="task-table"></tbody>
+        </table>
+      </div>
+      <p class="note" style="margin-top:10px">Estimate: about 1 working day · 5 tasks · runs on free Ollama models, so no AI cost for you during the beta.</p>
+    </div>
+    <div class="row">
+      <button class="btn primary" id="approve-team">Approve and start</button>
+    </div>
+  </section>
+
+  <!-- 5. Office -->
+  <section data-step="5" hidden>
+    <div class="lead">
+      <span class="gate">Step 5 · The office</span>
+      <h1>Watch your team work</h1>
+      <p class="muted">Every move is real activity: a task being assigned, code being written, QA sending a bug back. Agents work fast, so the day plays as a time-lapse you can pause and scrub.</p>
+    </div>
+    <div class="office">
+      <div class="floor-wrap">
+        <div class="floor" id="floor" role="img" aria-label="Office floor plan with the AI team at their desks"></div>
+        <div class="controls">
+          <button class="btn" id="play" aria-label="Pause">Pause</button>
+          <div class="seg" role="group" aria-label="Speed">
+            <button data-speed="1" aria-pressed="true">1×</button>
+            <button data-speed="3" aria-pressed="false">3×</button>
+          </div>
+          <input type="range" id="scrub" min="0" max="1000" value="0" aria-label="Timeline">
+          <span class="clock" id="clock">Day 1 · 10:00</span>
+        </div>
+      </div>
+      <div class="side">
+        <div class="tabs" role="tablist">
+          <button role="tab" aria-selected="true" data-tab="feed">Activity</button>
+          <button role="tab" aria-selected="false" data-tab="board">Tasks</button>
+          <button role="tab" aria-selected="false" data-tab="inbox">Inbox<span class="badge" id="inbox-badge" hidden>1</span></button>
+        </div>
+        <div class="panel" data-pane="feed"><div class="feed" id="feed"></div></div>
+        <div class="panel" data-pane="board" hidden><div class="board" id="board"></div></div>
+        <div class="panel" data-pane="inbox" hidden><div id="inbox" class="feed"></div></div>
+      </div>
+    </div>
+    <div class="row"><button class="btn primary" id="to-standup">Next morning</button></div>
+  </section>
+
+  <!-- 6. Standup -->
+  <section data-step="6" hidden>
+    <div class="lead">
+      <span class="gate">Step 6 · Daily standup</span>
+      <h1>Every morning, a short report</h1>
+      <p class="muted">Sent by email or WhatsApp at 9:00. One minute to read; you only act on "Needs you".</p>
+    </div>
+    <article class="panel standup">
+      <div class="head">
+        <div><h3>Standup · Expense Calculator</h3><span class="note">From Kabir (CTO) · Wed, 4 Nov · 9:00</span></div>
+        <span class="status done">On track</span>
+      </div>
+      <dl>
+        <dt>Done</dt>
+        <dd><ul><li>Expenses table and sign-in with Google</li><li>Add-expense form (QA caught negative amounts; fixed)</li><li>Expense list and monthly totals</li><li>Category chart</li></ul></dd>
+        <dt>Today</dt>
+        <dd>Final end-to-end test in a real browser, then the demo for you.</dd>
+        <dt>Blocked</dt>
+        <dd>Nothing.</dd>
+        <dt>Needs you</dt>
+        <dd><b>Approve the release</b> after you try the demo.</dd>
+        <dt>Usage</dt>
+        <dd class="mono">412k tokens · ₹0 (free models)</dd>
+      </dl>
+    </article>
+    <div class="row"><button class="btn primary" id="to-demo">Open the demo</button></div>
+  </section>
+
+  <!-- 7. Demo (Gate 3) -->
+  <section data-step="7" hidden>
+    <div class="lead">
+      <span class="gate">Approval 3 of 3 · Release</span>
+      <h1>Try it, then release it</h1>
+      <p class="muted">Tara (QA) recorded her final test in a real browser. Watch the replay or try the app yourself.</p>
+    </div>
+    <div class="two">
+      <div class="side">
+        <div class="panel">
+          <h3>Preview link</h3>
+          <div class="link-box" style="margin-top:8px"><span id="preview-url">expense-calculator-preview.medhkarm.app</span></div>
+          <p class="note" style="margin-top:6px">Sample address for this prototype.</p>
+        </div>
+        <div class="panel">
+          <h3>QA end-to-end test</h3>
+          <div class="checks" id="checks" style="margin-top:8px"></div>
+          <div class="row" style="margin-top:10px"><button class="btn" id="replay">Replay test</button></div>
+        </div>
+        <div class="panel success" id="released" hidden>
+          <h3>Released</h3>
+          <div class="link-box live" style="margin-top:8px">expense-calculator.medhkarm.app</div>
+          <p class="note" style="margin-top:8px">Code: github.com/your-name/expense-calculator · Need a change? Ask Mira, and the team picks it up.</p>
+        </div>
+        <div class="row">
+          <button class="btn primary" id="release">Approve release</button>
+          <button class="btn" id="restart">Start over</button>
+        </div>
+      </div>
+      <div class="phone" id="phone-demo"></div>
+    </div>
+  </section>
+</main>
+
+<script>
+(() => {
+  "use strict";
+  const $ = (s, el = document) => el.querySelector(s);
+  const $$ = (s, el = document) => [...el.querySelectorAll(s)];
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* ---------- the team ---------- */
+  const AGENTS = {
+    mira:  { name: "Mira",  role: "Product Manager", init: "MI", color: "var(--pm)" },
+    kabir: { name: "Kabir", role: "CTO",             init: "KA", color: "var(--cto)" },
+    isha:  { name: "Isha",  role: "Frontend developer", init: "IS", color: "var(--fe)" },
+    arjun: { name: "Arjun", role: "Backend developer",  init: "AR", color: "var(--be)" },
+    tara:  { name: "Tara",  role: "QA engineer",     init: "TA", color: "var(--qa)" },
+    neel:  { name: "Neel",  role: "DevOps",          init: "NE", color: "var(--ops)" },
+  };
+  const avatar = (id) => {
+    const a = AGENTS[id];
+    return `<span class="avatar" style="background:${a.color}" aria-hidden="true">${a.init}</span>`;
+  };
+
+  const TASKS = [
+    { id: "t1", title: "Expenses table and Google sign-in", owner: "arjun" },
+    { id: "t2", title: "Add-expense form", owner: "isha" },
+    { id: "t3", title: "Expense list", owner: "isha" },
+    { id: "t4", title: "Monthly totals by category", owner: "arjun" },
+    { id: "t5", title: "Category chart", owner: "isha" },
+  ];
+
+  /* ---------- stepper ---------- */
+  const STEP_NAMES = ["Idea", "Questions", "Plan", "Team", "Office", "Standup", "Release"];
+  let current = 1, furthest = 1;
+  const nav = $("#steps");
+  STEP_NAMES.forEach((name, i) => {
+    const b = document.createElement("button");
+    b.innerHTML = `<span class="n">${i + 1}</span>${name}`;
+    b.addEventListener("click", () => go(i + 1));
+    nav.appendChild(b);
+  });
+  function go(n) {
+    current = n; furthest = Math.max(furthest, n);
+    $$("section[data-step]").forEach(s => s.hidden = Number(s.dataset.step) !== n);
+    $$("button", nav).forEach((b, i) => {
+      b.toggleAttribute("aria-current", false);
+      if (i + 1 === n) b.setAttribute("aria-current", "step");
+      b.classList.toggle("done", i + 1 < furthest || (i + 1 < n));
+    });
+    window.scrollTo({ top: 0, behavior: reduce ? "auto" : "smooth" });
+    onEnter[n]?.();
+  }
+  const onEnter = {};
+
+  /* ---------- step 1 ---------- */
+  $("#send-idea").addEventListener("click", () => go(2));
+
+  /* ---------- step 2: PM chat ---------- */
+  const QUESTIONS = [
+    { q: "Who will use it?", options: ["Just me", "My family", "My small team"], key: "users" },
+    { q: "What should each expense have?", options: ["Amount, category, date and a note", "Just amount and category"], key: "fields" },
+    { q: "Which views do you want?", options: ["Monthly total and a chart by category", "Only a list"], key: "views" },
+    { q: "Should it sync between your phone and laptop? That needs a sign-in.", options: ["Yes, sign in with Google", "No, this device only"], key: "login" },
+  ];
+  const answers = {};
+  let chatStarted = false;
+  const chat = $("#pm-chat");
+  const addMsg = (html, me = false, id = "mira") => {
+    const m = document.createElement("div");
+    m.className = "msg" + (me ? " me" : "");
+    m.innerHTML = me ? `<div class="body">${html}</div>` : `${avatar(id)}<div class="body"><div class="who">${AGENTS[id].name} · ${AGENTS[id].role}</div>${html}</div>`;
+    chat.appendChild(m);
+    return m;
+  };
+  const wait = (ms) => new Promise(r => setTimeout(r, reduce ? 0 : ms));
+  async function pmSays(html) {
+    const t = addMsg(`<span class="typing-dots"><i></i><i></i><i></i></span>`);
+    await wait(650);
+    t.remove();
+    return addMsg(html);
+  }
+  async function ask(i) {
+    if (i >= QUESTIONS.length) {
+      await pmSays("Thanks. I've written a plan and drawn the screens for you to try.");
+      $("#to-plan").hidden = false;
+      return;
+    }
+    const { q, options, key } = QUESTIONS[i];
+    const m = await pmSays(`${q}<div class="chips"></div>`);
+    const chips = $(".chips", m);
+    options.forEach(opt => {
+      const c = document.createElement("button");
+      c.className = "chip"; c.textContent = opt;
+      c.addEventListener("click", () => {
+        answers[key] = opt;
+        chips.remove();
+        addMsg(opt, true);
+        ask(i + 1);
+      }, { once: true });
+      chips.appendChild(c);
+    });
+  }
+  onEnter[2] = async () => {
+    if (chatStarted) return;
+    chatStarted = true;
+    addMsg($("#idea-text").value.trim() || "I want a simple expense calculator app.", true);
+    await pmSays("Nice, an expense calculator. A few quick questions so we build the right thing.");
+    ask(0);
+  };
+  $("#to-plan").addEventListener("click", () => go(3));
+
+  /* ---------- the sample expense app (used in steps 3 and 7) ---------- */
+  const CATS = ["Food", "Travel", "Bills", "Shopping", "Other"];
+  const SAMPLE = [
+    { what: "Groceries, More Supermarket", cat: "Food", amt: 1840, date: "28 Oct" },
+    { what: "Metro card top-up", cat: "Travel", amt: 500, date: "27 Oct" },
+    { what: "Electricity, BESCOM", cat: "Bills", amt: 1260, date: "25 Oct" },
+    { what: "Lunch with team", cat: "Food", amt: 620, date: "24 Oct" },
+    { what: "Auto to airport", cat: "Travel", amt: 450, date: "21 Oct" },
+    { what: "Phone recharge", cat: "Bills", amt: 299, date: "18 Oct" },
+  ];
+  const rupees = (n) => "₹" + n.toLocaleString("en-IN");
+
+  function makeApp(root, startList) {
+    const state = { list: startList.map(e => ({ ...e })), view: "home" };
+    const render = () => {
+      const total = state.list.reduce((s, e) => s + e.amt, 0);
+      const byCat = CATS.map(c => [c, state.list.filter(e => e.cat === c).reduce((s, e) => s + e.amt, 0)]).filter(([, v]) => v > 0);
+      const max = Math.max(1, ...byCat.map(([, v]) => v));
+      if (state.view === "home") {
+        root.innerHTML = `
+          <div class="app-head"><div class="month">October spending</div><div class="total" data-k="total">${rupees(total)}</div></div>
+          <div class="app-body">
+            <div class="bars" data-k="chart">${byCat.map(([c, v]) => `<div class="bar"><span>${c}</span><span><i style="width:${(v / max * 100).toFixed(0)}%"></i></span><span>${rupees(v)}</span></div>`).join("")}</div>
+            <div data-k="list">${state.list.map(e => `<div class="exp"><span>${e.what}<br><small>${e.cat} · ${e.date}</small></span><span>${rupees(e.amt)}</span></div>`).join("")}</div>
+          </div>
+          <div class="app-foot"><button class="btn primary" data-k="add">Add expense</button></div>`;
+        $("[data-k=add]", root).addEventListener("click", () => { state.view = "add"; render(); });
+      } else {
+        root.innerHTML = `
+          <div class="app-head"><div class="month">New expense</div><div class="total">Add</div></div>
+          <div class="app-body">
+            <form class="app-form" data-k="form" novalidate>
+              <label for="${root.id}-amt">Amount (₹)<input id="${root.id}-amt" data-k="amt" inputmode="decimal" placeholder="250"></label>
+              <label for="${root.id}-cat">Category<select id="${root.id}-cat" data-k="cat">${CATS.map(c => `<option>${c}</option>`).join("")}</select></label>
+              <label for="${root.id}-what">Note<input id="${root.id}-what" data-k="what" placeholder="Chai and snacks"></label>
+              <div class="app-err" data-k="err" aria-live="polite"></div>
+              <button class="btn primary" data-k="save">Save</button>
+              <button class="btn" type="button" data-k="cancel">Cancel</button>
+            </form>
+          </div>`;
+        $("[data-k=cancel]", root).addEventListener("click", () => { state.view = "home"; render(); });
+        $("[data-k=form]", root).addEventListener("submit", (ev) => {
+          ev.preventDefault();
+          const amt = Number($("[data-k=amt]", root).value);
+          if (!Number.isFinite(amt) || amt <= 0) { $("[data-k=err]", root).textContent = "Enter an amount above ₹0."; return; }
+          state.list.unshift({ what: $("[data-k=what]", root).value.trim() || "Expense", cat: $("[data-k=cat]", root).value, amt: Math.round(amt), date: "Today" });
+          state.view = "home"; render();
+        });
+      }
+    };
+    render();
+    return { state, render };
+  }
+
+  /* ---------- step 3 ---------- */
+  onEnter[3] = () => {
+    const f = [
+      `Add an expense: amount, category, date${answers.fields?.startsWith("Just") ? "" : " and a note"}`,
+      answers.views?.startsWith("Only") ? "List of this month's expenses" : "This month's total, plus a chart by category",
+      "Edit or delete an expense",
+      answers.login?.startsWith("No") ? "Data stays on this device" : "Sign in with Google, synced across phone and laptop",
+      `Made for ${(answers.users || "Just me").toLowerCase()}, amounts in rupees`,
+    ];
+    $("#plan-features").innerHTML = f.map(x => `<li>${x}</li>`).join("");
+    if (!$("#phone-preview").dataset.ready) { makeApp($("#phone-preview"), SAMPLE); $("#phone-preview").dataset.ready = "1"; }
+  };
+  $("#ask-change").addEventListener("click", () => { $("#change-note").hidden = false; });
+  $("#approve-plan").addEventListener("click", () => go(4));
+
+  /* ---------- step 4 ---------- */
+  const CHECKER = { arjun: "tara", isha: "tara" };
+  onEnter[4] = () => {
+    const team = $("#team");
+    if (team.dataset.ready) return;
+    team.dataset.ready = "1";
+    const lines = {
+      mira: "Owns the plan; answers your questions",
+      kabir: "Assigns work and reviews every change",
+      isha: "Builds the screens: form, list, chart",
+      arjun: "Builds the database, sign-in and totals",
+      tara: "Tests each task, then the whole app in a browser",
+      neel: "Puts the app online: preview, then release",
+    };
+    Object.keys(AGENTS).forEach((id, i) => {
+      const c = document.createElement("div");
+      c.className = "agent-card";
+      c.innerHTML = `${avatar(id)}<div><b>${AGENTS[id].name}</b><div class="role">${AGENTS[id].role} · gpt-oss:20b</div><div class="task">${lines[id]}</div></div>`;
+      team.appendChild(c);
+      setTimeout(() => c.classList.add("show"), reduce ? 0 : 150 + i * 220);
+    });
+    $("#task-table").innerHTML = TASKS.map(t => `<tr><td>${t.title}</td><td>${AGENTS[t.owner].name}</td><td>${AGENTS[CHECKER[t.owner]].name}</td></tr>`).join("")
+      + `<tr><td>Preview and release</td><td>${AGENTS.neel.name}</td><td>You</td></tr>`;
+  };
+  $("#approve-team").addEventListener("click", () => go(5));
+
+  /* ---------- step 5: the office ---------- */
+  // Floor coordinates in percent of the floor box.
+  const DESK = { mira: [13, 26], kabir: [33, 26], neel: [53, 26], isha: [13, 66], arjun: [33, 66], tara: [53, 66] };
+  const SEAT = Object.fromEntries(Object.entries(DESK).map(([k, [x, y]]) => [k, [x, y + 10]]));
+  const MEET = { kabir: [80, 16], mira: [88, 22], isha: [73, 25], arjun: [80, 34], tara: [88, 32], neel: [73, 34] };
+  // Visitors stand beside the desk (right by default, left with a negative side), not on the seat.
+  const near = (id, side = 1) => [DESK[id][0] + side * 10, DESK[id][1] + 3];
+
+  // The day as a script of real events. t is seconds of replay at 1×.
+  const EV = [];
+  const move = (t, who, to) => EV.push({ t, type: "move", who, to });
+  const say = (t, who, text, dur = 3.2, tone = "") => EV.push({ t, type: "say", who, text, dur, tone });
+  const work = (t, who, on) => EV.push({ t, type: "work", who, on });
+  const task = (t, id, status) => EV.push({ t, type: "task", id, status });
+  const log = (t, who, text) => EV.push({ t, type: "log", who, text });
+  const inbox = (t, text) => EV.push({ t, type: "inbox", text });
+
+  say(0.5, "kabir", "Reading the approved plan");
+  log(0.5, "kabir", "Read the approved plan: 5 tasks.");
+  Object.keys(MEET).forEach((id, i) => move(2 + i * 0.2, id, MEET[id]));
+  say(4.2, "kabir", "Kickoff: 5 tasks, done by tomorrow");
+  log(4.2, "kabir", "Kickoff meeting with the whole team.");
+  say(6.2, "mira", "Amounts in rupees, Google sign-in");
+  say(8, "tara", "I'll test each task as it lands");
+  Object.keys(SEAT).forEach((id, i) => move(10 + i * 0.15, id, SEAT[id]));
+  task(11, "t1", "prog"); work(11, "arjun", true); say(11.5, "arjun", "Creating the expenses table"); log(11.5, "arjun", "Started: expenses table and Google sign-in.");
+  task(11.5, "t2", "prog"); work(11.5, "isha", true); say(12.2, "isha", "Building the add-expense form"); log(12.2, "isha", "Started: add-expense form.");
+  say(14, "neel", "Setting up the preview site"); work(14, "neel", true); log(14, "neel", "Set up the repo and the preview site.");
+  work(19, "neel", false);
+  task(19, "t1", "review"); work(19, "arjun", false); say(19, "arjun", "Table ready for review"); log(19, "arjun", "Expenses table ready for review.");
+  move(20, "tara", near("arjun")); say(21, "tara", "Testing sign-in and saving");
+  move(23, "tara", SEAT.tara); task(23, "t1", "done"); say(23.2, "tara", "Passed: 8 of 8 checks", 3, "ok"); log(23.2, "tara", "Passed: expenses table (8 of 8 checks).");
+  task(23.5, "t4", "prog"); work(23.5, "arjun", true); say(24, "arjun", "Monthly totals by category"); log(24, "arjun", "Started: monthly totals by category.");
+  task(26, "t2", "review"); work(26, "isha", false); say(26, "isha", "Form ready for review"); log(26, "isha", "Add-expense form ready for review.");
+  move(27, "tara", near("isha")); say(28, "tara", "Bug: it accepts -500", 3.5, "alert"); log(28, "tara", "Sent back: the form accepts negative amounts.");
+  task(28.5, "t2", "prog"); work(29.5, "isha", true); say(29.8, "isha", "Fixing: amount must be above ₹0");
+  move(30, "tara", SEAT.tara);
+  move(31, "kabir", near("isha")); say(32, "kabir", "Show the error under the field"); move(34, "kabir", SEAT.kabir);
+  work(35, "isha", false); task(35, "t2", "review"); move(35.5, "tara", near("isha")); say(36.5, "tara", "Passed: 6 of 6 checks", 3, "ok");
+  task(37, "t2", "done"); log(37, "tara", "Passed: add-expense form, after the fix."); move(38, "tara", SEAT.tara);
+  task(38.5, "t3", "prog"); work(38.5, "isha", true); say(39, "isha", "Building the expense list"); log(39, "isha", "Started: expense list.");
+  task(41, "t4", "review"); work(41, "arjun", false); move(42, "tara", near("arjun")); say(43, "tara", "Totals match by hand", 3, "ok");
+  task(44, "t4", "done"); log(44, "tara", "Passed: monthly totals."); move(45, "tara", SEAT.tara);
+  task(46, "t3", "review"); work(46, "isha", false); task(48, "t3", "done"); log(48, "tara", "Passed: expense list.");
+  task(48.5, "t5", "prog"); work(48.5, "isha", true); say(49, "isha", "Drawing the category chart"); log(49, "isha", "Started: category chart.");
+  move(50, "mira", near("isha")); say(51, "mira", "Use the colours from the plan"); move(53, "mira", SEAT.mira);
+  task(55, "t5", "review"); work(55, "isha", false); move(55.5, "tara", near("isha")); say(56.5, "tara", "Passed", 2.5, "ok");
+  task(57.5, "t5", "done"); log(57.5, "tara", "Passed: category chart. All 5 tasks done."); move(58, "tara", SEAT.tara);
+  work(58.5, "neel", true); say(59, "neel", "Deploying the preview"); log(59, "neel", "Deploying the preview.");
+  work(62, "neel", false); say(62, "neel", "Preview is live", 3, "ok"); log(62, "neel", "Preview is live for the final test.");
+  work(63, "tara", true); say(63.5, "tara", "End-to-end test in a browser"); work(67, "tara", false);
+  say(67.2, "tara", "12 of 12 steps passed", 3.5, "ok"); log(67.2, "tara", "End-to-end test: 12 of 12 steps passed.");
+  say(69, "kabir", "Sending Pavan the demo"); log(69, "kabir", "Asked you to approve the release.");
+  inbox(69, "Approve the release: try the demo first.");
+  EV.sort((a, b) => a.t - b.t);
+  const END = 72;
+
+  const floor = $("#floor");
+  floor.innerHTML = `
+    <div class="room" style="left:66%;top:5%;width:31%;height:40%"><span class="room-label">Meeting room</span></div>
+    <div class="table-round" style="left:75%;top:17%;width:10%;aspect-ratio:1"></div>
+    <div class="room" style="left:66%;top:55%;width:31%;height:40%"><span class="room-label">Pantry</span></div>
+    <span class="room-label" style="left:2%;top:4%;position:absolute">Product</span>
+    <span class="room-label" style="left:2%;top:49%;position:absolute">Engineering</span>
+    <div class="plant" style="left:60%;top:46%"></div><div class="plant" style="left:3%;top:88%"></div><div class="plant" style="left:93%;top:47%"></div>`;
+  Object.entries(DESK).forEach(([id, [x, y]]) => {
+    const d = document.createElement("div");
+    d.className = "desk"; d.id = "desk-" + id;
+    d.style.left = x + "%"; d.style.top = y + "%";
+    d.innerHTML = `<div class="monitor"><i></i><i></i><i></i><i></i></div>`;
+    floor.appendChild(d);
+  });
+  const agentEls = {};
+  Object.keys(AGENTS).forEach(id => {
+    const a = document.createElement("div");
+    a.className = "agent";
+    a.innerHTML = `<div class="bubble" hidden></div><div class="dot" style="background:${AGENTS[id].color}">${AGENTS[id].init}</div><div class="label">${AGENTS[id].name} · ${AGENTS[id].role.split(" ")[0]}</div>`;
+    a.style.left = SEAT[id][0] + "%"; a.style.top = SEAT[id][1] + "%";
+    floor.appendChild(a);
+    agentEls[id] = a;
+  });
+
+  function stateAt(t) {
+    const pos = Object.fromEntries(Object.keys(SEAT).map(k => [k, { at: SEAT[k], since: -99 }]));
+    const bubble = {}, busy = {}, tasks = Object.fromEntries(TASKS.map(x => [x.id, "todo"])), feed = [], inboxItems = [];
+    for (const e of EV) {
+      if (e.t > t) break;
+      if (e.type === "move") pos[e.who] = { at: e.to, since: e.t };
+      if (e.type === "say") bubble[e.who] = e;
+      if (e.type === "work") busy[e.who] = e.on;
+      if (e.type === "task") tasks[e.id] = e.status;
+      if (e.type === "log") feed.push(e);
+      if (e.type === "inbox") inboxItems.push(e);
+    }
+    return { pos, bubble, busy, tasks, feed, inboxItems };
+  }
+  const clockAt = (t) => { const mins = 10 * 60 + Math.round(t / END * 8 * 60); return `Day 1 · ${String(Math.floor(mins / 60)).padStart(2, "0")}:${String(mins % 60).padStart(2, "0")}`; };
+
+  let t = 0, playing = true, speed = 1, last = null, lastFeedLen = -1, lastTasksKey = "";
+  const LABEL = { todo: "To do", prog: "In progress", review: "In review", done: "Done" };
+  function render() {
+    const s = stateAt(t);
+    const walkTime = 1.2 / speed;
+    for (const [id, el] of Object.entries(agentEls)) {
+      const p = s.pos[id];
+      el.style.transitionDuration = walkTime + "s";
+      el.style.left = p.at[0] + "%"; el.style.top = p.at[1] + "%";
+      el.classList.toggle("walking", t - p.since < 1.2 && t >= p.since);
+      const b = s.bubble[id], bEl = $(".bubble", el);
+      if (b && t < b.t + b.dur) {
+        bEl.hidden = false; bEl.textContent = b.text; bEl.className = "bubble " + (b.tone || "");
+        // Keep bubbles inside the floor: anchor them inward near the left and right walls.
+        const x = p.at[0];
+        bEl.style.transform = `translateX(${x < 22 ? -12 : x > 78 ? -88 : -50}%)`;
+      }
+      else bEl.hidden = true;
+      $("#desk-" + id)?.classList.toggle("busy", !!s.busy[id]);
+    }
+    $("#clock").textContent = clockAt(t);
+    $("#scrub").value = Math.round(t / END * 1000);
+    if (s.feed.length !== lastFeedLen) {
+      lastFeedLen = s.feed.length;
+      $("#feed").innerHTML = s.feed.slice().reverse().map(e => `<div class="item">${avatar(e.who)}<div><div class="t">${clockAt(e.t).slice(8)} · ${AGENTS[e.who].name}</div>${e.text}</div></div>`).join("") || `<p class="note">Activity appears here as the team works.</p>`;
+      $("#inbox").innerHTML = s.inboxItems.map(e => `<div class="item">${avatar("kabir")}<div><div class="t">${clockAt(e.t).slice(8)}</div><b>${e.text}</b></div></div>`).join("") || `<p class="note">Nothing needs you right now.</p>`;
+      $("#inbox-badge").hidden = s.inboxItems.length === 0;
+    }
+    const key = JSON.stringify(s.tasks);
+    if (key !== lastTasksKey) {
+      lastTasksKey = key;
+      $("#board").innerHTML = ["prog", "review", "done", "todo"].map(st => {
+        const items = TASKS.filter(x => s.tasks[x.id] === st);
+        return `<div class="col"><h4>${LABEL[st]} (${items.length})</h4>${items.map(x => `<div class="card" style="--c:${AGENTS[x.owner].color}">${x.title}<br><span class="status ${st}">${AGENTS[x.owner].name}</span></div>`).join("")}</div>`;
+      }).join("");
+    }
+  }
+  function tick(now) {
+    if (last != null && playing && current === 5) {
+      t = Math.min(END, t + (now - last) / 1000 * speed);
+      if (t >= END) setPlaying(false);
+      render();
+    }
+    last = now;
+    requestAnimationFrame(tick);
+  }
+  function setPlaying(p) {
+    playing = p;
+    $("#play").textContent = p ? "Pause" : (t >= END ? "Replay" : "Play");
+    $("#play").setAttribute("aria-label", $("#play").textContent);
+  }
+  $("#play").addEventListener("click", () => { if (!playing && t >= END) t = 0; setPlaying(!playing); });
+  $$(".seg button").forEach(b => b.addEventListener("click", () => {
+    speed = Number(b.dataset.speed);
+    $$(".seg button").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+  }));
+  $("#scrub").addEventListener("input", (e) => { t = Number(e.target.value) / 1000 * END; render(); });
+  $$(".tabs button").forEach(b => b.addEventListener("click", () => {
+    $$(".tabs button").forEach(x => x.setAttribute("aria-selected", String(x === b)));
+    $$("[data-pane]").forEach(p => p.hidden = p.dataset.pane !== b.dataset.tab);
+  }));
+  onEnter[5] = () => { if (reduce) { t = END; setPlaying(false); } render(); };
+  render();
+  requestAnimationFrame(tick);
+  $("#to-standup").addEventListener("click", () => go(6));
+
+  /* ---------- step 6 ---------- */
+  $("#to-demo").addEventListener("click", () => go(7));
+
+  /* ---------- step 7: QA replay + release ---------- */
+  const CHECKS = [
+    "Sign in with Google", "Open October: total ₹4,969", "Tap Add expense", "Try ₹-500: error shown",
+    "Enter ₹250, Food, Chai and snacks", "Save", "New expense at the top of the list", "Total updates to ₹5,219",
+    "Food bar grows in the chart", "Edit the expense to ₹300", "Delete it again", "Works on a phone-sized screen",
+  ];
+  $("#checks").innerHTML = CHECKS.map(c => `<div><span class="mark">✓</span><span>${c}</span></div>`).join("");
+  let demoApp = null, replaying = false;
+  async function replay() {
+    if (replaying) return;
+    replaying = true;
+    const root = $("#phone-demo");
+    demoApp = makeApp(root, SAMPLE);
+    const rows = $$("#checks div");
+    rows.forEach(r => r.classList.remove("on"));
+    const cursor = document.createElement("div");
+    cursor.className = "cursor"; root.appendChild(cursor);
+    const point = (el) => {
+      if (!el) return;
+      const r = el.getBoundingClientRect(), pr = root.getBoundingClientRect();
+      cursor.style.left = (r.left - pr.left + r.width / 2 - 9) + "px";
+      cursor.style.top = (r.top - pr.top + r.height / 2 - 9) + "px";
+      if (!root.contains(cursor)) root.appendChild(cursor);
+    };
+    const step = async (i, fn) => { await wait(700); await fn?.(); rows[i].classList.add("on"); };
+    await step(0); await step(1, () => point($("[data-k=total]", root)));
+    await step(2, async () => { point($("[data-k=add]", root)); await wait(400); $("[data-k=add]", root).click(); });
+    await step(3, async () => { $("[data-k=amt]", root).value = "-500"; point($("[data-k=save]", root)); await wait(400); $("[data-k=save]", root).click(); });
+    await step(4, async () => { $("[data-k=amt]", root).value = "250"; $("[data-k=cat]", root).value = "Food"; $("[data-k=what]", root).value = "Chai and snacks"; point($("[data-k=what]", root)); });
+    await step(5, async () => { point($("[data-k=save]", root)); await wait(400); $("[data-k=save]", root).click(); });
+    await step(6, () => point($("[data-k=list] .exp", root)));
+    await step(7, () => point($("[data-k=total]", root)));
+    await step(8, () => point($("[data-k=chart]", root)));
+    await step(9); await step(10); await step(11);
+    cursor.remove();
+    replaying = false;
+  }
+  onEnter[7] = () => { if (!demoApp) replay(); };
+  $("#replay").addEventListener("click", replay);
+  $("#release").addEventListener("click", () => { $("#released").hidden = false; $("#release").disabled = true; $("#release").textContent = "Released"; });
+  $("#restart").addEventListener("click", () => location.reload());
+
+  go(1);
+})();
+</script>

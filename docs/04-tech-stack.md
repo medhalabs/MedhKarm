@@ -11,7 +11,7 @@ Decided Oct 1, 2026. A Next.js frontend over a Python backend, Postgres on Supab
 | Frontend ↔ backend | TypeScript client generated from FastAPI's OpenAPI spec | Types always match; Supabase handles sign-in and FastAPI checks its token |
 | Orchestration | LangGraph with Postgres checkpoints | Works with any model; `interrupt()` for approval gates; runs survive restarts. Replaces Temporal for the MVP |
 | Background jobs | arq on Redis, or a Postgres job table | Runs graphs in worker processes |
-| Model layer | LiteLLM; development default `ollama_chat/gpt-oss:120b` on Ollama Cloud (free tier) | One interface for Claude, OpenAI, Gemini, Ollama and others |
+| Model layer | LiteLLM; development default `ollama_chat/gpt-oss:20b` on Ollama Cloud (free tier); paid models later for customers | One interface for Claude, OpenAI, Gemini, Ollama and others |
 | Developer engine | Two engines behind one `DeveloperEngine` interface: built-in tool loop (default) and OpenHands SDK 1.50 (`DEVELOPER_ENGINE=openhands`) | Model-agnostic; the Claude Agent SDK can be added later for Claude users |
 | Sandbox | Docker locally, behind a `Sandbox` interface; hosted sandbox chosen in Phase 2 | Isolated environment per project; see below |
 | Tracing and costs | Langfuse | Works with LangGraph; tokens and cost per agent and task |
