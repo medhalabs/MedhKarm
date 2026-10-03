@@ -12,9 +12,9 @@ One engine runs every AI team; the teams launch one at a time. The **software te
 | --- | --- | --- |
 | Phase | Was | Now | Gate |
 | --- | --- | --- | --- |
-| 0 · Validate and set up | Oct 5 – Oct 16 | **Oct 5 – Oct 16, 2026** (unchanged) | Stack proven ✓; 5+ committed beta users; 20 eval tasks written ✓ and reviewed |
+| 0 · Validate and set up | Oct 5 – Oct 16 | **Oct 5 – Oct 16, 2026** (unchanged) | Stack proven ✓; name ✓; 20 eval tasks written ✓ and reviewed; 5+ committed beta users by Nov 27 |
 | 1 · Engine and team templates | Oct 19 – Nov 13 | **Done Oct 1, 2026** | Passed ✓ ([09-gate-1-report.md](09-gate-1-report.md)) |
-| 2 · Software team | Nov 16 – Dec 18 | **Oct 5 – Nov 27, 2026** (alongside Phase 0's interviews) | 12 of 20 eval tasks pass without help, on new and existing repos; cost per task known |
+| 2 · Software team | Nov 16 – Dec 18 | **Oct 5 – Nov 27, 2026** | 12 of 20 eval tasks pass without help, on new and existing repos; cost per task known |
 | 3 · Office and private beta | Jan 4 – Feb 12, 2027 | **Nov 30, 2026 – Jan 29, 2027** (beta from Dec 7) | 70% of beta tasks succeed; 30% of beta users pay; satisfaction 8/10+ |
 | Holiday buffer | Dec 21 – Jan 1 | Dec 21, 2026 – Jan 1, 2027 (inside Phase 3) | Hardening and beta support only |
 | Software team launch | Mar 1, 2027 | **Feb 15, 2027** | |
@@ -25,7 +25,7 @@ One engine runs every AI team; the teams launch one at a time. The **software te
 
 | By | Decision | Why then |
 | --- | --- | --- |
-| Oct 16, 2026 | Product name and domain | Beta invites and the landing page need them |
+| Oct 16, 2026 | Buy medhkarm.in (name decided: MedhKarm) | Beta invites and the landing page need it; an unbought domain can be taken |
 | Nov 13, 2026 | A small paid-model budget for evals and the beta (or stay free and narrow the task types) | Gate 2 needs 12/20 evals; on the free model, advanced logic ran out of steps in Gate 1 |
 | Nov 13, 2026 | Hosted sandbox for customer code (free tiers first) | Beta users' code can't run on this laptop's Docker |
 | Dec 18, 2026 | Business registration and Razorpay account | Gate 3 measures paying users; payments need a registered business (KYC) |
@@ -49,12 +49,13 @@ Goal: know who we build for and what "working" means before building the product
 - [x] Prove the stack end to end: LangGraph run with OpenHands in a local Docker sandbox, checkpointed in Postgres (done Oct 1, 2026)
 - [x] Interview round 1 ([07-interview-findings.md](07-interview-findings.md)): solo builders in India
 - [x] Launch market decided: India first
-- [ ] Interview round 2: 10+ solo builders and 5+ content creators, every one ending with a beta ask
-- [ ] Pick product name and domain
+- [x] Interview round 2: dropped (Oct 3, 2026). Pavan knows what solo builders need from round 1 and his own work; beta commitments are asked for directly instead (see Gate 0)
+- [x] Product name: **MedhKarm** (Oct 3, 2026)
+- [ ] Buy the domain medhkarm.in (chosen, not yet bought)
 - [x] Write 20 eval tasks: 17 on 4 existing projects, 3 new modules; all validated, baseline 18/19 (Oct 1, 2026). Waiting for your review
 - [x] Office mock-up for interviews: the full expense-calculator journey, animated office, standup and release (done Oct 1, 2026: [mockups/office-demo.html](mockups/office-demo.html), [shareable link](https://claude.ai/artifact/8eBgvzgr8ycDaJd6HZnwSZ))
 
-**Gate 0:** at least 5 solo builders commit to the beta with a real project; 20 eval tasks written and reviewed.
+**Gate 0:** at least 5 solo builders commit to the beta with a real project; 20 eval tasks written and reviewed. With round 2 dropped, commitments are asked for directly, and the deadline moves to **Nov 27, 2026**, the week before the beta opens (Dec 7).
 
 ## Phase 1 — Engine and team templates (planned Oct 19 – Nov 13; done Oct 1, 2026)
 
@@ -76,7 +77,7 @@ Goal: a general engine where a team is defined by config, its work is checked, a
 
 Goal: the software team delivers working, tested changes on new and existing projects without help.
 
-Runs alongside Phase 0's interviews: building in the mornings, interviews and beta recruiting in the afternoons. Early sign for the gate: at least 8 of 20 evals passing by Nov 13.
+Building in the mornings, beta recruiting in the afternoons. Early sign for the gate: at least 8 of 20 evals passing by Nov 13.
 
 - [ ] Connect an existing GitHub repo; agents map the codebase before changing it (JavaScript/TypeScript and Python first). Built Oct 1, 2026: clone, map before planning, install/test detection, pull request on release ([repos.md](technical/features/repos.md)). New projects get a private repository on release (tested live Oct 2). Left: a pull request tested live against an existing repo
 - [ ] Backlog: the PM splits a goal into tasks; agents work through them across days
@@ -154,7 +155,7 @@ What Phase 1 showed: with AI tools, code for a well-defined piece takes days, no
 
 | Period | Focus |
 | --- | --- |
-| Oct 5 – Nov 27 | Software team (Phase 2) in the mornings; interviews, beta commitments, name and domain in the afternoons |
+| Oct 5 – Nov 27 | Software team (Phase 2) in the mornings; beta commitments and the domain in the afternoons |
 | Nov 30 – Jan 29 | Beta onboarding and support first; office UI and billing around it |
 | Feb 15 onward | Software team in production; content and video team |
 
@@ -165,7 +166,7 @@ What Phase 1 showed: with AI tools, code for a well-defined piece takes days, no
 | Eval success rate below 60% | 2 | Under 8/20 by Nov 13 | Narrow to 2–3 task types; stronger model for developer tasks |
 | Existing repos are too varied | 2 | Repo tasks fail far more than new-app tasks | Limit to JS/TS and Python; require tests in the repo; codebase map first |
 | Cost per task too high | 2 | Median cost above plan margin | Cheap models for easy steps; caching; built-in engine for small tasks |
-| No beta commitments | 0–3 | Fewer than 5 by Oct 16, or 10 by Dec 15 | Free beta for a real project; recruit from creator and freelancer communities |
+| No beta commitments | 0–3 | Fewer than 5 by Nov 27, or 10 by Dec 15 | Free beta for a real project; recruit from creator and freelancer communities |
 | Dots, Grok Bot or Cursor add project management | Any | Competitor launch | Lean on specific teams, Indian pricing and languages, model choice, checked work |
 | Content team too costly per video | 4 | Generation cost above what creators pay | Cheaper formats (images + narration); BYO video model keys |
 | Animated office takes longer than planned | 3 | Not usable by Jan 8 | Start the beta on a card layout and switch to the animated office mid-beta; the event log drives both |
@@ -180,7 +181,9 @@ What Phase 1 showed: with AI tools, code for a well-defined piece takes days, no
 - [x] Who builds it: Pavan alone, with AI coding tools (Oct 1, 2026)
 - [x] Dates re-planned for one builder after Phase 1 finished early: launch Feb 15, 2027 (Oct 1, 2026)
 - [x] Development budget: ₹0 for now, free Ollama models only; paid models after a certain stage of development (Oct 1, 2026)
-- [ ] Product name and domain (by Oct 16, 2026)
+- [x] Product name: MedhKarm (Oct 3, 2026)
+- [x] Interview round 2 dropped; beta commitments asked for directly, by Nov 27 (Oct 3, 2026)
+- [ ] Buy medhkarm.in (by Oct 16, 2026)
 - [ ] Paid-model budget for evals and beta (by Nov 13, 2026)
 - [ ] Hosted sandbox for customer code (by Nov 13, 2026)
 - [ ] Business registration and Razorpay (by Dec 18, 2026)
