@@ -63,7 +63,7 @@ Forms are React forms with **server actions** (`api/actions.ts`): the Next.js se
 
 | Method | Path | Purpose | Auth |
 | --- | --- | --- | --- |
-| POST | `/runs` | Start a run: `{"request": "...", "test_command": "pytest -q", "repo": {"url": "https://github.com/owner/name", "branch": null}}` → 202 with the run. `repo` is optional ([repos.md](repos.md)); `test_command` is optional: `pytest -q` for a new project, detected from the project with a repo | None yet |
+| POST | `/runs` | Start a run: `{"request": "...", "test_command": "pytest -q", "repo": {"url": "https://github.com/owner/name", "branch": null}}` → 202 with the run. `repo` is optional ([repos.md](repos.md)); without it, `create_repo` (default `true`) and `new_repo_name` ask for a new private repository on release; `test_command` is optional: `pytest -q` for a new project, detected from the project with a repo | None yet |
 | GET | `/runs?limit=50` | Runs, newest first (limit 1–200) | None yet |
 | GET | `/runs/{run_id}` | One run: status, `gate` while waiting, `error` if it broke | None yet |
 | POST | `/runs/{run_id}/approval` | `{"approved": true, "feedback": ""}` → 202 | None yet |
@@ -125,6 +125,7 @@ None of its own. The workflow records the run's events ([workflows.md](workflows
 
 | Date | Change |
 | --- | --- |
+| 2026-10-01 | New projects: `create_repo` / `new_repo_name` on start, `new_repo` on runs (migration `0005`); admin form checkbox and name; run page shows the created repository |
 | 2026-10-01 | Runs on an existing GitHub repository: optional `repo` on start, `repo` and `delivery` on runs (migration `0004`), test command optional; admin form and run page show the repo and the pull request ([repos.md](repos.md)) |
 | 2026-10-01 | Admin page: start, list, watch and approve runs in the browser |
 | 2026-10-01 | `gate` carries the approval rules' reasons; runs the rules approve or reject never wait ([approvals.md](approvals.md)) |

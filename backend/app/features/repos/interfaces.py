@@ -23,3 +23,8 @@ class RepoHost(Protocol):
         """Commit the workspace's changes to `branch`, push it and open a pull request.
         Safe to repeat: an existing branch is overwritten and an open pull request reused."""
         ...
+
+    async def publish(self, sandbox: Sandbox, name: str, description: str) -> Delivery:
+        """Create a private repository called `name` in the token owner's account and push
+        the workspace to its `main` branch. Safe to repeat; never overwrites existing work."""
+        ...

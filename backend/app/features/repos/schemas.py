@@ -10,6 +10,7 @@ from pydantic import BaseModel, Field, field_validator
 GITHUB_URL = re.compile(
     r"^https://github\.com/([A-Za-z0-9-]{1,39})/([A-Za-z0-9._-]{1,100}?)(?:\.git)?/?$"
 )
+REPO_NAME = re.compile(r"^[A-Za-z0-9._-]{1,100}$")
 BRANCH_NAME = re.compile(r"^(?!-)(?!.*\.\.)[A-Za-z0-9._/-]{1,200}$")
 
 
@@ -92,8 +93,35 @@ class CodebaseMap(BaseModel):
         return text if len(text) <= limit else text[: limit - 20].rstrip() + "\n… (map cut short)"
 
 
+def repo_name_for(request: str, run_id: str) -> str:
+    """A new repository's name from the request: 'roman-numerals-converter-3f9a2c'."""
+    words = re.findall(r"[a-z0-9]+", request.lower())
+    slug = "-".join(words)[:40].strip("-") or "project"
+    return f"{slug}-{run_id[:6]}"
+
+
+def check_repo_name(name: str | None) -> str | None:
+    """GitHub's rules for a repository name; blank means none."""
+    name = (name or "").strip() or None
+    if name and (not REPO_NAME.match(name) or name in (".", "..")):
+        raise ValueError("Repository names use letters, digits, '.', '_' and '-'")
+    return name
+
+
+class NewRepo(BaseModel):
+    """Create a private repository for a new project when its work is released."""
+
+    name: str | None = Field(default=None, max_length=100)  # None: from the request
+
+    @field_validator("name")
+    @classmethod
+    def _github_name(cls, name: str | None) -> str | None:
+        return check_repo_name(name)
+
+
 class DeliveryStatus(StrEnum):
     OPENED = "opened"  # a pull request is open with the work
+    CREATED = "created"  # a new repository holds the work (new projects)
     NO_CHANGES = "no_changes"  # nothing to deliver
     SKIPPED = "skipped"  # couldn't deliver (e.g. no GitHub token); the reason says why
 
@@ -105,4 +133,5 @@ class Delivery(BaseModel):
     branch: str = ""
     commit: str = ""
     pull_request_url: str = ""
+    repo_url: str = ""  # the repository the work went to (set for created ones)
     reason: str = ""

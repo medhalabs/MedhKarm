@@ -51,3 +51,16 @@ def test_brief_is_capped() -> None:
     assert len(brief) <= 1000
     assert brief.endswith("(map cut short)")
     assert CodebaseMap().brief() == ""
+
+
+def test_new_repo_names() -> None:
+    from app.features.repos.schemas import NewRepo, repo_name_for
+
+    assert repo_name_for("Create roman.py: Roman numerals both ways!", "3f9a2c1b") == (
+        "create-roman-py-roman-numerals-both-ways-3f9a2c"
+    )
+    assert repo_name_for("¿?", "abc123") == "project-abc123"
+    assert NewRepo(name=" my-app ").name == "my-app"
+    for bad in ("my app", "..", "a/b"):
+        with pytest.raises(ValidationError):
+            NewRepo(name=bad)

@@ -1,4 +1,5 @@
 """GitHub: clone into the sandbox, then push a branch and open a pull request with the work.
+For a new project, create a private repository and push the work to its `main` branch.
 
 The token never touches the disk: git gets it as a one-off `http.extraHeader` on the clone and
 push commands only (not stored in .git/config, where agent-run code could read it), and it is
@@ -90,15 +91,9 @@ class GitHubRepoHost:
         self, source: RepoSource, branch: str, title: str, body: str
     ) -> str:
         repo = f"{API}/repos/{source.owner}/{source.name}"
-        headers = {
-            "Authorization": f"Bearer {self._token}",
-            "Accept": "application/vnd.github+json",
-            "X-GitHub-Api-Version": "2022-11-28",
-        }
+        headers = self._headers()
         async with AsyncExitStack() as stack:
-            http = self._http
-            if http is None:
-                http = await stack.enter_async_context(httpx.AsyncClient(timeout=30))
+            http = await self._client(stack)
             base = source.branch or await self._default_branch(http, repo, headers)
             response = await http.post(
                 f"{repo}/pulls",
@@ -119,6 +114,85 @@ class GitHubRepoHost:
                     f"{response.text[:300]}"
                 )
             return str(response.json()["html_url"])
+
+    async def publish(self, sandbox: Sandbox, name: str, description: str) -> Delivery:
+        if not self._token:
+            return Delivery(
+                status=DeliveryStatus.SKIPPED,
+                reason="No GITHUB_TOKEN set, so no repository was created for the work",
+            )
+        if not (await sandbox.run("git rev-parse --git-dir")).ok:
+            patterns = " ".join(shlex.quote(p) for p in LOCAL_ONLY)
+            await sandbox.run(
+                f"git init -q -b main && printf '%s\\n' {patterns} >> .git/info/exclude"
+            )
+        status = await sandbox.run("git add -A && git status --porcelain")
+        if not status.ok:
+            raise RepoError(f"Couldn't read the work's files: {status.output[-500:]}")
+        if status.output.strip():
+            commit = await sandbox.run(
+                f"git {AUTHOR} commit -q -m {shlex.quote(description[:200] or 'First version')}"
+            )
+            if not commit.ok:
+                raise RepoError(f"Couldn't commit the work: {commit.output[-500:]}")
+        head = await sandbox.run("git rev-parse HEAD")
+        if not head.ok:  # nothing was ever committed: an empty workspace
+            return Delivery(status=DeliveryStatus.NO_CHANGES, reason="The work has no files")
+        html_url, clone_url = await self._create_repository(name, description)
+        push = await sandbox.run(
+            f"git {self._auth()} push --quiet {shlex.quote(clone_url)} HEAD:refs/heads/main",
+            timeout_seconds=CLONE_TIMEOUT,
+        )
+        if not push.ok:  # never forced: an existing repository's work is left alone
+            raise RepoError(f"Couldn't push to {html_url}: {self._scrub(push.output)[-500:]}")
+        return Delivery(
+            status=DeliveryStatus.CREATED,
+            branch="main",
+            commit=head.output.strip(),
+            repo_url=html_url,
+        )
+
+    async def _create_repository(self, name: str, description: str) -> tuple[str, str]:
+        """Creates the private repository (or finds the one an earlier attempt created);
+        returns its web address and clone address."""
+        headers = self._headers()
+        about = " ".join(description.split())[:300]
+        async with AsyncExitStack() as stack:
+            http = await self._client(stack)
+            created = await http.post(
+                f"{API}/user/repos",
+                headers=headers,
+                json={"name": name, "description": about, "private": True},
+            )
+            if created.status_code == 422:  # name taken: ours from a retry, or the founder's
+                me = await http.get(f"{API}/user", headers=headers)
+                if not me.is_success:
+                    raise RepoError(
+                        f"GitHub didn't say who the token belongs to ({me.status_code})"
+                    )
+                created = await http.get(
+                    f"{API}/repos/{me.json()['login']}/{name}", headers=headers
+                )
+            if not created.is_success:
+                raise RepoError(
+                    f"GitHub didn't create the repository {name} ({created.status_code}): "
+                    f"{created.text[:300]}"
+                )
+            data = created.json()
+            return str(data["html_url"]), str(data["clone_url"])
+
+    def _headers(self) -> dict[str, str]:
+        return {
+            "Authorization": f"Bearer {self._token}",
+            "Accept": "application/vnd.github+json",
+            "X-GitHub-Api-Version": "2022-11-28",
+        }
+
+    async def _client(self, stack: AsyncExitStack) -> httpx.AsyncClient:
+        """The client tests passed in, or a new one closed with `stack`."""
+        if self._http is not None:
+            return self._http
+        return await stack.enter_async_context(httpx.AsyncClient(timeout=30))
 
     async def _default_branch(
         self, http: httpx.AsyncClient, repo: str, headers: dict[str, str]

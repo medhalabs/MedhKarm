@@ -98,14 +98,13 @@ async def record_step(recorder: RunRecorder, node: str, data: dict[str, Any]) ->
         status = data.get("status", "finished")
         delivery = data.get("delivery")
         if delivery:
-            await recorder.record(
-                Actor.DEVOPS,
-                EventType.CHANGES_DELIVERED,
-                f"Opened a pull request: {delivery['pull_request_url']}"
-                if delivery.get("pull_request_url")
-                else f"Didn't open a pull request: {delivery.get('reason', '')}",
-                delivery,
-            )
+            if delivery.get("pull_request_url"):
+                summary = f"Opened a pull request: {delivery['pull_request_url']}"
+            elif delivery.get("repo_url"):
+                summary = f"Created the repository and pushed the work: {delivery['repo_url']}"
+            else:
+                summary = f"Didn't deliver to GitHub: {delivery.get('reason', '')}"
+            await recorder.record(Actor.DEVOPS, EventType.CHANGES_DELIVERED, summary, delivery)
         summaries = {
             "released": "Released",
             "rejected": "Stopped: release not approved",

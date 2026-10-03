@@ -13,6 +13,7 @@ describe("parseStartRun", () => {
     expect(parseStartRun(form({ request: " Build a calculator " }))).toEqual({
       request: "Build a calculator",
       test_command: "pytest -q",
+      create_repo: false,
     });
   });
 
@@ -22,6 +23,22 @@ describe("parseStartRun", () => {
         form({ request: "Add search", repo_url: "https://github.com/a/notes", repo_branch: "" }),
       ),
     ).toEqual({ request: "Add search", repo: { url: "https://github.com/a/notes", branch: null } });
+  });
+
+  it("creates a named repo for a new project when ticked", () => {
+    expect(
+      parseStartRun(form({ request: "Build a timer", create_repo: "on", new_repo_name: "timer" })),
+    ).toEqual({
+      request: "Build a timer",
+      test_command: "pytest -q",
+      create_repo: true,
+      new_repo_name: "timer",
+    });
+    expect(
+      parseStartRun(
+        form({ request: "Build a timer", create_repo: "on", new_repo_name: "my timer" }),
+      ),
+    ).toEqual({ error: "Repository names use letters, digits, '.', '_' and '-'." });
   });
 
   it("only takes GitHub addresses", () => {

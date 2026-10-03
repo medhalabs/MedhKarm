@@ -1,5 +1,5 @@
-"""Final node: hands released work back to the founder's repository (a pull request), records
-the outcome and removes the sandbox."""
+"""Final node: hands released work to GitHub (a pull request on the founder's repository, or
+a new private repository for a new project), records the outcome and removes the sandbox."""
 
 from typing import Any
 
@@ -25,6 +25,15 @@ def make_finish_node(sandboxes: SandboxProvider, repos: RepoService | None = Non
                 state.get("run_id", "run"),
                 state["request"],
                 state.get("dev_result", {}).get("summary", ""),
+            )
+            update["delivery"] = delivery.model_dump(mode="json")
+        elif status == "released" and state.get("new_repo") is not None and repos:
+            new_repo = state.get("new_repo") or {}
+            delivery = await repos.publish(
+                await sandboxes.attach(state["sandbox_id"]),
+                state.get("run_id", "run"),
+                state["request"],
+                new_repo.get("name"),
             )
             update["delivery"] = delivery.model_dump(mode="json")
         if state.get("sandbox_id"):

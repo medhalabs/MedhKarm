@@ -74,3 +74,18 @@ async def test_workers_record_the_delivery_and_keep_it() -> None:
     await runs.set_status(run.id, RunStatus.RELEASED)
 
     assert (await runs.get(run.id)).delivery == {"pull_request_url": "u"}
+
+
+async def test_new_projects_create_a_repo_unless_told_not_to() -> None:
+    runs, _, _ = service()
+
+    default = await runs.start(StartRun(request="Build a timer"))
+    named = await runs.start(StartRun(request="Build a timer", new_repo_name="timer"))
+    off = await runs.start(StartRun(request="Build a timer", create_repo=False))
+    on_repo = await runs.start(
+        StartRun(request="Add search", repo=RepoSource(url="https://github.com/a/notes"))
+    )
+
+    assert default.new_repo is not None and default.new_repo.name is None
+    assert named.new_repo is not None and named.new_repo.name == "timer"
+    assert off.new_repo is None and on_repo.new_repo is None

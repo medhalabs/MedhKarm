@@ -1,12 +1,17 @@
 from typing import Any, Protocol
 
-from app.features.repos.schemas import RepoSource
+from app.features.repos.schemas import NewRepo, RepoSource
 from app.features.runs.schemas import Run, RunStatus
 
 
 class RunRepository(Protocol):
     async def create(
-        self, run_id: str, request: str, test_command: str, repo: RepoSource | None = None
+        self,
+        run_id: str,
+        request: str,
+        test_command: str,
+        repo: RepoSource | None = None,
+        new_repo: NewRepo | None = None,
     ) -> Run: ...
 
     async def get(self, run_id: str) -> Run | None: ...

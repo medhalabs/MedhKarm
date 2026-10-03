@@ -4,7 +4,11 @@ export type StartRunInput = {
   request: string;
   test_command?: string; // omitted with a repo: the backend detects it
   repo?: { url: string; branch: string | null };
+  create_repo?: boolean; // without a repo: create one on release (backend default: true)
+  new_repo_name?: string;
 };
+
+const REPO_NAME = /^[A-Za-z0-9._-]{1,100}$/;
 
 const GITHUB_URL = /^https:\/\/github\.com\/[A-Za-z0-9-]{1,39}\/[A-Za-z0-9._-]{1,100}?(\.git)?\/?$/;
 export type DecisionInput = { approved: boolean; feedback: string };
@@ -19,7 +23,18 @@ export function parseStartRun(form: FormData): StartRunInput | { error: string }
   if (testCommand.length > 500) return { error: "Keep the test command under 500 characters." };
   if (repoUrl && !GITHUB_URL.test(repoUrl))
     return { error: "Use the repository's GitHub address: https://github.com/owner/name" };
-  if (!repoUrl) return { request, test_command: testCommand || "pytest -q" };
+  if (!repoUrl) {
+    const create = form.get("create_repo") === "on";
+    const name = String(form.get("new_repo_name") ?? "").trim();
+    if (create && name && (!REPO_NAME.test(name) || name === "." || name === ".."))
+      return { error: "Repository names use letters, digits, '.', '_' and '-'." };
+    return {
+      request,
+      test_command: testCommand || "pytest -q",
+      create_repo: create,
+      ...(create && name ? { new_repo_name: name } : {}),
+    };
+  }
   return {
     request,
     ...(testCommand ? { test_command: testCommand } : {}),

@@ -5,6 +5,7 @@ import uuid
 from typing import Any
 
 from app.features.jobs.interfaces import JobQueue
+from app.features.repos.schemas import NewRepo
 from app.features.runs.exceptions import RunNotFoundError, RunNotWaitingError
 from app.features.runs.interfaces import RunRepository
 from app.features.runs.schemas import (
@@ -28,7 +29,10 @@ class RunService:
     async def start(self, body: StartRun) -> Run:
         # With a repository and no test command, the run detects one from the project.
         test_command = body.test_command or ("" if body.repo else DEFAULT_TEST_COMMAND)
-        run = await self._runs.create(uuid.uuid4().hex[:12], body.request, test_command, body.repo)
+        new_repo = NewRepo(name=body.new_repo_name) if not body.repo and body.create_repo else None
+        run = await self._runs.create(
+            uuid.uuid4().hex[:12], body.request, test_command, body.repo, new_repo
+        )
         await self._jobs.enqueue(
             START_JOB,
             {"run_id": run.id},

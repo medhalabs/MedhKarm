@@ -78,7 +78,7 @@ Or from the command line, without the API or a worker:
    uv run python -m app.workers.build_run resume <run_id> --approve
    ```
 
-To work on an existing GitHub repository, add `--repo https://github.com/owner/name` (and `--branch` if not the default); the test command is then detected. For private repositories, and to get a pull request on release, set `GITHUB_TOKEN` in `backend/.env`: a fine-grained token with Contents and Pull requests read and write on those repositories ([features/repos.md](features/repos.md)).
+To work on an existing GitHub repository, add `--repo https://github.com/owner/name` (and `--branch` if not the default); the test command is then detected. Without `--repo`, a released run creates a new private repository with the work (`--new-repo-name`, or `--no-new-repo` to skip). For private repositories, pull requests and new repositories, set `GITHUB_TOKEN` in `backend/.env`: a fine-grained token with Contents and Pull requests read and write on those repositories ([features/repos.md](features/repos.md)).
 
 See everything the team did, step by step: `uv run python -m app.workers.build_run events <run_id>`.
 

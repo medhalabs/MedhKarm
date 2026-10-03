@@ -22,7 +22,7 @@ from app.core.database import session_factory
 from app.core.logging import configure_logging
 from app.features.events.service import EventService
 from app.features.events.stores.sql_store import SqlEventStore
-from app.features.repos.schemas import RepoSource
+from app.features.repos.schemas import NewRepo, RepoSource
 from app.features.workflows.schemas import RunOutcome, StepUpdate
 from app.workers.wiring import ensure_sandbox_image, workflow_service
 
@@ -89,6 +89,12 @@ async def main() -> None:
     start.add_argument("--test-command", default="", help="Detected from --repo if empty")
     start.add_argument("--repo", help="GitHub repository to change: https://github.com/owner/name")
     start.add_argument("--branch", help="Branch to start from (default: the repo's default)")
+    start.add_argument("--new-repo-name", help="Without --repo: name of the repo to create")
+    start.add_argument(
+        "--no-new-repo",
+        action="store_true",
+        help="Without --repo: don't create a GitHub repository on release",
+    )
     start.add_argument(
         "--engine", choices=["builtin", "openhands"], help="Overrides DEVELOPER_ENGINE"
     )
@@ -128,6 +134,9 @@ async def main() -> None:
                 args.test_command or ("" if repo else "pytest -q"),
                 print_step,
                 repo=repo,
+                new_repo=None
+                if repo or args.no_new_repo
+                else NewRepo(name=args.new_repo_name).model_dump(mode="json"),
             )
         elif args.command == "resume":
             outcome = await service.resume(args.run_id, args.approve, args.feedback, print_step)

@@ -1,6 +1,6 @@
 # Repos (founders' existing projects)
 
-**Status:** In progress (Phase 2, item 1): clone a GitHub repository, map it before planning, open a pull request on release. Live-tested on a public repository; pull requests not yet tested against GitHub  
+**Status:** In progress (Phase 2, item 1): clone a GitHub repository, map it before planning, open a pull request on release; or, for a new project, create a private repository on release. Live-tested on a public repository; pull requests not yet tested against GitHub  
 **Code:** `backend/app/features/repos/` · used by `workflows` (`nodes/connect.py`, `nodes/finish.py`) · form fields in `frontend/src/features/runs/` · migration `backend/alembic/versions/0004_run_repos.py`  
 **Last updated:** 2026-10-01
 
@@ -31,6 +31,19 @@ flowchart LR
 3. **plan**: the CTO gets the map and is told to change the existing project and keep its structure and style.
 4. **develop**: every developer brief starts with the map.
 5. **finish**, if the founder approved: commits the work (author `MedhKarm`) to `medhkarm/<run_id>`, pushes it and opens a pull request against the branch the run started from (or the default branch). The pull request's title is the request's first line; its body has the developer's summary and the full request. A `changes.delivered` event (DevOps) carries the link, and the run's `delivery` field shows it in the admin page. Then the sandbox is removed. If the push or the pull request fails, the job is retried with the sandbox still there; a retry reuses the commit and an already-open pull request.
+
+### New projects: a repository of their own
+
+A run without a repository creates one when its work is released (unless the founder opts out: `create_repo: false` in the API, the checkbox on the admin form, `--no-new-repo` on the command line):
+
+1. `finish` turns the workspace into a git repository (`git init -b main`, the same local-only excludes) and commits the work.
+2. It creates a **private** repository in the token owner's account, named by the founder (`new_repo_name`) or from the request plus the run id (`roman-numerals-converter-3f9a2c`), with the request's first line as its description.
+3. It pushes the work to `main`, never with `--force`: an existing repository with other work is left alone and the delivery fails with a clear error. A retry finds the repository the first try created and pushes the same commit again.
+4. `changes.delivered` says "Created the repository and pushed the work: <url>"; the run's `delivery` has `status: created` and `repo_url`.
+
+The eval runner never asks for a repository, so evals create nothing.
+
+Live test (Oct 2, 2026): a temperature-conversion module, approved at the gate, became the private repository `pavanrajkg04/create-temperature-py-with-c-to-f-c-f-to-be9527` with its two files on `main` (checked on GitHub). An earlier run (bill splitting) failed QA, its own test and code disagreeing on the rounding rule, and so created nothing.
 
 The map is also built for runs without a repository when the workspace has files (the eval runner's starting projects), so evals measure the same behaviour. Installing only happens for cloned repositories.
 
@@ -67,9 +80,9 @@ Several commands are joined with `&&`. A test command given by the founder alway
 
 | File | Responsibility |
 | --- | --- |
-| `schemas.py` | `RepoSource` (validated GitHub address and branch; `owner`, `name`), `CodebaseMap` (+ `brief()` for prompts), `Delivery`, `DeliveryStatus` |
+| `schemas.py` | `RepoSource` (validated GitHub address and branch; `owner`, `name`), `NewRepo` and `repo_name_for()`, `CodebaseMap` (+ `brief()` for prompts), `Delivery`, `DeliveryStatus` |
 | `interfaces.py` | `RepoHost` Protocol: `clone`, `deliver` (GitLab or Bitbucket would be new classes); `CodeGraph` Protocol: `describe` |
-| `github.py` | `GitHubRepoHost`: clone, commit, push, open or reuse the pull request (GitHub REST API via `httpx`) |
+| `github.py` | `GitHubRepoHost`: clone, commit, push, open or reuse the pull request; `publish()` creates a private repository and pushes `main` (GitHub REST API via `httpx`) |
 | `code_graph.py` | `GraphifyCodeGraph`: the "most connected code" part of the map (`hubs()`), from Graphify's `graph.json` |
 | `mapper.py` | `map_codebase(sandbox)`: the map and the install/test commands |
 | `service.py` | `RepoService`: `checkout()` (clone once, map, install) and `deliver()` (branch name, title, body). What the workflow uses |
@@ -93,7 +106,7 @@ Command line: `uv run python -m app.workers.build_run start --repo https://githu
 
 ## Data model
 
-Two columns on `runs` (migration `0004_run_repos`): `repo` (jsonb, `RepoSource`) and `delivery` (jsonb, `Delivery`: `status` opened / no_changes / skipped, `branch`, `commit`, `pull_request_url`, `reason`). The workflow state gains `repo`, `repo_commit`, `codebase_map`, `setup_ok` and `delivery`.
+Columns on `runs`: `repo` (jsonb, `RepoSource`) and `delivery` (jsonb, `Delivery`: `status` opened / created / no_changes / skipped, `branch`, `commit`, `pull_request_url`, `repo_url`, `reason`), migration `0004_run_repos`; `new_repo` (jsonb, `NewRepo`: the repository to create on release, null for none), migration `0005_run_new_repo`. The workflow state gains `repo`, `repo_commit`, `codebase_map`, `setup_ok` and `delivery`.
 
 ## Events
 
@@ -107,12 +120,13 @@ Two columns on `runs` (migration `0004_run_repos`): `repo` (jsonb, `RepoSource`)
 - **Other features used:** `sandbox` (interfaces)
 - **Used by:** `workflows` (through `RepoService`), `runs` (`RepoSource`)
 - **External services:** GitHub (git over HTTPS, REST API)
-- **Config:** `CODE_GRAPH` (default `false`): the code graph in the map and `explain_symbol`. `GITHUB_TOKEN`: a fine-grained personal access token with **Contents** and **Pull requests** read and write, on the repositories the team works on. Wired in `app/workers/wiring.py`
+- **Config:** `CODE_GRAPH` (default `false`): the code graph in the map and `explain_symbol`. `GITHUB_TOKEN`: a personal access token. For existing repositories: fine-grained, with **Contents** and **Pull requests** read and write, on those repositories. To create repositories for new projects it also needs to create repositories: a classic token with the `repo` scope, or a fine-grained token with **Administration** read and write on all repositories (which also allows deleting them: keep it private). Wired in `app/workers/wiring.py`
 
 ## Design decisions
 
 - 2026-10-01 — The map is built with shell commands, not a model: it's free, fast (the clone, install and map of a 40-file library took 9 s) and the same every time. Agents can still read any file with their tools.
 - 2026-10-01 — Map first, then plan: on Gate 1 the developers spent many steps re-reading the project; the map gives the CTO and every developer the layout up front.
+- 2026-10-01 — New projects get a private repository on release, not at the start: only approved work leaves the sandbox, and rejected runs leave nothing behind on GitHub. Pushing straight to `main` is fine there because the founder approved this exact work and the repository is new.
 - 2026-10-01 — A pull request, never a direct push: the founder reviews and merges on GitHub as with any contributor. Matches "the founder approves what matters".
 - 2026-10-01 — Delivery happens in `finish`, before the sandbox is removed, and is safe to repeat, so a failed push is retried with the work still there.
 - 2026-10-01 — Token by environment variable for now (one founder, local). GitHub App installation tokens per company come with sign-in.
@@ -146,7 +160,9 @@ Rerun 3 (with `edit_file`): reached the release gate with a correct `peek()` add
 | Symptom | Likely cause | Fix |
 | --- | --- | --- |
 | `Couldn't clone …: Repository not found` | Private repository and no token, or the token can't see it | Set `GITHUB_TOKEN` with access to that repository |
-| `Didn't open a pull request: No GITHUB_TOKEN set` | No token | Set `GITHUB_TOKEN`; the work of that run is gone with its sandbox |
+| `GitHub didn't create the repository … (403)` | Token can't create repositories | Classic token with `repo`, or fine-grained with Administration read and write |
+| `Couldn't push to https://github.com/you/<name>` on a new project | A repository with that name already has other work | Choose another `new_repo_name` |
+| `Didn't deliver to GitHub: No GITHUB_TOKEN set` | No token | Set `GITHUB_TOKEN`; the work of that run is gone with its sandbox |
 | `Couldn't push …: 403` | Token lacks Contents write | Give the token Contents read and write |
 | `GitHub didn't open the pull request (403)` | Token lacks Pull requests write | Give the token Pull requests read and write |
 | Map says "Installing dependencies … failed" | Native build tools, private packages, or a lockfile out of date | Give a test command that installs what's needed, e.g. `pip install -q x && python -m pytest -q` |
@@ -155,6 +171,7 @@ Rerun 3 (with `edit_file`): reached the release gate with a correct `peek()` add
 
 | Date | Change |
 | --- | --- |
+| 2026-10-01 | New projects: a private repository created on release (`create_repo`, `new_repo_name`; `new_repo` on runs, migration `0005`) |
 | 2026-10-01 | Code graph experiment (`CODE_GRAPH`): Graphify's most connected code in the map; `graphify-out/` kept out of the workspace and pull requests |
 | 2026-10-01 | Live test on `pallets/itsdangerous`; no-changes guard added in the workflow |
 | 2026-10-01 | Created: GitHub clone, codebase map before planning, install/test detection, pull request on release |

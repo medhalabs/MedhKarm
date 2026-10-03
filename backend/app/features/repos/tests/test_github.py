@@ -124,3 +124,68 @@ async def test_failed_push_is_an_error_without_the_token() -> None:
     with pytest.raises(RepoError) as error:
         await github(pulls_api([])).deliver(SOURCE, sandbox, "medhkarm/r", "t", "b")
     assert TOKEN not in str(error.value)
+
+
+def create_api(seen: list[httpx.Request], create_status: int = 201) -> httpx.MockTransport:
+    repo = {
+        "html_url": "https://github.com/me/roman-3f9a2c",
+        "clone_url": "https://github.com/me/roman-3f9a2c.git",
+    }
+
+    def handle(request: httpx.Request) -> httpx.Response:
+        seen.append(request)
+        if request.method == "POST" and request.url.path == "/user/repos":
+            return httpx.Response(create_status, json=repo if create_status == 201 else {})
+        if request.url.path == "/user":
+            return httpx.Response(200, json={"login": "me"})
+        if request.url.path == "/repos/me/roman-3f9a2c":
+            return httpx.Response(200, json=repo)
+        return httpx.Response(404)
+
+    return httpx.MockTransport(handle)
+
+
+class NewProject(Git):
+    """A workspace with no git repository yet, then one with the work committed."""
+
+    def __call__(self, command: str, files: dict[str, str]) -> CommandResult:
+        if command == "git rev-parse --git-dir":
+            return CommandResult(exit_code=128, output="fatal: not a git repository")
+        return super().__call__(command, files)
+
+
+async def test_publish_creates_a_private_repo_and_pushes_main() -> None:
+    seen: list[httpx.Request] = []
+    sandbox = InMemorySandbox("sb", NewProject(changed="A roman.py"))
+
+    delivery = await github(create_api(seen)).publish(sandbox, "roman-3f9a2c", "Roman numerals")
+
+    assert delivery.status == DeliveryStatus.CREATED
+    assert delivery.repo_url == "https://github.com/me/roman-3f9a2c"
+    assert (delivery.branch, delivery.commit) == ("main", "deadbeef")
+    assert json.loads(seen[0].content) == {
+        "name": "roman-3f9a2c",
+        "description": "Roman numerals",
+        "private": True,
+    }
+    assert any(c.startswith("git init -q -b main") for c in sandbox.commands)
+    push = next(c for c in sandbox.commands if " push " in c)
+    assert "HEAD:refs/heads/main" in push and "--force" not in push and TOKEN not in push
+
+
+async def test_publish_retry_reuses_the_repo_it_created() -> None:
+    seen: list[httpx.Request] = []
+    sandbox = InMemorySandbox("sb", Git(changed=""))  # already committed by the first try
+
+    delivery = await github(create_api(seen, create_status=422)).publish(
+        sandbox, "roman-3f9a2c", "Roman numerals"
+    )
+
+    assert delivery.repo_url == "https://github.com/me/roman-3f9a2c"
+    assert [r.url.path for r in seen] == ["/user/repos", "/user", "/repos/me/roman-3f9a2c"]
+
+
+async def test_publish_without_a_token_is_skipped() -> None:
+    sandbox = InMemorySandbox("sb", Git())
+    delivery = await github(create_api([]), token=None).publish(sandbox, "x", "y")
+    assert delivery.status == DeliveryStatus.SKIPPED and sandbox.commands == []

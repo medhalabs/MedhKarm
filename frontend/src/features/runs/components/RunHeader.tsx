@@ -45,8 +45,22 @@ export function RunHeader({ run }: { run: Run }) {
           </a>
         </p>
       )}
-      {run.delivery && !run.delivery.pull_request_url && (
-        <p className="text-sm text-zinc-500">No pull request: {run.delivery.reason}</p>
+      {!run.repo && run.new_repo && !run.delivery && (
+        <p className="text-sm text-zinc-500">
+          When released: a new private GitHub repo
+          {run.new_repo.name && <span className="font-mono"> {run.new_repo.name}</span>}.
+        </p>
+      )}
+      {run.delivery?.repo_url && (
+        <p className="rounded-md bg-emerald-50 p-3 text-sm text-emerald-900 dark:bg-emerald-950 dark:text-emerald-200">
+          Repository created:{" "}
+          <a href={run.delivery.repo_url} className="underline" target="_blank" rel="noreferrer">
+            {run.delivery.repo_url}
+          </a>
+        </p>
+      )}
+      {run.delivery && !run.delivery.pull_request_url && !run.delivery.repo_url && (
+        <p className="text-sm text-zinc-500">Not delivered to GitHub: {run.delivery.reason}</p>
       )}
       {run.error && (
         <p

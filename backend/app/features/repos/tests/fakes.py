@@ -46,6 +46,7 @@ class FakeHost:
     def __init__(self) -> None:
         self.clones = 0
         self.delivered: list[tuple[str, str, str]] = []
+        self.published: list[tuple[str, str]] = []
 
     async def clone(self, source: RepoSource, sandbox: Sandbox) -> str:
         self.clones += 1
@@ -65,3 +66,9 @@ class FakeHost:
     ) -> Delivery:
         self.delivered.append((branch, title, body))
         return Delivery(status=DeliveryStatus.OPENED, branch=branch, pull_request_url="u")
+
+    async def publish(self, sandbox: Sandbox, name: str, description: str) -> Delivery:
+        self.published.append((name, description))
+        return Delivery(
+            status=DeliveryStatus.CREATED, branch="main", repo_url=f"https://github.com/me/{name}"
+        )

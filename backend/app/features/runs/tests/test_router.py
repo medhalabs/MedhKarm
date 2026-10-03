@@ -39,3 +39,5 @@ def test_start_list_get_and_approve() -> None:
     repo = {"url": "https://github.com/a/notes", "branch": "dev"}
     on_repo = api.post("/runs", json={"request": "Add search", "repo": repo}).json()
     assert on_repo["repo"] == repo and on_repo["test_command"] == ""
+    bad_name = {"request": "Build a timer", "new_repo_name": "my timer"}
+    assert api.post("/runs", json=bad_name).status_code == 422

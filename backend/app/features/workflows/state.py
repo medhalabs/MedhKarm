@@ -8,6 +8,7 @@ class BuildState(TypedDict, total=False):
     request: str  # what the founder asked for
     test_command: str  # shell command that decides "done" (detected from the repo if empty)
     repo: dict[str, Any]  # the founder's GitHub repository (RepoSource-shaped), if any
+    new_repo: dict[str, Any]  # no repo: create one on release (NewRepo-shaped; absent = don't)
     repo_commit: str  # the commit the team started from
     codebase_map: str  # what the team learned about the project before changing it
     setup_ok: bool  # installing the project's dependencies worked

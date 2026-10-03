@@ -215,3 +215,31 @@ async def test_asked_for_tests_but_wrote_none_is_sent_back_and_fails() -> None:
     assert "no test file" in done.state["last_review"]["feedback"]  # no CTO model call
     assert not done.waiting_for_approval and done.state["status"] == "failed"
     assert done.state["verify_output"].startswith("The request asks for tests")
+
+
+async def test_new_project_gets_a_new_repo_on_release_only() -> None:
+    def run_with(approved: bool) -> tuple[WorkflowService, FakeHost]:
+        llm = ScriptedLLMProvider(_script(write_app=True))
+        host = FakeHost()
+        sandboxes = InMemorySandboxProvider(_tests_pass_if_app_exists)
+        graph = build_app_graph(
+            llm, ToolLoopEngine(llm), sandboxes, InMemorySaver(), repos=RepoService(host)
+        )
+        return WorkflowService(graph), host
+
+    service, host = run_with(approved=True)
+    await service.start("run-new1", "Build app", "pytest", new_repo={"name": None})
+    done = await service.resume("run-new1", approved=True)
+
+    assert host.published == [("build-app-run-ne", "Build app")]
+    assert done.state["delivery"]["repo_url"] == "https://github.com/me/build-app-run-ne"
+
+    service, host = run_with(approved=False)
+    await service.start("run-new2", "Build app", "pytest", new_repo={"name": "mine"})
+    await service.resume("run-new2", approved=False)
+    assert host.published == []
+
+    service, host = run_with(approved=True)
+    await service.start("run-new3", "Build app", "pytest")  # no new_repo: evals, opt-out
+    assert "delivery" not in (await service.resume("run-new3", approved=True)).state
+    assert host.published == []

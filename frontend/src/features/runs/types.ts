@@ -18,12 +18,13 @@ export type Gate = {
 /** A founder's GitHub repository (backend: repos/schemas.py RepoSource). */
 export type RepoSource = { url: string; branch: string | null };
 
-/** How released work went back to the repository (backend: repos/schemas.py Delivery). */
+/** How released work went to GitHub (backend: repos/schemas.py Delivery). */
 export type Delivery = {
-  status: "opened" | "no_changes" | "skipped";
+  status: "opened" | "created" | "no_changes" | "skipped";
   branch: string;
   commit: string;
   pull_request_url: string;
+  repo_url: string; // the repository the work went to (set when one was created)
   reason: string;
 };
 
@@ -32,6 +33,7 @@ export type Run = {
   request: string;
   test_command: string; // empty: detected from the repository when the run starts
   repo: RepoSource | null;
+  new_repo: { name: string | null } | null; // a repository to create on release
   status: RunStatus;
   gate: Gate | null;
   error: string | null;

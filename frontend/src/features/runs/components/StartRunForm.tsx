@@ -49,6 +49,21 @@ export function StartRunForm() {
         </label>
       </div>
       <div className="flex flex-wrap items-end gap-3">
+        <label className="flex items-center gap-2 text-sm font-medium">
+          <input type="checkbox" name="create_repo" defaultChecked />
+          No repo above? Create a private GitHub repo when released
+        </label>
+        <label className="flex min-w-48 flex-1 flex-col gap-1 text-sm font-medium">
+          New repo name
+          <input
+            name="new_repo_name"
+            maxLength={100}
+            placeholder="made from the request"
+            className="rounded-md border border-zinc-300 bg-transparent px-3 py-2 font-mono text-sm font-normal dark:border-zinc-700"
+          />
+        </label>
+      </div>
+      <div className="flex flex-wrap items-end gap-3">
         <label className="flex flex-1 flex-col gap-1 text-sm font-medium">
           Test command (decides when it&apos;s done; detected for a repo if empty)
           <input

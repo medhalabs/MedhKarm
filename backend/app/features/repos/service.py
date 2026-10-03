@@ -5,7 +5,13 @@ from pydantic import BaseModel
 
 from app.features.repos.interfaces import CodeGraph, RepoHost
 from app.features.repos.mapper import map_codebase
-from app.features.repos.schemas import CodebaseMap, Delivery, DeliveryStatus, RepoSource
+from app.features.repos.schemas import (
+    CodebaseMap,
+    Delivery,
+    DeliveryStatus,
+    RepoSource,
+    repo_name_for,
+)
 from app.features.sandbox.interfaces import Sandbox
 
 SETUP_TIMEOUT = 600
@@ -59,3 +65,14 @@ class RepoService:
             "approved by you at the release gate."
         )
         return await self._host.deliver(source, sandbox, f"medhkarm/{run_id}", title, body)
+
+    async def publish(
+        self, sandbox: Sandbox, run_id: str, request: str, name: str | None = None
+    ) -> Delivery:
+        """A new project's released work goes to a new private repository."""
+        if self._host is None:
+            return Delivery(status=DeliveryStatus.SKIPPED, reason="No repository host configured")
+        description = request.strip().splitlines()[0][:200] if request.strip() else ""
+        return await self._host.publish(
+            sandbox, name or repo_name_for(request, run_id), description
+        )
