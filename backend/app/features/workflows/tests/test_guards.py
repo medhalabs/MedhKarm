@@ -46,6 +46,9 @@ async def test_review_sends_a_fake_pytest_back_without_asking_the_model() -> Non
             tool("finish", summary="tests pass"),
             # no submit_review here: the guard decides
             tool("finish", summary="still the same"),
+            # QA's fix round: still the stand-in, so the guard sends it back again
+            tool("finish", summary="fixed"),
+            tool("finish", summary="fixed, really"),
         ]
     )
     sandboxes = InMemorySandboxProvider(lambda c, f: CommandResult(exit_code=0, output="ok"))
@@ -53,9 +56,10 @@ async def test_review_sends_a_fake_pytest_back_without_asking_the_model() -> Non
 
     state = (await WorkflowService(graph).start("r", "Build calc", "python -m pytest")).state
 
-    [task] = state["tasks"]
+    [task, fix] = state["tasks"]
     assert task["attempts"] == 2
-    assert "replaces the real test tool" in state["last_review"]["feedback"]
+    assert (fix["id"], fix["title"]) == ("qa1", "Make QA's checks pass")
+    assert any("replaces the real test tool" in str(call) for call in llm.calls)  # sent back
     assert state["verified"] is False  # QA refuses it too, so the founder is never asked
     assert state["status"] == "failed"
 

@@ -1,12 +1,15 @@
 """Second node: gets to know the project before anyone plans or changes it. Clones the
 founder's repository when the run has one, maps the code (files, languages, outline, how to
-install and test) and installs its dependencies. Safe to repeat after a crash."""
+install and test) and installs its dependencies. Then measures which of QA's checks (build,
+type-check, lint) already pass, so problems that were there before don't block the team.
+Safe to repeat after a crash."""
 
 from typing import Any
 
 from app.features.repos.schemas import RepoSource
 from app.features.repos.service import RepoService
 from app.features.sandbox.interfaces import SandboxProvider
+from app.features.workflows.checkers.quality import measure_baseline
 from app.features.workflows.nodes.base import BuildNode
 from app.features.workflows.state import BuildState
 
@@ -28,6 +31,7 @@ def make_connect_node(sandboxes: SandboxProvider, repos: RepoService) -> BuildNo
             "codebase_map": brief,
             "repo_commit": checkout.commit,
             "setup_ok": checkout.setup_ok,
+            "checks_baseline": {} if checkout.map.empty else await measure_baseline(sandbox),
         }
         if not state.get("test_command"):
             update["test_command"] = checkout.map.test_command or DEFAULT_TEST_COMMAND

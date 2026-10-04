@@ -22,6 +22,9 @@ class BuildState(TypedDict, total=False):
     dev_result: dict[str, Any]  # all developer work so far, totalled (DevResult-shaped)
     verified: bool  # our own re-run of the tests passed
     verify_output: str
+    checks: list[dict[str, Any]]  # QA's last checks, one per tool (CheckRun-shaped)
+    checks_baseline: dict[str, bool]  # check name -> passed, before the team changed anything
+    qa_rounds: int  # fix rounds QA's checks have asked for
     security: dict[str, Any]  # the security engineer's last report (SecurityReport-shaped)
     security_rounds: int  # fix rounds the security engineer has asked for
     security_passed: bool  # no blocking security findings remain

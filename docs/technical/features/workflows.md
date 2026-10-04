@@ -2,7 +2,7 @@
 
 **Status:** Build graph with CTO planning and review (Phase 1)  
 **Code:** `backend/app/features/workflows/` · run by the worker's build jobs (`backend/app/workers/handlers/build.py`, see [jobs.md](jobs.md)) or the command line (`backend/app/workers/build_run.py`)  
-**Last updated:** 2026-10-01
+**Last updated:** 2026-10-04
 
 ## What it is
 
@@ -19,19 +19,38 @@ flowchart LR
     D --> R{review<br/>CTO checks the task}
     R -->|send back with changes| D
     R -->|approved, more tasks| D
-    R -->|all tasks done| V[verify<br/>QA re-runs the tests]
-    V -->|tests pass| A{{approval<br/>release gate: rules decide,<br/>usually pause}}
-    V -->|tests fail| F[finish]
+    R -->|all tasks done| V[verify<br/>QA: tests, build,<br/>type-check, lint]
+    V -->|fails, first time| D
+    V -->|pass| A{{approval<br/>release gate: rules decide,<br/>usually pause}}
+    V -->|still failing| F[finish]
     A -->|founder decides| F
     F --> E((end))
 ```
 
 0. **prepare** — creates the run's sandbox (unless one was given, as the eval runner does), so its id is saved in a checkpoint before any work. A retry or another worker then re-attaches to it instead of creating a new one.
-0. **connect** — gets to know the project before anyone plans: clones the founder's repository if the run has one, maps the code (files, languages, outline, how to install and test) and installs it, and fills in the test command if none was given ([repos.md](repos.md)). For a new project with an empty workspace it does nothing.
+0. **connect** — gets to know the project before anyone plans: clones the founder's repository if the run has one, maps the code (files, languages, outline, how to install and test) and installs it, and fills in the test command if none was given ([repos.md](repos.md)). Then it runs QA's quality checks once on the project as found (`checks_baseline`, see verify). For a new project with an empty workspace it does nothing.
 1. **plan** — the CTO (with the codebase map, for an existing project) (template role `cto`: model and `instructions`) answers with the `submit_plan` tool: a summary, how many developers to use, and 1–5 tasks in order. `assign()` gives each task an id (`t1`…) and an owner, round-robin over the developers' names (up to the developer role's `max_count`). The plan is read leniently (see `cto.py`): small models name fields their own way, and if no usable plan comes back the fallback is one task covering the whole request.
 2. **develop** — re-attaches to the run's sandbox by id; the current task's owner works on it through the `DeveloperEngine`. The brief has the request, the CTO's plan, "your task (i of n)", and, on a second attempt, the CTO's requested changes. Tasks run one after another in the same workspace, so later tasks build on earlier ones.
 3. **review** — if the task's files include a stand-in for the test tool (e.g. `pytest.py`, see `guards.py`), or its tests failed, it goes straight back to the developer (no model call). Otherwise the CTO reads the task, the developer's summary and the changed files (up to 6, 1,500 characters each) and answers with `submit_review`: approve, or revise with specific changes. A task gets at most `max_revisions` (default 1) rounds of changes; after that the run moves on (`done_with_issues`) and QA's final check decides. A review the CTO doesn't format properly counts as approval, so a format slip never blocks a run.
-3. **verify** — asks the run's `WorkChecker` whether the work is good. For software that's `TestCommandChecker`: it re-runs the test command in the same sandbox, and fails at once if the workspace contains a stand-in for the test tool. QA never trusts the developer's report. Human review (content team) and approval rules (operations team) will be other checkers.
+3. **verify** — asks the run's `WorkChecker` whether the work is good. QA never trusts the developer's report. For software that's `QualityChecker` around `TestCommandChecker`:
+   - **Tests:** re-runs the test command in the same sandbox; fails at once if the workspace contains a stand-in for the test tool.
+   - **Quality checks**, found from the workspace at check time (`checkers/quality.py`), so a new project is checked by whatever its developers set up:
+
+     | Check | When | Command |
+     | --- | --- | --- |
+     | `syntax` | The run changed Python files | Parses each changed `.py` file (no bytecode written) |
+     | `types` | `package.json` has a `typecheck`/`type-check`/`check-types`/`tsc` script, or a `tsconfig.json` with `typescript` installed | `npm run typecheck`, or `npx --no-install tsc --noEmit` |
+     | `lint` | `package.json` has a `lint` script | `npm run lint` |
+     | `build` | `package.json` has a `build` script | `npm run build` |
+     | `ruff` | `[tool.ruff]` in `pyproject.toml`, or `ruff.toml` | `ruff check .` |
+     | `mypy` | `[tool.mypy]` in `pyproject.toml`, or `mypy.ini` | `mypy .` |
+
+     npm, pnpm or yarn follows the lockfile; Node checks install dependencies first if `node_modules` is missing. Every check runs even after one fails, so a fix sees all the problems at once (10-minute limit each).
+   - **What blocks:** failing tests, or a check that fails now but passed (or didn't exist) before the team started. A check that **already failed** on the project as found (`checks_baseline`) is noted ("already failing before this work: mypy") and doesn't block: the founder's old problems aren't this run's to fix. A tool that isn't installed (exit 127) is skipped.
+   - **One fix round** (closes gap G-04): on a failure (failing checks, or tests asked for but none written) a task **"Make QA's checks pass"** (`qa1`) goes to the first developer with the failing output and commands ("never delete, skip or weaken tests or checks"). It goes through develop → CTO review → verify again. Still failing → the run fails without asking the founder. A run that changed no files fails without a fix round.
+   - `state.checks` holds each check (`CheckRun`: name, command, passed, skipped, already_failing, output).
+
+   Human review (content team) and approval rules (operations team) will be other checkers.
 4. **approval** — only reached if tests pass. The team's approval rules look at the run's facts (files changed, tokens, open review comments; see [approvals.md](approvals.md)) and either decide on their own (approve or reject, recorded as `approval.decided` by `system`) or pause: `interrupt()` saves the run and stops, returning the gate details (why it asks, summary, files changed, tokens, test output). Resuming with `Command(resume={"approved": ..., "feedback": ...})` continues from here.
 5. **finish** — on a released new-project run with `new_repo`, creates a private repository and pushes the work to `main`; on a released repo run, commits the work to `medhkarm/<run_id>`, pushes it and opens a pull request (before the sandbox goes, so a failed push is retried with the work still there); then destroys the sandbox and sets `status`: `released`, `rejected` or `failed`.
 
@@ -59,6 +78,7 @@ Live test (Oct 4, 2026): a BMI calculator (FastAPI + a page). Kabir split it int
 | `state.py` | `BuildState`: everything a run knows (saved in each checkpoint) |
 | `interfaces.py` | `WorkChecker` Protocol: `check(state, sandbox) -> CheckResult` |
 | `checkers/test_command.py` | `TestCommandChecker`: runs the test command |
+| `checkers/quality.py` | `QualityChecker` (tests, then the quality checks), `detect_checks()`, `run_checks()`, `measure_baseline()` |
 | `nodes/base.py` | `BuildNode` Protocol: the shape every node factory returns |
 | `cto.py` | The CTO's plan and review as data: `submit_plan` / `submit_review` tools, lenient parsing, `assign()` |
 | `nodes/prepare.py` | First node: creates the sandbox |
@@ -66,14 +86,14 @@ Live test (Oct 4, 2026): a BMI calculator (FastAPI + a page). Kabir split it int
 | `nodes/plan.py` | CTO planning node |
 | `nodes/review.py` | CTO review node and `after_review` routing |
 | `nodes/develop.py` | Developer node: current task, sandbox, totals across tasks |
-| `nodes/verify.py` | QA node (re-runs tests) |
+| `nodes/verify.py` | QA node: the checker, the fix task (`qa1`), `after_verify` routing |
 | `nodes/approval.py` | Release gate: `approval_facts()`, approval rules, `interrupt` |
 | `guards.py` | `shadowed_test_tools()`: spots work that fakes its tests (a stand-in `pytest.py`); `asks_for_tests()` / `is_test_file()`: tests asked for but none written |
 | `nodes/finish.py` | Outcome, pull request for released repo runs, sandbox cleanup |
 | `graphs/build_app.py` | Wires the nodes and edges; takes its dependencies as arguments |
 | `checkpointer.py` | Opens the Postgres checkpointer and creates its tables |
 | `service.py` | `WorkflowService`: `start`, `resume`, `continue_run`, `get`; reports each step through a callback |
-| `schemas.py` | `CheckResult`, `StepUpdate`, `RunOutcome` |
+| `schemas.py` | `QualityCheck`, `CheckRun`, `CheckResult`, `StepUpdate`, `RunOutcome` |
 | `activity.py` | `record_step()`: what each step means in the activity log |
 | `app/workers/build_run.py` | Command-line entry point |
 | `app/workers/wiring.py` | `build_engine()`: picks the developer engine and sandbox from settings; `workflow_service()`: the Postgres-backed service used by `build_run` and the worker |
@@ -110,6 +130,8 @@ LangGraph creates and owns its tables in our Postgres (`checkpoints`, `checkpoin
 - 2026-10-01 — Structured output through tool calls (`submit_plan`, `submit_review`), parsed leniently: gpt-oss:20b called the tool every time but used its own field names (`name` for `title`, extra `files`/`tests` keys) in 3 of 3 tries; strict parsing rejected every plan.
 - 2026-10-01 — Failing tests are sent back without asking the model; reviews are capped at one round of changes per task to bound cost.
 - 2026-10-01 — Every step is recorded in the activity log ([events.md](events.md)): `WorkflowService` takes an optional `EventStore` and records start, plan, work, check, approvals and finish; the develop node records `work.started` and passes a `RunRecorder` to the engine. `run_id` is stored in the state so nodes can record against it.
+- 2026-10-04 — **QA checks the project's own build, type-check and lint, only what it configures.** No imposed linters or style: a founder's project is judged by its own rules, and a new project by what its developers set up. Checks already failing before the run only make a note, like the security engineer's "changed files only".
+- 2026-10-04 — **One QA fix round**, the same pattern as security and browser tests: many runs failed for one fixable test error; one round caps the cost.
 - 2026-10-01 — The checking step is an interface (`WorkChecker`), so each kind of team can check work its own way. `build_app_graph(..., checker=...)` defaults to `TestCommandChecker`.
 - 2026-10-01 — `WorkflowService.start(..., sandbox_id=...)` can run in an existing, prepared sandbox (used by the eval runner to seed a starting project).
 - 2026-10-01 — Nodes are built by factory functions that receive their dependencies (`make_develop_node(engine, sandboxes)`), so the graph never creates concrete classes and tests run it with fakes.
@@ -128,7 +150,10 @@ LangGraph creates and owns its tables in our Postgres (`checkpoints`, `checkpoin
 - **Cost grows with tasks.** A 3-part request (expense tracker: add/list, monthly totals, CSV export) became 4 tasks for 3 developers, with one send-back: about 384,000 tokens and 7 minutes on gpt-oss:20b, against about 10,000 for a one-task build. Developers re-read the project and run tests per task, and the CTO reviews each one. Fine on free models; important for pricing.
 - The eval suite's results predate the CTO step; rerun it before comparing.
 - One fixed graph; per-template graphs (PM → CTO → Dev → QA → DevOps) come in Phase 1–2.
-- No retry loop from verify back to develop yet.
+- `ruff` and `mypy` aren't in the sandbox image: they run when the project's own dependencies install them, and are skipped otherwise (a new project that adds `[tool.ruff]` without installing ruff isn't linted).
+- Checks already failing before the run are recorded in the activity log, not shown at the release gate.
+- The QA fix task goes to the first developer, whatever failed (a frontend lint error isn't routed to the frontend specialist).
+- Not yet tried live on a Node/Next.js project (Phase 2 end test pass).
 - Faked tests: in a sandbox without pytest, gpt-oss:20b wrote its own `pytest.py` so the test command "passed", and the CTO approved it (seen twice live on Oct 1). Now the sandbox has pytest by default, the developer and CTO instructions forbid it, and the review and QA refuse it automatically (`guards.py`). Other ways of faking (tests that assert nothing) still rely on the CTO's review.
 
 ## Troubleshooting
@@ -143,6 +168,7 @@ LangGraph creates and owns its tables in our Postgres (`checkpoints`, `checkpoin
 
 | Date | Change |
 | --- | --- |
+| 2026-10-04 | QA checks: `QualityChecker` runs the tests plus the project's build, type-check and lint (`syntax`, `types`, `lint`, `build`, `ruff`, `mypy`); `checks_baseline` measured in `connect` so old failures don't block; one fix round (`qa1`, "Make QA's checks pass", `qa_rounds`); `state.checks`; `after_verify` |
 | 2026-10-04 | `preview` step (DevOps) after security; production deploy in `finish` after approval |
 | 2026-10-04 | `browser_qa` step: QA writes an end-to-end Playwright test for web changes; one fix round for the frontend developer; `finish` fails runs whose browser test still fails |
 | 2026-10-04 | Specialties: the CTO tags tasks (`specialty`), `assign()` prefers matching specialists, the develop node adds the specialty's instructions |

@@ -8,7 +8,8 @@ from app.features.workflows.state import BuildState
 class WorkChecker(Protocol):
     """Decides whether the team's work is good enough to put in front of the founder.
 
-    One per kind of team: tests for software (TestCommandChecker); human review for
+    One per kind of team: tests, build, type-check and lint for software (QualityChecker
+    around TestCommandChecker); human review for
     content and approval rules for operations come later.
     """
 

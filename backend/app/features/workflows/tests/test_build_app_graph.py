@@ -215,6 +215,9 @@ async def test_asked_for_tests_but_wrote_none_is_sent_back_and_fails() -> None:
             _call("write_file", path="app.py", content="def peek(): ..."),
             _call("finish", summary="Added peek"),
             _call("finish", summary="Done, really"),
+            # QA's fix round: still no test file
+            _call("finish", summary="Fixed"),
+            _call("finish", summary="Fixed, really"),
         ]
     )
     sandboxes = InMemorySandboxProvider(_tests_pass_if_app_exists)
@@ -222,9 +225,10 @@ async def test_asked_for_tests_but_wrote_none_is_sent_back_and_fails() -> None:
 
     done = await WorkflowService(graph).start("run-t", "Add peek() with tests", "pytest")
 
-    assert "no test file" in done.state["last_review"]["feedback"]  # no CTO model call
+    assert any("no test file" in str(call) for call in llm.calls)  # sent back, no CTO call
     assert not done.waiting_for_approval and done.state["status"] == "failed"
     assert done.state["verify_output"].startswith("The request asks for tests")
+    assert [t["id"] for t in done.state["tasks"]][-1] == "qa1"  # one fix round, then stop
 
 
 async def test_new_project_gets_a_new_repo_on_release_only() -> None:

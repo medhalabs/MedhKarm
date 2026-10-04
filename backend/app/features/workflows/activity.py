@@ -82,13 +82,7 @@ async def record_step(recorder: RunRecorder, node: str, data: dict[str, Any]) ->
                 )
             await recorder.record(Actor.CTO, EventType.REVIEW_FINISHED, summary, review)
     elif node == "verify":
-        passed = bool(data.get("verified"))
-        await recorder.record(
-            Actor.QA,
-            EventType.CHECK_FINISHED,
-            "Checks passed" if passed else "Checks failed: sent back",
-            {"passed": passed, "output": str(data.get("verify_output", ""))[-2000:]},
-        )
+        await _record_checks(recorder, data)
     elif node == "browser_qa" and data.get("browser", {}).get("needed"):
         await _record_browser(recorder, data)
     elif node == "security" and data.get("security"):
@@ -143,6 +137,43 @@ async def record_step(recorder: RunRecorder, node: str, data: dict[str, Any]) ->
 
 def _task_brief(task: dict[str, Any]) -> dict[str, Any]:
     return {"id": task["id"], "title": task["title"], "owner": task["owner"]}
+
+
+async def _record_checks(recorder: RunRecorder, data: dict[str, Any]) -> None:
+    passed = bool(data.get("verified"))
+    checks = data.get("checks", [])
+    names = ", ".join(c["name"] for c in checks if c.get("passed")) or "tests"
+    old = [c["name"] for c in checks if not c.get("passed") and c.get("already_failing")]
+    fix = next(
+        (t for t in data.get("tasks", []) if t.get("id") == f"qa{data.get('qa_rounds')}"), None
+    )
+    if passed:
+        summary = f"Checks passed ({names})"
+        if old:
+            summary += f"; already failing before this work: {', '.join(old)}"
+    elif fix and fix.get("status") == "todo":
+        summary = f"Checks failed: sent to {fix['owner']} to fix"
+    elif str(data.get("verify_output", "")).startswith("No files were changed"):
+        summary = "Stopped: no files were changed"
+    else:
+        summary = "Stopped: the checks still fail"
+    await recorder.record(
+        Actor.QA,
+        EventType.CHECK_FINISHED,
+        summary,
+        {
+            "passed": passed,
+            "output": str(data.get("verify_output", ""))[-2000:],
+            "checks": checks,
+        },
+    )
+    if fix and fix.get("status") == "todo" and not passed:
+        await recorder.record(
+            Actor.QA,
+            EventType.TASK_ASSIGNED,
+            f"Assigned \u201c{fix['title']}\u201d to {fix['owner']}",
+            {"task_id": fix["id"], "member": fix["owner"], "title": fix["title"]},
+        )
 
 
 async def _record_security(recorder: RunRecorder, data: dict[str, Any]) -> None:

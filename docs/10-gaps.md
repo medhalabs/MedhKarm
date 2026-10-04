@@ -13,7 +13,6 @@ Last updated: Oct 4, 2026.
 | G-01 | **The free model fails advanced tasks.** Cron parser (Gate 1) and the first Pomodoro item both failed: developers ran out of steps, got stuck on test-import errors and reached for shims | Gate 2 needs 12 of 20 evals; beta users bring real work | Oct 1, Oct 4 | Paid-model decision by Nov 13; CTO splits smaller; more steps for hard tasks; tests first |
 | G-02 | Eval results are stale: measured before the CTO, security step, specialties and browser tests. The runner now measures cost and time per task (Oct 4); a full fresh baseline hasn't been run | Gate 2 is measured on them | Oct 1 | One full run now; then `EVAL_NIGHTLY=true` |
 | G-03 | Code-graph (Graphify) A/B comparison unfinished (graph on: 10 of 13 so far, about 29% more tokens) | Decide whether to keep it | Oct 2 | Finish with the eval runner; lean: keep off |
-| G-04 | **QA failures end the run**: no fix round from QA back to a developer (security has one) | Many runs fail for one fixable test error | Oct 1 | Same pattern as the security step: one "make the tests pass" task, then stop |
 | G-05 | A backlog item has never been released end to end live (repo created, next item builds on it, auto-merge) | The backlog's core promise | Oct 4 | One live run with your OK to create the repo |
 | G-06 | A pull request on an existing repository has never been tested live against GitHub (skipped Oct 3) | Founders with existing projects | Oct 3 | Test with the first beta user's repo, or a test repo |
 | G-07 | Integration tests write into the development database; test runs (`probe`, `test-…`) can't be deleted from the append-only log and show as "Blocked" in standups | Misleading standups | Oct 1 | Separate test database (task suggested Oct 1) |
@@ -52,6 +51,7 @@ Last updated: Oct 4, 2026.
 | G-30 | Deploys: production not tested live; no app environment variables (API keys) on Vercel; Flask/Django not detected; inline upload capped at ~6 MB | Oct 4 | Test production on approval; env vars per project; file-upload API for big apps |
 | G-31 | Placeholder tests slip through: a developer added `tests/test_dummy.py` with `assert True`; the CTO's review should refuse "tests that check nothing", but didn't, and the guards only catch fake test tools | Oct 4 | A guard for tests with no real assertion (`assert True`, empty bodies); CTO review prompt with an example |
 | G-32 | Eval cost estimates: the OpenHands engine's calls aren't metered (it reports totals only); paid-model figures ignore prompt caching (most tokens are repeated input), so they overstate cost; the ₹ rate in `prices.toml` is set by hand | Oct 4 | Meter OpenHands through its LLM settings; estimate cached input from the conversation shape; update the rate |
+| G-33 | QA checks: `ruff`/`mypy` run only when the project installs them (not in the sandbox image); checks already failing before a run are logged but not shown at the gate; the QA fix task goes to the first developer whatever failed; not tried live on a Node/Next.js project | Oct 4 | Add ruff to the image; show old failures at the gate; route by the failing files' specialty; test in the Phase 2 end pass |
 
 ## Filled
 
@@ -61,3 +61,4 @@ Last updated: Oct 4, 2026.
 | — | Retries leaked a Docker container per failed developer step | Oct 1, 2026 | `prepare` step creates the sandbox first ([jobs.md](technical/features/jobs.md)) |
 | — | The engine ran built-in tools a role wasn't given | Oct 1, 2026 | Only offered tools run ([integrations.md](technical/features/integrations.md)) |
 | — | No security checks on releases | Oct 4, 2026 | Vikram ([security.md](technical/features/security.md)) |
+| G-04 | QA failures ended the run: no fix round from QA back to a developer | Oct 4, 2026 | One "Make QA's checks pass" task, with build, type-check and lint checks ([workflows.md](technical/features/workflows.md)) |

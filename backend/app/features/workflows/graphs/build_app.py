@@ -1,13 +1,13 @@
 """Build graph: prepare → connect → plan → (develop → review)* → verify → browser QA →
 security → preview → (release gate) → finish.
 
+QA (verify) runs the tests, build, type-check and lint; failures go back to a developer once.
+
 The CTO plans tasks; for each task the assigned developer works and the CTO reviews, sending
 it back with changes if needed. Failed verification skips the gate: the founder is only asked
 to approve working code. The security engineer then scans the changes: blocking findings go
 back to a developer once (develop → review → verify → security again), warnings go to the gate.
 """
-
-from typing import Literal
 
 from langgraph.checkpoint.base import BaseCheckpointSaver
 from langgraph.graph import END, START, StateGraph
@@ -21,6 +21,7 @@ from app.features.models.interfaces import LLMProvider
 from app.features.repos.service import RepoService
 from app.features.sandbox.interfaces import SandboxProvider
 from app.features.security.service import SecurityReview
+from app.features.workflows.checkers.quality import QualityChecker
 from app.features.workflows.checkers.test_command import TestCommandChecker
 from app.features.workflows.interfaces import WorkChecker
 from app.features.workflows.nodes.approval import make_approval_node
@@ -33,12 +34,8 @@ from app.features.workflows.nodes.prepare import make_prepare_node
 from app.features.workflows.nodes.preview import make_preview_node
 from app.features.workflows.nodes.review import REVIEW_PROMPT, after_review, make_review_node
 from app.features.workflows.nodes.security import after_security, make_security_node
-from app.features.workflows.nodes.verify import make_verify_node
+from app.features.workflows.nodes.verify import after_verify, make_verify_node
 from app.features.workflows.state import BuildState
-
-
-def _after_verify(state: BuildState) -> Literal["browser_qa", "finish"]:
-    return "browser_qa" if state.get("verified") else "finish"
 
 
 def build_app_graph(
@@ -90,7 +87,12 @@ def build_app_graph(
         "review",
         make_review_node(planner, sandboxes, review_instructions or REVIEW_PROMPT, max_revisions),
     )
-    graph.add_node("verify", make_verify_node(sandboxes, checker or TestCommandChecker()))
+    graph.add_node(
+        "verify",
+        make_verify_node(
+            sandboxes, checker or QualityChecker(TestCommandChecker()), developer_names
+        ),
+    )
     names = developer_names or ["Developer"]
     frontend = next((n for n in names if (specialties or {}).get(n) == "frontend"), names[0])
     graph.add_node(
@@ -110,7 +112,7 @@ def build_app_graph(
     graph.add_edge("plan", "develop")
     graph.add_edge("develop", "review")
     graph.add_conditional_edges("review", after_review, ["develop", "verify"])
-    graph.add_conditional_edges("verify", _after_verify)
+    graph.add_conditional_edges("verify", after_verify, ["develop", "browser_qa", "finish"])
     graph.add_conditional_edges("browser_qa", after_browser_qa, ["develop", "security", "finish"])
     graph.add_conditional_edges("security", after_security, ["develop", "preview", "finish"])
     graph.add_edge("preview", "approval")

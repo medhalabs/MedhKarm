@@ -21,7 +21,7 @@ The log is **append-only**: the database refuses to change or delete an event, s
 
 | Recorded by | Events |
 | --- | --- |
-| `WorkflowService` (workflows) | `run.started`, `plan.created`, `task.assigned` (one per task: "Assigned “CSV export” to Isha”), `work.finished`, `review.finished` ("Approved …" or "Sent … back to Isha: …"), `check.finished`, `approval.requested`, `approval.decided`, `run.finished`; `model.used` for the CTO's plan and review calls |
+| `WorkflowService` (workflows) | `run.started`, `plan.created`, `task.assigned` (one per task: "Assigned “CSV export” to Isha”), `work.finished`, `review.finished` ("Approved …" or "Sent … back to Isha: …"), `check.finished` (QA: "Checks passed (tests, syntax, ruff)", "Checks failed: sent to Isha to fix" plus a `task.assigned`, "Stopped: the checks still fail"; `data.checks` has each check), `approval.requested`, `approval.decided`, `run.finished`; `model.used` for the CTO's plan and review calls |
 | Develop node (workflows) | `work.started` |
 | `WorkflowService.continue_run` (workflows) | `run.resumed` ("Picked up again after an interruption") when a worker carries on a run another worker didn't finish |
 | Release gate (workflows) | `approval.decided` from `system` when the team's approval rules approve or reject on their own ("Approved the release by your rules: …"); `approval.requested` ends with the rules' reasons when a rule asked ([approvals.md](approvals.md)) |
@@ -141,6 +141,7 @@ This feature *is* the event log. Other features call `RunRecorder.record()`.
 
 | Date | Change |
 | --- | --- |
+| 2026-10-04 | QA's `check.finished` lists each check (`data.checks`) and says who got the fix task; QA records `task.assigned` for it |
 | 2026-10-04 | `deploy.finished` events from `devops` |
 | 2026-10-04 | `security.finished` events and the `security` actor (Vikram) |
 | 2026-10-01 | `codebase.mapped` and `changes.delivered` event types; `changes.delivered` refreshes the run page |
