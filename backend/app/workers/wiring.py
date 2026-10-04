@@ -16,6 +16,7 @@ from app.features.deploys.vercel import VercelDeployTarget
 from app.features.developer_engine.interfaces import DeveloperEngine
 from app.features.events.stores.sql_store import SqlEventStore
 from app.features.models.interfaces import LLMProvider
+from app.features.models.metering import MeteredLLMProvider
 from app.features.models.service import build_provider, resolve_model_config
 from app.features.repos.code_graph import GraphifyCodeGraph
 from app.features.repos.github import GitHubRepoHost
@@ -79,7 +80,7 @@ def build_team_runtime(settings: Settings) -> TeamRuntime:
     engine, sandboxes = build_engine(settings, developer)
     return TeamRuntime(
         template=template,
-        planner=build_provider(settings, cto.model),
+        planner=_provider(settings, cto.model),
         planner_instructions=cto.instructions,
         review_instructions=cto.review_instructions,
         developer_names=developer.display_names,
@@ -87,7 +88,7 @@ def build_team_runtime(settings: Settings) -> TeamRuntime:
         specialties=developer.specialty_of(),
         specialty_instructions={s.id: s.instructions for s in developer.specialties},
         approval_policy=template.approval,
-        pm=build_provider(settings, pm.model),
+        pm=_provider(settings, pm.model),
         pm_instructions=pm.instructions,
         security=SecurityReview() if _active(template, "security") else None,
         browser_tester=_browser_tester(settings, template),
@@ -112,12 +113,17 @@ def _browser_tester(settings: Settings, template: TeamTemplate) -> DeveloperEngi
 
     qa = template.role("qa")
     return ToolLoopEngine(
-        build_provider(settings, qa.model),
+        _provider(settings, qa.model),
         max_steps=qa.max_steps or settings.builtin_max_steps,
         tools=qa.tools,
         instructions=qa.instructions,
         actor=Actor.QA,
     )
+
+
+def _provider(settings: Settings, model: str | None) -> LLMProvider:
+    """Every agent's model, metered: eval runs count each task's tokens across all agents."""
+    return MeteredLLMProvider(build_provider(settings, model))
 
 
 def _active(template: TeamTemplate, role_id: str) -> bool:
@@ -189,7 +195,7 @@ def build_engine(
     from app.features.integrations.service import tool_sources
 
     builtin = ToolLoopEngine(
-        build_provider(settings, model),
+        _provider(settings, model),
         max_steps=(role.max_steps if role and role.max_steps else settings.builtin_max_steps),
         tools=tools,
         instructions=(role.instructions if role and role.instructions else SYSTEM_PROMPT),

@@ -133,5 +133,6 @@ Then start a run over HTTP ([runs.md](runs.md)). Watch jobs: `docker exec medhka
 
 | Date | Change |
 | --- | --- |
+| 2026-10-04 | `evals.nightly` job (the nightly eval suite) and its schedule |
 | 2026-10-04 | `backlog.plan` job (the PM) and the backlog tick (periodic); build handlers report finished runs to a `RunListener` |
 | 2026-10-01 | Created: Postgres job queue with leases, retries and unique keys; worker loop with graceful stop and periodic tasks; build start/resume and standup jobs |

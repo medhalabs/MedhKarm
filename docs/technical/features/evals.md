@@ -49,6 +49,16 @@ By kind: 4 bugs, 12 features, 1 refactor, 3 new modules. By difficulty: 10 easy 
 
 All 20 passed validation on 2026-10-01 (about 15 seconds). Run it after editing any task.
 
+## Cost, time and the nightly run
+
+- **Every model call in a task is counted** (Kabir, developers, Tara, reviews): providers built in `app/workers/wiring.py` are wrapped in `MeteredLLMProvider` (`app/features/models/metering.py`), and the runner opens a meter per task (`metering()`, a context variable, so parallel tasks stay separate). Each outcome has `model_calls`, `prompt_tokens`, `completion_tokens` and `total_tokens` for **all agents** (before Oct 4, 2026, `total_tokens` counted the developers only).
+- **Money:** `backend/evals/prices.toml` lists prices per million tokens (input, output) and `usd_to_inr`. Each run is priced at the model it ran on (free Ollama: ₹0) and at every `reference` model (Claude Haiku 4.5, Sonnet 5.5, Opus 5.5 at Anthropic list prices of Sep 25, 2026). Reference figures assume the same tokens and no prompt caching, so they're upper estimates; run the suite on a model to know its real cost. Update the rate and prices in the file.
+- **The report** adds a cost table (per task, per passed task, whole run, in ₹ and $), tokens in/out and calls per task, mean and median time, and a line comparing with the previous run of the same engine, model and variant.
+- **History:** every run appends one line to `backend/evals/results/history.jsonl` (pass count, errors, median time, tokens, $ per task per priced model): the trend over time.
+- **Nightly:** with `EVAL_NIGHTLY=true`, the worker queues `evals.nightly` once per night and engine (`EVAL_NIGHTLY_ENGINES`, default `["builtin"]`; add `"openhands"` for both) between `EVAL_NIGHTLY_HOUR` (default 2) and four hours later, India time, so a worker started in the afternoon doesn't start a surprise run. The job runs the whole suite (`run_suite`, the same code as the command line, `EVAL_NIGHTLY_PARALLEL`) and its result names the report. Off by default because it uses model quota.
+
+First metered run (Oct 4, 2026, gpt-oss:20b, 2 tasks): both passed. `cart-bug-rounding` took 13 calls, 27k input / 2k output tokens, 92 s; `book-feature-cancel` took 96 calls, 600k / 44k, 589 s. That's a 22× spread in cost, and about 93% of tokens are input: the conversation resent each step, which prompt caching would bill at about a tenth.
+
 ## Code map
 
 | File | Responsibility |
@@ -58,7 +68,9 @@ All 20 passed validation on 2026-10-01 (about 15 seconds). Run it after editing 
 | `workspace.py` | Copies projects, hidden checks and solutions into a sandbox; runs the hidden checks |
 | `runner.py` | `EvalRunner`: one task through the build workflow, scored; runs many in parallel |
 | `validator.py` | `TaskValidator`: proves tasks are fair and not already solved |
-| `report.py` | Markdown summary (by kind, language, difficulty) and JSON results |
+| `report.py` | Markdown summary (by kind, language, difficulty), cost table, comparison with the last run; JSON results; `history.jsonl` |
+| `pricing.py` | `PriceTable`, `ModelPrice`, `load_prices()` (`backend/evals/prices.toml`) |
+| `app/workers/handlers/evals.py` | `NightlyEvals` job and `nightly_evals_schedule()` |
 | `exceptions.py` | `EvalTaskError` (bad task files) |
 | `app/workers/run_evals.py` | CLI: `list`, `validate`, `run`; wires engine, sandbox and image |
 
@@ -168,6 +180,7 @@ What the runs show:
 
 | Date | Change |
 | --- | --- |
+| 2026-10-04 | Cost and time per task: every agent's calls metered, priced at the run's model and reference models (`prices.toml`), cost table, history and comparison; nightly runs (`EVAL_NIGHTLY`) |
 | 2026-10-01 | `--code-graph on|off` for A/B runs; reports carry a `variant` (in the summary and the file name); the runner maps each project before planning, like real runs |
 | 2026-10-01 | Errored tasks (model or sandbox failures) reported separately and not scored; first baseline recorded |
 | 2026-10-01 | Created: 20 tasks on 4 projects, validator, runner, reports, sandbox image |

@@ -32,7 +32,10 @@ class TaskOutcome(BaseModel):
     visible_passed: bool = False
     hidden_passed: bool = False
     steps: int = 0
-    total_tokens: int = 0
+    total_tokens: int = 0  # every agent's tokens in the task (CTO, developers, QA)
+    prompt_tokens: int = 0
+    completion_tokens: int = 0
+    model_calls: int = 0
     seconds: float = 0.0
     summary: str = ""
     files_changed: list[str] = Field(default_factory=list)

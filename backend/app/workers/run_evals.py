@@ -21,8 +21,9 @@ from langgraph.checkpoint.memory import InMemorySaver
 from app.core.config import Settings, get_settings
 from app.core.logging import configure_logging
 from app.features.evals.loader import load_tasks
+from app.features.evals.pricing import PriceTable, load_prices
 from app.features.evals.report import save, summary_markdown, validation_markdown
-from app.features.evals.runner import EvalRunner
+from app.features.evals.runner import EvalRunner, OnOutcome
 from app.features.evals.schemas import EvalReport, TaskOutcome
 from app.features.evals.validator import TaskValidator
 from app.features.repos.code_graph import GraphifyCodeGraph
@@ -62,6 +63,20 @@ async def validate(settings: Settings, only: list[str] | None, parallel: int) ->
 
 
 async def run(settings: Settings, only: list[str] | None, parallel: int) -> int:
+    report, path, prices = await run_suite(settings, only, parallel, on_outcome=print_outcome)
+    print("\n" + summary_markdown(report, prices, None))
+    print(f"Saved: {path.relative_to(BACKEND_DIR)} (+ .json; history in results/history.jsonl)")
+    return 0
+
+
+async def run_suite(
+    settings: Settings,
+    only: list[str] | None,
+    parallel: int,
+    on_outcome: OnOutcome | None = None,
+) -> tuple[EvalReport, Path, PriceTable]:
+    """The whole suite (or `only` these tasks) on the settings' engine and model; saves the
+    report and a history line. Used by the command line and the nightly job."""
     prepare = None
     if settings.developer_engine == "openhands":
         prepare = OPENHANDS_PREPARE
@@ -92,13 +107,14 @@ async def run(settings: Settings, only: list[str] | None, parallel: int) -> int:
     runner = EvalRunner(WorkflowService(graph), sandboxes, prepare_command=prepare)
 
     started = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
-    print(
-        f"Running {len(tasks)} tasks · engine={settings.developer_engine} · "
-        f"model={settings.default_model} · code_graph={settings.code_graph} · "
-        f"parallel={parallel}\n",
-        flush=True,
-    )
-    outcomes = await runner.run_all(tasks, parallel=parallel, on_outcome=print_outcome)
+    if on_outcome:
+        print(
+            f"Running {len(tasks)} tasks · engine={settings.developer_engine} · "
+            f"model={settings.default_model} · code_graph={settings.code_graph} · "
+            f"parallel={parallel}\n",
+            flush=True,
+        )
+    outcomes = await runner.run_all(tasks, parallel=parallel, on_outcome=on_outcome)
 
     report = EvalReport(
         started_at=started,
@@ -107,10 +123,9 @@ async def run(settings: Settings, only: list[str] | None, parallel: int) -> int:
         outcomes=outcomes,
         variant="code-graph" if settings.code_graph else "",
     )
-    path = save(report, EVALS_DIR / "results")
-    print("\n" + summary_markdown(report))
-    print(f"Saved: {path.relative_to(BACKEND_DIR)} (+ .json)")
-    return 0
+    prices = load_prices(EVALS_DIR / "prices.toml")
+    path = save(report, EVALS_DIR / "results", prices)
+    return report, path, prices
 
 
 def main() -> None:

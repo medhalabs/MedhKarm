@@ -78,6 +78,7 @@ None yet.
 
 | Date | Change |
 | --- | --- |
+| 2026-10-04 | `metering.py`: `MeteredLLMProvider` and `metering()` count calls and tokens per piece of work (eval tasks) |
 | 2026-10-01 | Default model `gpt-oss:20b` |
 | 2026-10-01 | Retries with growing waits (2–32 s) on temporary errors only |
 | 2026-10-01 | Added `ModelConfig` and `resolve_model_config()` for external agents |

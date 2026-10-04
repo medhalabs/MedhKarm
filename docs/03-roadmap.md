@@ -110,7 +110,7 @@ Building in the mornings, beta recruiting in the afternoons. Early sign for the 
 - [ ] QA writes and runs tests; build, type-check, lint and tests must pass
 - [ ] Preview deploys; production only after the release gate
 - [ ] Choose the hosted sandbox (E2B, Fly Machines, Daytona or Modal) for customer code
-- [ ] Eval runner: all 20 tasks nightly, both developer engines, with pass rate, cost and time per task
+- [x] Eval runner: all 20 tasks nightly, both developer engines, with pass rate, cost and time per task. Done Oct 4, 2026: every agent's tokens metered per task, ₹ cost at the run's model and at Claude Haiku/Sonnet/Opus prices, history and comparison, nightly with `EVAL_NIGHTLY=true` (OpenHands opt-in) ([evals.md](technical/features/evals.md)). A full fresh baseline is still to run
 - [ ] Model × role tests: which models fill which seats
 - [x] Automated scans: npm audit, Semgrep, run by Vikram (security engineer), who can block a release. Done Oct 4, 2026: secrets, 15 offline Semgrep rules, pip-audit/npm audit on changed files after QA; blocking problems go back to a developer once, warnings go to your gate; tested live ([security.md](technical/features/security.md))
 - [ ] Neel (DevOps) joins the team with preview deploys. Built Oct 4, 2026: Vercel preview before your gate (tested live), production after approval ([deploys.md](technical/features/deploys.md)). Left: production tested live

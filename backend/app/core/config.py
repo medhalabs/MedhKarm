@@ -44,6 +44,13 @@ class Settings(BaseSettings):
     vercel_token: SecretStr | None = None
     vercel_team: str | None = None  # team slug; default: the token's own scope
 
+    # Nightly eval suite (the worker runs it between EVAL_NIGHTLY_HOUR and 4 hours later, local
+    # time in STANDUP_TIMEZONE; once per day and engine). Off by default: it uses model quota.
+    eval_nightly: bool = False
+    eval_nightly_hour: int = 2
+    eval_nightly_engines: list[Literal["builtin", "openhands"]] = ["builtin"]
+    eval_nightly_parallel: int = 2
+
     # Daily standup: covers 24 hours up to this hour, in this time zone
     standup_timezone: str = "Asia/Kolkata"
     standup_hour: int = 9

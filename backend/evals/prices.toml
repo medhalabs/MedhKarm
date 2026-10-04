@@ -1,0 +1,36 @@
+# Model prices for eval cost estimates (USD per million tokens). Edit when prices change.
+# Every eval task is priced at the model it actually ran on, and at each `reference` model
+# ("what would this task cost if the same tokens were billed at that model's price").
+# Different models use different numbers of tokens for the same work, so reference costs are
+# estimates; run the suite on a model to know its real cost.
+
+usd_to_inr = 88.0  # check today's rate and update
+
+[[models]]
+id = "ollama_chat/gpt-oss:20b"
+label = "gpt-oss:20b (Ollama Cloud free tier)"
+input_usd = 0.0
+output_usd = 0.0
+
+[[models]]
+id = "claude-haiku-4-5"
+label = "Claude Haiku 4.5"
+input_usd = 1.0
+output_usd = 5.0
+reference = true
+
+[[models]]
+id = "claude-sonnet-5-5"
+label = "Claude Sonnet 5.5"
+input_usd = 2.0
+output_usd = 10.0
+reference = true
+
+[[models]]
+id = "claude-opus-5-5"
+label = "Claude Opus 5.5"
+input_usd = 4.0
+output_usd = 20.0
+reference = true
+
+# Anthropic list prices as of Sep 25, 2026 (first-party API, before prompt-caching discounts).

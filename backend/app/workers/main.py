@@ -33,6 +33,7 @@ from app.features.standups.dependencies import get_standup_service
 from app.features.workflows.service import WorkflowService
 from app.workers.handlers.backlog import PlanBacklog, backlog_schedule
 from app.workers.handlers.build import ResumeBuild, StartBuild
+from app.workers.handlers.evals import NIGHTLY_EVALS, NightlyEvals, nightly_evals_schedule
 from app.workers.handlers.standup import SEND_STANDUP, SendStandup, standup_schedule
 from app.workers.wiring import build_team_runtime, ensure_sandbox_image, workflow_service
 
@@ -62,6 +63,7 @@ async def main() -> None:
         START_JOB: StartBuild(runs, workflow, team.sandboxes, events, progress),
         RESUME_JOB: ResumeBuild(runs, workflow, team.sandboxes, events, progress),
         PLAN_JOB: PlanBacklog(planner, projects),
+        NIGHTLY_EVALS: NightlyEvals(settings),
         SEND_STANDUP: SendStandup(standups, LogDelivery()),
     }
     runner = JobRunner(
@@ -74,6 +76,7 @@ async def main() -> None:
         poll_seconds=settings.worker_poll_seconds,
         periodic=[
             backlog_schedule(progress),
+            nightly_evals_schedule(queue, settings),
             *([standup_schedule(queue, standups)] if settings.standup_schedule else []),
         ],
     )

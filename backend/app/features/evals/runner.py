@@ -18,6 +18,7 @@ from collections.abc import Callable
 from app.features.evals.schemas import EvalTask, TaskOutcome
 from app.features.evals.workspace import run_hidden_checks, seed_project
 from app.features.models.exceptions import ModelCallError
+from app.features.models.metering import metering
 from app.features.sandbox.exceptions import SandboxError
 from app.features.sandbox.interfaces import SandboxProvider
 from app.features.workflows.service import WorkflowService
@@ -68,7 +69,18 @@ class EvalRunner:
             if self._prepare_command:
                 await sandbox.run(self._prepare_command, timeout_seconds=600)
             await seed_project(sandbox, task)
-            await asyncio.wait_for(self._run_build(task, sandbox_id, outcome), self._timeout)
+            with metering() as meter:  # counts every agent's model calls in this task
+                try:
+                    await asyncio.wait_for(
+                        self._run_build(task, sandbox_id, outcome), self._timeout
+                    )
+                finally:
+                    used = meter.total
+                    if used.calls:
+                        outcome.model_calls = used.calls
+                        outcome.prompt_tokens = used.prompt_tokens
+                        outcome.completion_tokens = used.completion_tokens
+                        outcome.total_tokens = used.total_tokens
         except TimeoutError:
             outcome.error = f"Timed out after {self._timeout:.0f}s"
         except (ModelCallError, SandboxError) as exc:
