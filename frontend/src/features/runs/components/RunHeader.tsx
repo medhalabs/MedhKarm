@@ -59,6 +59,22 @@ export function RunHeader({ run }: { run: Run }) {
           </a>
         </p>
       )}
+      {run.deployment && (
+        <p className="text-sm">
+          {run.deployment.state === "READY" ? (
+            <>
+              Live at{" "}
+              <a href={run.deployment.url} className="underline" target="_blank" rel="noreferrer">
+                {run.deployment.url}
+              </a>
+            </>
+          ) : (
+            <span className="text-red-700 dark:text-red-400">
+              Couldn&apos;t put it live: {run.deployment.error || run.deployment.state}
+            </span>
+          )}
+        </p>
+      )}
       {run.delivery && !run.delivery.pull_request_url && !run.delivery.repo_url && (
         <p className="text-sm text-zinc-500">Not delivered to GitHub: {run.delivery.reason}</p>
       )}

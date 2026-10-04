@@ -141,6 +141,7 @@ This feature *is* the event log. Other features call `RunRecorder.record()`.
 
 | Date | Change |
 | --- | --- |
+| 2026-10-04 | `deploy.finished` events from `devops` |
 | 2026-10-04 | `security.finished` events and the `security` actor (Vikram) |
 | 2026-10-01 | `codebase.mapped` and `changes.delivered` event types; `changes.delivered` refreshes the run page |
 | 2026-10-01 | Live activity feed in the admin page (frontend `events` feature) |

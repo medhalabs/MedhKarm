@@ -14,6 +14,7 @@ export const EVENT_TYPES = [
   "work.finished",
   "check.finished",
   "security.finished",
+  "deploy.finished",
   "approval.requested",
   "approval.decided",
   "changes.delivered",

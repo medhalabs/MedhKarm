@@ -125,6 +125,7 @@ None of its own. The workflow records the run's events ([workflows.md](workflows
 
 | Date | Change |
 | --- | --- |
+| 2026-10-04 | `deployment` (where the released app is live, migration 0007); the admin page shows the preview link at the gate and the live link |
 | 2026-10-01 | New projects: `create_repo` / `new_repo_name` on start, `new_repo` on runs (migration `0005`); admin form checkbox and name; run page shows the created repository |
 | 2026-10-01 | Runs on an existing GitHub repository: optional `repo` on start, `repo` and `delivery` on runs (migration `0004`), test command optional; admin form and run page show the repo and the pull request ([repos.md](repos.md)) |
 | 2026-10-01 | Admin page: start, list, watch and approve runs in the browser |

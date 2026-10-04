@@ -143,6 +143,7 @@ LangGraph creates and owns its tables in our Postgres (`checkpoints`, `checkpoin
 
 | Date | Change |
 | --- | --- |
+| 2026-10-04 | `preview` step (DevOps) after security; production deploy in `finish` after approval |
 | 2026-10-04 | `browser_qa` step: QA writes an end-to-end Playwright test for web changes; one fix round for the frontend developer; `finish` fails runs whose browser test still fails |
 | 2026-10-04 | Specialties: the CTO tags tasks (`specialty`), `assign()` prefers matching specialists, the develop node adds the specialty's instructions |
 | 2026-10-04 | `security` step after verify: the security engineer's scans, one fix task for blocking findings (`sec1`), warnings to the gate; `finish` fails runs whose security problems remain |

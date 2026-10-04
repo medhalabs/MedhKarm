@@ -105,6 +105,7 @@ None of its own. Role ids are the `actor` values in the activity log; `Actor` in
 
 | Date | Change |
 | --- | --- |
+| 2026-10-04 | Neel (DevOps) active; `preview_failed` approval rule |
 | 2026-10-04 | QA (Tara) gets tools, instructions and 20 steps to write browser tests |
 | 2026-10-04 | Developer specialties (backend: Isha, Ravi; frontend: Arjun) with their own instructions |
 | 2026-10-04 | `security` role (Vikram, security engineer) and the `security_warnings` approval rule |

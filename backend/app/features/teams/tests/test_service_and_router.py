@@ -23,6 +23,7 @@ def test_list_shows_active_roles_only() -> None:
         "Developer",
         "QA engineer",
         "Security engineer",
+        "DevOps",
     ]
 
 
@@ -40,6 +41,7 @@ def test_assemble_default_team() -> None:
         ("developer", "Isha"),
         ("qa", "Tara"),
         ("security", "Vikram"),
+        ("devops", "Neel"),
     ]
 
 
@@ -64,7 +66,7 @@ def test_api_lists_and_fetches_templates() -> None:
     assert template["workflow"] == "build_app"
     assert len(template["roles"]) == 6
     members = c.get("/teams/templates/software/team").json()["members"]
-    assert [m["name"] for m in members] == ["Mira", "Kabir", "Isha", "Tara", "Vikram"]
+    assert [m["name"] for m in members] == ["Mira", "Kabir", "Isha", "Tara", "Vikram", "Neel"]
 
 
 def test_api_unknown_template_is_404() -> None:

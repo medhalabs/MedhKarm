@@ -48,6 +48,9 @@ Last updated: Oct 4, 2026.
 | G-26 | `models.md` says there's no per-role model choice; roles do set their own model now | Oct 4 | Doc fix |
 | G-27 | The sandbox image is 2.86 GB since Playwright and Chromium (was 1.21 GB): slow first build, more disk | Oct 4 | Playwright's smaller headless-only Chromium; a separate image for web projects |
 | G-28 | Browser tests are proven for Python web apps and plain pages; Node/React dev servers (npm, Next.js) aren't tried yet; QA's test used a fixed port (8000) instead of a free one | Oct 4 | Try on a JS app; tell QA to pick a free port in code |
+| G-29 | Hobby previews are behind Vercel login (302/401), so Neel can't smoke-test them; the founder must be signed in to Vercel | Oct 4 | Vercel "Protection Bypass for Automation" secret: Neel opens the preview and checks the page and API |
+| G-30 | Deploys: production not tested live; no app environment variables (API keys) on Vercel; Flask/Django not detected; inline upload capped at ~6 MB | Oct 4 | Test production on approval; env vars per project; file-upload API for big apps |
+| G-31 | Placeholder tests slip through: a developer added `tests/test_dummy.py` with `assert True`; the CTO's review should refuse "tests that check nothing", but didn't, and the guards only catch fake test tools | Oct 4 | A guard for tests with no real assertion (`assert True`, empty bodies); CTO review prompt with an example |
 
 ## Filled
 

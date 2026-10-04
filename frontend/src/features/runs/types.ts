@@ -14,6 +14,9 @@ export type Gate = {
   tokens?: number;
   tests: string;
   security?: string[]; // the security engineer's warnings, if any
+  preview_url?: string; // DevOps' preview to try before approving
+  preview_error?: string;
+  browser_test?: string;
 };
 
 /** A founder's GitHub repository (backend: repos/schemas.py RepoSource). */
@@ -29,6 +32,15 @@ export type Delivery = {
   reason: string;
 };
 
+/** DevOps' deployment (backend: deploys/schemas.py). */
+export type Deployment = {
+  url: string;
+  state: string; // READY when it worked
+  target: string;
+  kind: string;
+  error: string;
+};
+
 export type Run = {
   id: string;
   request: string;
@@ -39,6 +51,7 @@ export type Run = {
   gate: Gate | null;
   error: string | null;
   delivery: Delivery | null;
+  deployment: Deployment | null; // where the released app is live
   created_at: string;
   updated_at: string;
 };

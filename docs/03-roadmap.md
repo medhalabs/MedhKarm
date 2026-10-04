@@ -113,7 +113,7 @@ Building in the mornings, beta recruiting in the afternoons. Early sign for the 
 - [ ] Eval runner: all 20 tasks nightly, both developer engines, with pass rate, cost and time per task
 - [ ] Model × role tests: which models fill which seats
 - [x] Automated scans: npm audit, Semgrep, run by Vikram (security engineer), who can block a release. Done Oct 4, 2026: secrets, 15 offline Semgrep rules, pip-audit/npm audit on changed files after QA; blocking problems go back to a developer once, warnings go to your gate; tested live ([security.md](technical/features/security.md))
-- [ ] Neel (DevOps) joins the team with preview deploys
+- [ ] Neel (DevOps) joins the team with preview deploys. Built Oct 4, 2026: Vercel preview before your gate (tested live), production after approval ([deploys.md](technical/features/deploys.md)). Left: production tested live
 - [x] Developer specialties: frontend (UI, browser tests) and backend (APIs, database, migrations); the CTO assigns by specialty. Done Oct 4, 2026: Isha and Ravi backend, Arjun frontend, each with their own instructions; tested live (notes app: API to Isha and Ravi, page to Arjun)
 - [x] Tara (QA) writes end-to-end browser tests for web apps. Done Oct 4, 2026: Playwright in the sandbox; for web changes Tara writes one test, we run it, failures go to the frontend developer once; tested live (BMI calculator)
 

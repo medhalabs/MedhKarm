@@ -30,6 +30,27 @@ export function ApprovalPanel({ runId, gate }: { runId: string; gate: Gate }) {
         </ul>
       </div>
       {gate.summary && <p className="text-sm">{gate.summary}</p>}
+      {gate.preview_url && (
+        <p className="text-sm">
+          <a
+            href={gate.preview_url}
+            target="_blank"
+            rel="noreferrer"
+            className="font-medium text-sky-700 underline dark:text-sky-400"
+          >
+            Try the preview →
+          </a>{" "}
+          <span className="text-zinc-500">(opens on Vercel; sign in to Vercel if it asks)</span>
+        </p>
+      )}
+      {gate.preview_error && (
+        <p className="text-sm text-red-700 dark:text-red-400">
+          The preview didn&apos;t build: {gate.preview_error}
+        </p>
+      )}
+      {gate.browser_test && (
+        <p className="text-sm text-zinc-600 dark:text-zinc-400">Browser test {gate.browser_test}</p>
+      )}
       <div className="text-sm">
         <span className="font-medium">Files changed:</span>{" "}
         <span className="font-mono">{gate.files_changed.join(", ") || "none"}</span>

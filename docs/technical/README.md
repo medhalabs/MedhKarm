@@ -37,5 +37,6 @@ Knowledge transfer for anyone working on the code: what each part is, how it wor
 | integrations | [features/integrations.md](features/integrations.md) | MCP servers as agent tools, with per-role limits; `python_docs` server |
 | projects | [features/projects.md](features/projects.md) | Projects and their backlog: the PM plans, items become runs, autopilot across days |
 | security | [features/security.md](features/security.md) | Vikram, the security engineer: secrets, Semgrep and dependency scans on every release |
+| deploys | [features/deploys.md](features/deploys.md) | Neel (DevOps): Vercel preview before the gate, production after approval |
 | approvals | [features/approvals.md](features/approvals.md) | Approval rules at the release gate: ask, approve or reject, with reasons |
 | repos | [features/repos.md](features/repos.md) | Founders' GitHub repositories: clone, map before planning, pull request on release |
