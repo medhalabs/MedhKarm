@@ -11,6 +11,8 @@ from pathlib import Path
 from app.core.config import Settings
 from app.core.database import session_factory
 from app.features.approvals.schemas import ApprovalPolicy
+from app.features.deploys.service import DeployService
+from app.features.deploys.vercel import VercelDeployTarget
 from app.features.developer_engine.interfaces import DeveloperEngine
 from app.features.events.stores.sql_store import SqlEventStore
 from app.features.models.interfaces import LLMProvider
@@ -19,6 +21,7 @@ from app.features.repos.code_graph import GraphifyCodeGraph
 from app.features.repos.github import GitHubRepoHost
 from app.features.repos.service import RepoService
 from app.features.sandbox.interfaces import SandboxProvider
+from app.features.security.service import SecurityReview
 from app.features.teams.loader import load_templates
 from app.features.teams.schemas import RoleSpec, TeamTemplate
 from app.features.teams.service import TeamService
@@ -57,9 +60,15 @@ class TeamRuntime:
     review_instructions: str
     developer_names: list[str]
     max_developers: int
+    specialties: dict[str, str]  # developer name -> specialty
+    specialty_instructions: dict[str, str]  # specialty -> instructions
     approval_policy: ApprovalPolicy  # what happens at the release gate
     pm: LLMProvider  # the PM's model: plans project backlogs
     pm_instructions: str
+    security: SecurityReview | None  # the security engineer, if the team has an active one
+    browser_tester: DeveloperEngine | None  # QA's engine for browser tests (built-in only)
+    deploys: DeployService | None  # DevOps, when the team has one and VERCEL_TOKEN is set
+    qa_name: str
     engine: DeveloperEngine  # the developer
     sandboxes: SandboxProvider
 
@@ -75,12 +84,44 @@ def build_team_runtime(settings: Settings) -> TeamRuntime:
         review_instructions=cto.review_instructions,
         developer_names=developer.display_names,
         max_developers=developer.max_count,
+        specialties=developer.specialty_of(),
+        specialty_instructions={s.id: s.instructions for s in developer.specialties},
         approval_policy=template.approval,
         pm=build_provider(settings, pm.model),
         pm_instructions=pm.instructions,
+        security=SecurityReview() if _active(template, "security") else None,
+        browser_tester=_browser_tester(settings, template),
+        deploys=(
+            DeployService(VercelDeployTarget(settings.vercel_token, settings.vercel_team))
+            if _active(template, "devops") and settings.vercel_token
+            else None
+        ),
+        qa_name=template.role("qa").display_names[0],
         engine=engine,
         sandboxes=sandboxes,
     )
+
+
+def _browser_tester(settings: Settings, template: TeamTemplate) -> DeveloperEngine | None:
+    """QA's engine for browser tests: the built-in engine with QA's role (tools, instructions,
+    steps). Not with OpenHands yet (see docs/10-gaps.md)."""
+    if settings.developer_engine != "builtin":
+        return None
+    from app.features.developer_engine.engines.tool_loop_engine import ToolLoopEngine
+    from app.features.events.schemas import Actor
+
+    qa = template.role("qa")
+    return ToolLoopEngine(
+        build_provider(settings, qa.model),
+        max_steps=qa.max_steps or settings.builtin_max_steps,
+        tools=qa.tools,
+        instructions=qa.instructions,
+        actor=Actor.QA,
+    )
+
+
+def _active(template: TeamTemplate, role_id: str) -> bool:
+    return any(r.id == role_id and r.active for r in template.roles)
 
 
 @asynccontextmanager
@@ -102,6 +143,12 @@ async def workflow_service(
             developer_names=team.developer_names,
             max_developers=team.max_developers,
             approval_policy=team.approval_policy,
+            security=team.security,
+            specialties=team.specialties,
+            specialty_instructions=team.specialty_instructions,
+            browser_tester=team.browser_tester,
+            qa_name=team.qa_name,
+            deploys=team.deploys,
             repos=RepoService(
                 GitHubRepoHost(settings.github_token),
                 GraphifyCodeGraph() if settings.code_graph else None,

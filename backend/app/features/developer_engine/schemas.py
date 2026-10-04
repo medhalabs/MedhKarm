@@ -6,6 +6,8 @@ class DevTask(BaseModel):
     test_command: str = Field(description="Shell command, run in the workspace, that must exit 0")
     # An existing project: more to read before writing, so the engine allows more steps.
     existing_project: bool = False
+    # Extra instructions for this task (e.g. the developer's specialty), after the role's own.
+    instructions: str = ""
 
 
 class DevResult(BaseModel):

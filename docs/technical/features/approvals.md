@@ -20,6 +20,7 @@ The founder approves what matters, and the rules say what matters. Every build s
 | `tasks_count` | Tasks in the CTO's plan |
 | `tasks_with_issues` | Tasks accepted with review comments still open |
 | `tests_passed` | QA's final check passed (always true at the gate today: failing runs never reach it) |
+| `security_warnings` | The security engineer's non-blocking findings ([security.md](security.md)) |
 
 2. Every **enabled** rule whose conditions (`when`) **all** hold matches. A rule with no conditions always matches.
 3. **The strictest matching action wins:** reject, then ask, then approve. An approve rule can never wave through something another rule says needs the founder, wherever the rules sit in the file. With no match, `default` applies (ask, for the software team).
@@ -59,6 +60,7 @@ Operators: `eq`, `ne`, `gt`, `gte`, `lt`, `lte`, and `matches_any` (shell-style 
 | `open_review_comments` | ask | A task was accepted with review comments still open |
 | `large_change` | ask | More than 15 files changed |
 | `expensive_run` | ask | More than 1,000,000 tokens |
+| `security_warnings` | ask | The security engineer has warnings |
 | `small_clean_change` | approve (**off**) | ≤ 3 files, no open review comments, tests passed. Turn it on to release small changes without asking; the ask rules still win when they match |
 | default | ask | Every other release |
 
@@ -126,4 +128,5 @@ None. Rules live in the team template file; the verdict is saved in the run's ch
 
 | Date | Change |
 | --- | --- |
+| 2026-10-04 | `security_warnings` fact and the software team's rule; the gate lists the warnings (`gate.security`) |
 | 2026-10-01 | Created: approval policies (ask / approve / reject, strictest wins), facts at the release gate, software team rules, reasons in the gate, activity log and standup |

@@ -27,6 +27,8 @@ def approval_facts(state: BuildState) -> dict[str, Any]:
         "tasks_count": len(tasks),
         "tasks_with_issues": sum(t.get("status") == "done_with_issues" for t in tasks),
         "tests_passed": bool(state.get("verified")),
+        "security_warnings": int(state.get("security", {}).get("warnings", 0)),
+        "preview_failed": _preview_failed(state),
     }
 
 
@@ -54,6 +56,22 @@ def make_approval_node(policy: ApprovalPolicy | None = None) -> BuildNode:
                 "files_changed": dev.get("files_changed", []),
                 "tokens": facts["tokens"],
                 "tests": state.get("verify_output", ""),
+                "preview_url": (state.get("preview") or {}).get("url", "")
+                if not _preview_failed(state)
+                else "",
+                "preview_error": (state.get("preview") or {}).get("error", "")
+                if _preview_failed(state)
+                else "",
+                "browser_test": (
+                    "passed: " + ", ".join(state.get("browser", {}).get("test_files", []))
+                    if state.get("browser", {}).get("needed")
+                    else ""
+                ),
+                "security": [
+                    f["severity"] + ": " + (f["path"] + " " if f.get("path") else "") + f["message"]
+                    for f in state.get("security", {}).get("findings", [])
+                    if f["severity"] != "low"
+                ][:10],
             }
         )
         if isinstance(decision, dict):
@@ -68,3 +86,8 @@ def make_approval_node(policy: ApprovalPolicy | None = None) -> BuildNode:
         }
 
     return approval
+
+
+def _preview_failed(state: BuildState) -> bool:
+    preview = state.get("preview") or {}
+    return preview.get("kind", "none") != "none" and preview.get("state") != "READY"

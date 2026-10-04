@@ -28,9 +28,9 @@ class Settings(BaseSettings):
     # Sandbox
     # Python + Node + pytest, built from backend/sandbox-image/ on first use. A bare
     # python:3.13-slim has no pytest, and developers then faked it (see workflows/guards.py).
-    sandbox_image: str = "medhkarm-sandbox:dev"
+    sandbox_image: str = "medhkarm-sandbox:3"
     # Python + Node + test tools, built from backend/sandbox-image/ (see features/evals.md)
-    eval_sandbox_image: str = "medhkarm-sandbox:dev"
+    eval_sandbox_image: str = "medhkarm-sandbox:3"
 
     # GitHub: clone founders' private repositories and open pull requests with released work.
     # A fine-grained token with Contents and Pull requests (read and write) on those repos.
@@ -39,6 +39,10 @@ class Settings(BaseSettings):
 
     # Which team template runs builds (app/features/teams/templates/<id>.toml)
     team_template: str = "software"
+
+    # DevOps: previews and production deploys on Vercel (unset: nothing is deployed)
+    vercel_token: SecretStr | None = None
+    vercel_team: str | None = None  # team slug; default: the token's own scope
 
     # Daily standup: covers 24 hours up to this hour, in this time zone
     standup_timezone: str = "Asia/Kolkata"

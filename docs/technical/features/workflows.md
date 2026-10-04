@@ -39,6 +39,19 @@ The run id is LangGraph's `thread_id`; each checkpoint is stored under it.
 
 **After an interruption** (a worker died or was stopped mid-run), `WorkflowService.continue_run()` carries on from the last checkpoint: the interrupted step starts again from its beginning, in the same sandbox, and a `run.resumed` event is recorded. `RunOutcome.next_nodes` says whether a run stopped part-way (steps left, no gate) — the worker's build handlers use it to decide between start, continue and resume.
 
+### QA's browser test (Tara)
+
+After the tests pass, runs that changed something a user sees in a browser (`.html`, `.htm`, `.jsx`, `.tsx`, `.vue`, `.svelte`, or files under `templates/`, `static/`, `public/`, `pages/`, `components/`) get an **end-to-end browser test** (`nodes/browser_qa.py`):
+
+1. Tara (the QA role: its own `instructions`, `tools`, `max_steps`; the built-in engine with `actor: qa`) writes **one** test in `tests/e2e/` with pytest-playwright: start the app as it really runs, use the page like a person (fill in, click, check what appears), stop the server. If she finds the app itself broken, she says so ("APP BUG: …").
+2. We run the test ourselves (`python -m pytest tests/e2e -q -p no:cacheprovider`); her word is never taken.
+3. Passed → on to the security step; the gate shows `browser_test: passed: tests/e2e/…`. The test ships with the code.
+4. Failed (or an app bug) → **one** task "Make the browser test pass" for the frontend specialist (`ui1`: fix the app, not the test; never weaken it), then review, QA's tests, and the **same** browser test again. Still failing → the run fails without asking the founder.
+
+Events: `work.started` and `tool.used` from Tara (`actor: qa`, `member: Tara`), `check.finished` ("Browser test passed (…)", "Browser test failed: sent to Arjun to fix", "Stopped the release: the browser test still fails"), `task.assigned` for the fix task.
+
+Live test (Oct 4, 2026): a BMI calculator (FastAPI + a page). Kabir split it into 4 tasks for the backend and frontend specialists, QA's tests passed, and Tara read `app.py` and `static/index.html` and wrote `tests/e2e/test_bmi_e2e.py`. Her test starts uvicorn, enters 70 kg and 170 cm, clicks Calculate, and checks for "BMI: 24.2 (normal)". It passed in headless Chromium; Vikram found nothing, and the run reached the gate (about 1.4 lakh tokens).
+
 ## Code map
 
 | File | Responsibility |
@@ -130,6 +143,9 @@ LangGraph creates and owns its tables in our Postgres (`checkpoints`, `checkpoin
 
 | Date | Change |
 | --- | --- |
+| 2026-10-04 | `browser_qa` step: QA writes an end-to-end Playwright test for web changes; one fix round for the frontend developer; `finish` fails runs whose browser test still fails |
+| 2026-10-04 | Specialties: the CTO tags tasks (`specialty`), `assign()` prefers matching specialists, the develop node adds the specialty's instructions |
+| 2026-10-04 | `security` step after verify: the security engineer's scans, one fix task for blocking findings (`sec1`), warnings to the gate; `finish` fails runs whose security problems remain |
 | 2026-10-01 | A request that asks for tests ("add tests", "with pytest tests") needs a test file added or changed: the review sends the last task back (no model call) and QA fails the run otherwise (`guards.py`: `asks_for_tests`, `is_test_file`). A live run on itsdangerous reached the gate with the feature but no tests |
 | 2026-10-01 | Work that changes no files is sent back by the review (no model call), and QA fails a run that changed nothing: on an existing project the old tests pass untouched, and a live run reached the gate with no changes |
 | 2026-10-01 | `connect` node (clone, map, install) between `prepare` and `plan`; the CTO and developers get the codebase map; `finish` opens a pull request for released repo runs; `build_app_graph(..., repos=...)`, `start(..., repo=...)`, `build_run start --repo/--branch` ([repos.md](repos.md)) |

@@ -120,4 +120,5 @@ def test_facts_count_cto_and_developer_tokens() -> None:
         "tasks_count": 2,
         "tasks_with_issues": 1,
         "tests_passed": True,
+        "security_warnings": 0,
     }

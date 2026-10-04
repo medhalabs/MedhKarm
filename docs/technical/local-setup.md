@@ -84,7 +84,7 @@ See everything the team did, step by step: `uv run python -m app.workers.build_r
 
 Check a finished run against Gate 1 (team from config, 10+ steps, approval, restart, logging, cost, standup): `uv run python -m app.workers.gate_check <run_id>`.
 
-The first run builds the `medhkarm-sandbox:dev` image (Python, Node, pytest, Graphify; a minute or two, once). After pulling changes to `backend/sandbox-image/`, rebuild it: `docker build -t medhkarm-sandbox:dev backend/sandbox-image`. Details: [features/workflows.md](features/workflows.md).
+The first run builds the `medhkarm-sandbox:3` image (Python, Node, pytest, Graphify; a minute or two, once). After pulling changes to `backend/sandbox-image/`, rebuild it: `docker build -t medhkarm-sandbox:3 backend/sandbox-image`. Details: [features/workflows.md](features/workflows.md).
 
 ### Run the eval suite
 
@@ -93,7 +93,7 @@ uv run python -m app.workers.run_evals validate   # no model needed; checks the 
 uv run python -m app.workers.run_evals run        # all 20 tasks through the software team
 ```
 
-The first run builds the `medhkarm-sandbox:dev` image (about a minute). Details: [features/evals.md](features/evals.md).
+The first run builds the `medhkarm-sandbox:3` image (about a minute). Details: [features/evals.md](features/evals.md).
 
 To use the OpenHands engine instead, add `--engine openhands` (or set `DEVELOPER_ENGINE=openhands` in `backend/.env`). Pull its 1.2 GB image once beforehand so the first run doesn't wait:
 

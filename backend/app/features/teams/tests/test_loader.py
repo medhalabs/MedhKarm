@@ -72,7 +72,7 @@ def test_shipped_templates_load() -> None:
     templates = load_templates()
 
     software = templates["software"]
-    assert [r.id for r in software.roles] == ["pm", "cto", "developer", "qa", "devops"]
+    assert [r.id for r in software.roles] == ["pm", "cto", "developer", "qa", "security", "devops"]
     assert [r.id for r in software.roles if not r.active] == ["devops"]
     assert software.role("developer").max_count == 3
 
@@ -90,3 +90,16 @@ def test_approval_rules_must_use_the_workflows_facts() -> None:
 
     with pytest.raises(InvalidTemplateError, match="unknown facts refund_amount"):
         parse_template(text)
+
+
+def test_specialties_must_name_members_once() -> None:
+    import pytest
+
+    from app.features.teams.exceptions import InvalidTemplateError
+    from app.features.teams.loader import TEMPLATES_DIR, parse_template
+
+    text = (TEMPLATES_DIR / "software.toml").read_text()
+    with pytest.raises(InvalidTemplateError, match="unknown members"):
+        parse_template(text.replace('names = ["Arjun"]', 'names = ["Zara"]'))
+    with pytest.raises(InvalidTemplateError, match="more than one specialty"):
+        parse_template(text.replace('names = ["Arjun"]', 'names = ["Arjun", "Isha"]'))

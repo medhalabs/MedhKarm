@@ -19,6 +19,7 @@ MAX_TASKS = 5
 class PlannedTask(BaseModel):
     title: str = Field(min_length=1, max_length=120)
     description: str = ""
+    specialty: str = "any"  # e.g. "frontend", "backend": who should build it
 
 
 class CtoPlan(BaseModel):
@@ -58,6 +59,10 @@ PLAN_TOOL: ToolSpec = {
                             "description": {
                                 "type": "string",
                                 "description": "Files to change and what the tests must check",
+                            },
+                            "specialty": {
+                                "type": "string",
+                                "description": "Who should build it: frontend, backend or any",
                             },
                         },
                         "required": ["title", "description"],
@@ -127,24 +132,44 @@ def parse_review(response: LLMResponse) -> ReviewDecision:
     return ReviewDecision(decision="approve", feedback="")
 
 
-def assign(plan: CtoPlan, developer_names: list[str], max_developers: int) -> list[dict[str, Any]]:
-    """Tasks with ids and owners: round-robin over the developers the CTO chose to use."""
+def assign(
+    plan: CtoPlan,
+    developer_names: list[str],
+    max_developers: int,
+    specialties: dict[str, str] | None = None,
+) -> list[dict[str, Any]]:
+    """Tasks with ids and owners: round-robin over the developers the CTO chose to use. With
+    `specialties` (name -> specialty), a task goes to a matching specialist when one fits
+    within `max_developers`, else to the team as usual."""
     team_size = max(1, min(plan.developers, max_developers, len(plan.tasks), len(developer_names)))
-    return [
-        {
-            "id": f"t{i + 1}",
-            "title": _without_name(task.title, developer_names),
-            "description": task.description,
-            "owner": developer_names[i % team_size],
-            "status": "todo",
-            "attempts": 0,
-            "feedback": "",
-            "summary": "",
-            "files_changed": [],
-            "success": False,
-        }
-        for i, task in enumerate(plan.tasks[:MAX_TASKS])
-    ]
+    team = developer_names[:team_size]
+    allowed = developer_names[: max(1, min(max_developers, len(developer_names)))]
+    turns: dict[str, int] = {}
+    tasks = []
+    for i, task in enumerate(plan.tasks[:MAX_TASKS]):
+        owner = team[i % team_size]
+        wanted = task.specialty
+        if specialties and wanted != "any":
+            fits = [n for n in allowed if specialties.get(n) == wanted]
+            if fits:
+                owner = fits[turns.get(wanted, 0) % len(fits)]
+                turns[wanted] = turns.get(wanted, 0) + 1
+        tasks.append(
+            {
+                "id": f"t{i + 1}",
+                "title": _without_name(task.title, developer_names),
+                "description": task.description,
+                "specialty": (specialties or {}).get(owner, "any"),
+                "owner": owner,
+                "status": "todo",
+                "attempts": 0,
+                "feedback": "",
+                "summary": "",
+                "files_changed": [],
+                "success": False,
+            }
+        )
+    return tasks
 
 
 def _without_name(title: str, names: list[str]) -> str:
@@ -180,7 +205,8 @@ def _validate_plan(data: Any) -> CtoPlan | None:
 
 
 TITLE_KEYS = ("title", "name", "task", "summary")
-SKIP_KEYS = {*TITLE_KEYS, "description", "developer", "owner", "assignee", "id"}
+SPECIALTY_KEYS = ("specialty", "speciality", "area", "role", "skill")
+SKIP_KEYS = {*TITLE_KEYS, *SPECIALTY_KEYS, "description", "developer", "owner", "assignee", "id"}
 
 
 def _normalise_task(raw: Any) -> PlannedTask | None:
@@ -202,4 +228,8 @@ def _normalise_task(raw: Any) -> PlannedTask | None:
         shown = ", ".join(map(str, value)) if isinstance(value, list) else str(value)
         extras.append(f"{key.capitalize()}: {shown}")
     full = "\n".join([description, *extras]).strip()
-    return PlannedTask(title=title, description=full) if title else None
+    specialty = next(
+        (str(raw[k]).strip().lower() for k in SPECIALTY_KEYS if str(raw.get(k, "")).strip()),
+        "any",
+    )
+    return PlannedTask(title=title, description=full, specialty=specialty) if title else None

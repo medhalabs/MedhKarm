@@ -48,11 +48,14 @@ class InMemoryRunRepository:
         gate: dict[str, Any] | None = None,
         error: str | None = None,
         delivery: dict[str, Any] | None = None,
+        deployment: dict[str, Any] | None = None,
     ) -> None:
         run = self.runs[run_id]
         run.status, run.gate, run.error = status, gate, error
         if delivery is not None:
             run.delivery = delivery
+        if deployment is not None:
+            run.deployment = deployment
         run.updated_at = datetime.now(UTC)
 
     async def transition(self, run_id: str, from_status: RunStatus, to_status: RunStatus) -> bool:

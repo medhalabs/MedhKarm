@@ -20,6 +20,8 @@ class EventType(StrEnum):
     MODEL_USED = "model.used"
     WORK_FINISHED = "work.finished"
     CHECK_FINISHED = "check.finished"
+    SECURITY_FINISHED = "security.finished"
+    DEPLOY_FINISHED = "deploy.finished"
     APPROVAL_REQUESTED = "approval.requested"
     APPROVAL_DECIDED = "approval.decided"
     CHANGES_DELIVERED = "changes.delivered"
@@ -33,6 +35,7 @@ class Actor(StrEnum):
     CTO = "cto"
     DEVELOPER = "developer"
     QA = "qa"
+    SECURITY = "security"
     DEVOPS = "devops"
     SYSTEM = "system"
 

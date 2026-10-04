@@ -107,7 +107,11 @@ class _BuildHandler:
         status = FINISHED.get(str(outcome.state.get("status")), RunStatus.ERROR)
         error = None if status != RunStatus.ERROR else "Run ended without a result"
         await self._runs.set_status(
-            outcome.run_id, status, error=error, delivery=outcome.state.get("delivery")
+            outcome.run_id,
+            status,
+            error=error,
+            delivery=outcome.state.get("delivery"),
+            deployment=outcome.state.get("deployment"),
         )
         return status
 

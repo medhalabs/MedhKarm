@@ -13,6 +13,7 @@ export const EVENT_TYPES = [
   "model.used",
   "work.finished",
   "check.finished",
+  "security.finished",
   "approval.requested",
   "approval.decided",
   "changes.delivered",
@@ -20,7 +21,8 @@ export const EVENT_TYPES = [
 
 export type EventType = (typeof EVENT_TYPES)[number];
 
-export type Actor = "founder" | "pm" | "cto" | "developer" | "qa" | "devops" | "system";
+export type Actor =
+  "founder" | "pm" | "cto" | "developer" | "qa" | "security" | "devops" | "system";
 
 export type ActivityEvent = {
   id: number;

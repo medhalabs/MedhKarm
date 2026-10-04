@@ -13,8 +13,14 @@ from app.features.workflows.state import BuildState
 
 
 def make_develop_node(
-    engine: DeveloperEngine, sandboxes: SandboxProvider, events: EventStore | None = None
+    engine: DeveloperEngine,
+    sandboxes: SandboxProvider,
+    events: EventStore | None = None,
+    specialty_instructions: dict[str, str] | None = None,
 ) -> BuildNode:
+    """`specialty_instructions` (specialty -> instructions) are added for tasks of that
+    specialty, after the developer role's own instructions."""
+
     async def develop(state: BuildState) -> dict[str, Any]:
         sandbox = (
             await sandboxes.attach(state["sandbox_id"])
@@ -39,6 +45,7 @@ def make_develop_node(
                 description=_brief(state, task, index, len(tasks)),
                 test_command=state["test_command"],
                 existing_project=bool(state.get("codebase_map")),
+                instructions=(specialty_instructions or {}).get(task.get("specialty", ""), ""),
             ),
             sandbox,
             recorder,

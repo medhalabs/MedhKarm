@@ -82,6 +82,11 @@ async def run(settings: Settings, only: list[str] | None, parallel: int) -> int:
         developer_names=team.developer_names,
         max_developers=team.max_developers,
         approval_policy=team.approval_policy,
+        security=team.security,
+        specialties=team.specialties,
+        specialty_instructions=team.specialty_instructions,
+        browser_tester=team.browser_tester,
+        qa_name=team.qa_name,
         repos=RepoService(graph=GraphifyCodeGraph() if settings.code_graph else None),
     )
     runner = EvalRunner(WorkflowService(graph), sandboxes, prepare_command=prepare)

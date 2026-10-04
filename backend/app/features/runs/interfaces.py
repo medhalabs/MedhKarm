@@ -27,6 +27,7 @@ class RunRepository(Protocol):
         gate: dict[str, Any] | None = None,
         error: str | None = None,
         delivery: dict[str, Any] | None = None,
+        deployment: dict[str, Any] | None = None,
     ) -> None:
         """`delivery` is kept when not given."""
         ...

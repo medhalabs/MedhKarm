@@ -4,6 +4,15 @@ from app.features.approvals.schemas import ApprovalPolicy
 from app.features.integrations.schemas import McpAccess
 
 
+class Specialty(BaseModel):
+    """A kind of work some members of a role are best at, e.g. frontend or backend."""
+
+    id: str = Field(pattern=r"^[a-z][a-z_]*$")
+    title: str  # "Frontend developer"
+    names: list[str] = Field(min_length=1)  # members (from the role's display_names)
+    instructions: str = ""  # added to the role's instructions for this kind of task
+
+
 class RoleSpec(BaseModel):
     """One seat on a team: what it does, how it behaves, what it may touch."""
 
@@ -15,6 +24,7 @@ class RoleSpec(BaseModel):
     review_instructions: str = ""  # for roles that review others' work (the CTO)
     tools: list[str] = Field(default_factory=list)  # built-in tools
     mcp: list[McpAccess] = Field(default_factory=list)  # MCP servers it may use, with limits
+    specialties: list[Specialty] = Field(default_factory=list)  # who is best at what
     model: str | None = None  # LiteLLM model name; None = the default model
     max_steps: int | None = Field(default=None, ge=1, le=200)
     # Step limit on an existing project (more to read first); default max_steps
@@ -27,7 +37,17 @@ class RoleSpec(BaseModel):
     def _count_within_max(self) -> "RoleSpec":
         if self.count > self.max_count:
             raise ValueError(f"role {self.id}: count {self.count} exceeds max_count")
+        named = [n for s in self.specialties for n in s.names]
+        unknown = sorted(set(named) - set(self.display_names))
+        if unknown:
+            raise ValueError(f"role {self.id}: specialties name unknown members {unknown}")
+        if len(named) != len(set(named)):
+            raise ValueError(f"role {self.id}: a member has more than one specialty")
         return self
+
+    def specialty_of(self) -> dict[str, str]:
+        """Member name -> specialty id."""
+        return {name: s.id for s in self.specialties for name in s.names}
 
 
 class TeamTemplate(BaseModel):

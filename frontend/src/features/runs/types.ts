@@ -13,6 +13,7 @@ export type Gate = {
   files_changed: string[];
   tokens?: number;
   tests: string;
+  security?: string[]; // the security engineer's warnings, if any
 };
 
 /** A founder's GitHub repository (backend: repos/schemas.py RepoSource). */

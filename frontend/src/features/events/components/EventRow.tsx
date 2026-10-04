@@ -8,6 +8,7 @@ const DOTS: Record<string, string> = {
   cto: "bg-sky-500",
   developer: "bg-emerald-500",
   qa: "bg-amber-500",
+  security: "bg-rose-500",
   system: "bg-zinc-400",
 };
 

@@ -52,5 +52,6 @@ class Run(BaseModel):
     gate: dict[str, Any] | None = None  # what the founder is asked to approve, while waiting
     error: str | None = None
     delivery: dict[str, Any] | None = None  # the pull request with the released work, if any
+    deployment: dict[str, Any] | None = None  # where the released app is live, if deployed
     created_at: datetime
     updated_at: datetime

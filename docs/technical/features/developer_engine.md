@@ -147,6 +147,8 @@ OpenHands used about 10× the tokens on this small task: its system prompt and t
 
 | Date | Change |
 | --- | --- |
+| 2026-10-04 | `ToolLoopEngine(actor=...)`: whose work the activity log shows (QA's browser tests use `qa`) |
+| 2026-10-04 | `DevTask.instructions`: extra instructions for one task (the developer's specialty), added to the system prompt |
 | 2026-10-01 | `explain_symbol` tool (with `CODE_GRAPH=true`): rebuilds Graphify's code graph (about half a second) and explains a class, function or method: its file and line, methods, what it calls and uses, and what uses it; an ambiguous name is explained for each match (up to 3); without Graphify it points to `search` |
 | 2026-10-01 | `edit_file` tool and a `write_file` guard (a second live run replaced the 400-line `serializer.py` with a fragment); other argument names accepted (`file_path`, `contents`, …) |
 | 2026-10-01 | `search` tool; `read_file` returns numbered lines in parts (was cut at 4,000 characters, so long files were re-read over and over); `DevTask.existing_project` and `existing_project_max_steps`; a nudge to write when 5 steps are left and nothing is changed. From a live run on `pallets/itsdangerous`: 25 steps of reading, 13 calls to a `search` tool that didn't exist, nothing written |

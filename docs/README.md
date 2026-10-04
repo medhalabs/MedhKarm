@@ -14,6 +14,7 @@ Planning documents for the AI Virtual Office product. **Start with [08-product-p
 | [07-interview-findings.md](07-interview-findings.md) | Interview round 1: solo builders in India |
 | [08-product-plan-v2.md](08-product-plan-v2.md) | **Current product plan:** AI workforce, team templates, launch order |
 | [09-gate-1-report.md](09-gate-1-report.md) | Gate 1 (engine and team templates): passed Oct 1, 2026, with easy-to-advanced results |
+| [10-gaps.md](10-gaps.md) | **Known gaps**: everything missing, half-done or untested, and when we'll fill it |
 | [mockups/office-demo.html](mockups/office-demo.html) | Clickable prototype for interviews: idea → questions → plan → team → animated office → standup → release ([shareable link](https://claude.ai/artifact/8eBgvzgr8ycDaJd6HZnwSZ)) |
 | [technical/](technical/README.md) | Technical documentation for every feature (knowledge transfer for newcomers) |
 

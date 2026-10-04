@@ -109,7 +109,7 @@ None of its own. The workflow records the run's events ([workflows.md](workflows
 ## Known limitations and gotchas
 
 - No sign-in or companies yet: anyone who can reach the API or the admin page can start and approve runs (server actions are reachable by POST too). Keep both on localhost until auth lands.
-- The default test command `pytest -q` relies on the default sandbox image (`medhkarm-sandbox:dev`), which has pytest. With another `SANDBOX_IMAGE`, install the test tools in the test command.
+- The default test command `pytest -q` relies on the default sandbox image (`medhkarm-sandbox:3`), which has pytest. With another `SANDBOX_IMAGE`, install the test tools in the test command.
 - Cancelling a running build isn't supported yet.
 - Runs started from the command line (`build_run start`) have no `runs` row, so they don't appear in `GET /runs` (their events and standup still work).
 

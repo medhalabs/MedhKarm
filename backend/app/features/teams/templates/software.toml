@@ -64,6 +64,25 @@ In an existing project, use `search` to find the code you need and read only tho
 files with `edit_file` (exact old text -> new text); use `write_file` only for new files.
 Make the change early, then test and fix."""
 
+# Who is best at what. The CTO gives each task a specialty and assigns a matching developer;
+# that specialty's instructions are added to the developer's own for the task.
+[[roles.specialties]]
+id = "backend"
+title = "Backend developer"
+names = ["Isha", "Ravi"]
+instructions = """For this task you work as a backend developer: data models, business
+logic, APIs and databases. Validate input where it enters, use query parameters (never build
+SQL from strings), read secrets from environment variables, and keep functions small and
+tested, including the error cases."""
+
+[[roles.specialties]]
+id = "frontend"
+title = "Frontend developer"
+names = ["Arjun"]
+instructions = """For this task you work as a frontend developer: pages, components, forms
+and styling. Keep components small, label every form field, handle loading, empty and error
+states, never write HTML from data (no innerHTML), and test what the user sees and does."""
+
 # MCP servers this role may use (catalog: integrations/mcp_servers.toml), with limits.
 [[roles.mcp]]
 server = "python_docs"
@@ -75,15 +94,30 @@ max_calls = 10  # per task
 id = "qa"
 title = "QA engineer"
 display_names = ["Tara"]
-responsibilities = "Checks every change by running the tests, and sends failures back."
-tools = ["run_command"]
+responsibilities = "Checks every change by running the tests, writes a browser test for web pages, and sends failures back."
+# The tests checker runs the test command; for runs that change a web page, Tara also writes
+# one end-to-end browser test (Playwright) with these tools (app/features/workflows/nodes/browser_qa.py).
+tools = ["read_file", "write_file", "list_files", "run_command", "finish"]
+max_steps = 20
+instructions = """You are a careful QA engineer working in a Linux workspace. You test what
+the developers built the way a user would, with a real browser (Playwright). Write clear,
+deterministic tests: wait for elements instead of sleeping, use unique test data, and always
+stop any server you start. Never change the app's code: only your test. If the app doesn't
+do what was asked, say so plainly instead of bending the test."""
+
+[[roles]]
+id = "security"
+title = "Security engineer"
+display_names = ["Vikram"]
+responsibilities = "Scans every release for leaked secrets, dangerous code and vulnerable dependencies; blocks it until they're fixed."
+# Runs scanners, no model yet (app/features/security/): secrets, Semgrep (offline rules), pip-audit / npm audit.
 
 [[roles]]
 id = "devops"
 title = "DevOps"
 display_names = ["Neel"]
-responsibilities = "Puts the app online: a preview to try, then the release."
-active = false  # joins in Phase 2, with preview deploys
+responsibilities = "Puts the app online: a preview to try before you approve, then the live release."
+# Deploys to Vercel (app/features/deploys/) when VERCEL_TOKEN is set; no model.
 
 # What happens at the release gate. Every enabled rule whose conditions all hold applies, and
 # the strictest wins: reject, then ask, then approve. With no match, `default` applies.
@@ -110,6 +144,18 @@ id = "open_review_comments"
 action = "ask"
 reason = "The CTO accepted a task with review comments still open."
 when = [{ fact = "tasks_with_issues", op = "gt", value = 0 }]
+
+[[approval.rules]]
+id = "security_warnings"
+action = "ask"
+reason = "The security engineer has warnings for you to look at."
+when = [{ fact = "security_warnings", op = "gt", value = 0 }]
+
+[[approval.rules]]
+id = "preview_failed"
+action = "ask"
+reason = "The preview didn't build, so it can't go live as it is."
+when = [{ fact = "preview_failed", op = "eq", value = true }]
 
 [[approval.rules]]
 id = "large_change"

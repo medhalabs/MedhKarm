@@ -87,7 +87,16 @@ async def test_reports_each_step() -> None:
 
     await service.start("run-4", "Build app", "pytest", on_step=lambda s: seen.append(s.node))
 
-    assert seen == ["prepare", "connect", "plan", "develop", "review", "verify"]
+    assert seen == [
+        "prepare",
+        "connect",
+        "plan",
+        "develop",
+        "review",
+        "verify",
+        "browser_qa",
+        "security",
+    ]
 
 
 async def test_activity_log_tells_the_story_of_a_run() -> None:

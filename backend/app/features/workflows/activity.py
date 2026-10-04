@@ -43,8 +43,14 @@ async def record_step(recorder: RunRecorder, node: str, data: dict[str, Any]) ->
             await recorder.record(
                 Actor.CTO,
                 EventType.TASK_ASSIGNED,
-                f"Assigned \u201c{task['title']}\u201d to {task['owner']}",
-                {"task_id": task["id"], "member": task["owner"], "title": task["title"]},
+                f"Assigned \u201c{task['title']}\u201d to {task['owner']}"
+                + (f" ({task['specialty']})" if task.get("specialty", "any") != "any" else ""),
+                {
+                    "task_id": task["id"],
+                    "member": task["owner"],
+                    "title": task["title"],
+                    "specialty": task.get("specialty", "any"),
+                },
             )
     elif node == "develop":
         task = next((t for t in data.get("tasks", []) if t.get("status") == "review"), None)
@@ -83,6 +89,10 @@ async def record_step(recorder: RunRecorder, node: str, data: dict[str, Any]) ->
             "Checks passed" if passed else "Checks failed: sent back",
             {"passed": passed, "output": str(data.get("verify_output", ""))[-2000:]},
         )
+    elif node == "browser_qa" and data.get("browser", {}).get("needed"):
+        await _record_browser(recorder, data)
+    elif node == "security" and data.get("security"):
+        await _record_security(recorder, data)
     elif node == "approval":
         approval = data.get("approval", {})
         if approval.get("decided_by") == "rules":  # founders' decisions are recorded on resume
@@ -94,8 +104,24 @@ async def record_step(recorder: RunRecorder, node: str, data: dict[str, Any]) ->
                 + " ".join(approval.get("reasons", [])),
                 {"approved": approved, "rules": approval.get("rule_ids", []), "by": "rules"},
             )
+    elif node == "preview" and data.get("preview", {}).get("kind", "none") != "none":
+        preview = data["preview"]
+        summary = (
+            f"Preview ready: {preview['url']}"
+            if preview.get("state") == "READY"
+            else f"The preview didn't build: {preview.get('error') or preview.get('state')}"
+        )
+        await recorder.record(Actor.DEVOPS, EventType.DEPLOY_FINISHED, summary, preview)
     elif node == "finish":
         status = data.get("status", "finished")
+        deployment = data.get("deployment")
+        if deployment:
+            summary = (
+                f"Live at {deployment['url']}"
+                if deployment.get("state") == "READY"
+                else f"Couldn't put it live: {deployment.get('error') or deployment.get('state')}"
+            )
+            await recorder.record(Actor.DEVOPS, EventType.DEPLOY_FINISHED, summary, deployment)
         delivery = data.get("delivery")
         if delivery:
             if delivery.get("pull_request_url"):
@@ -117,3 +143,60 @@ async def record_step(recorder: RunRecorder, node: str, data: dict[str, Any]) ->
 
 def _task_brief(task: dict[str, Any]) -> dict[str, Any]:
     return {"id": task["id"], "title": task["title"], "owner": task["owner"]}
+
+
+async def _record_security(recorder: RunRecorder, data: dict[str, Any]) -> None:
+    report = data["security"]
+    blocking, warnings = int(report.get("blocking", 0)), int(report.get("warnings", 0))
+    fix = next(
+        (t for t in data.get("tasks", []) if t.get("id") == f"sec{report['round'] + 1}"), None
+    )
+    if not blocking:
+        summary = (
+            "No security problems found"
+            if not warnings
+            else (f"No blocking problems; {warnings} warning{'s' if warnings != 1 else ''} for you")
+        )
+    elif fix:
+        problems = f"{blocking} security problem{'s' if blocking != 1 else ''}"
+        summary = f"Found {problems}: sent to {fix['owner']} to fix"
+    else:
+        problems = f"{blocking} security problem{'s' if blocking != 1 else ''}"
+        summary = f"Stopped the release: {problems} still there"
+    await recorder.record(Actor.SECURITY, EventType.SECURITY_FINISHED, summary, report)
+    if fix:
+        await recorder.record(
+            Actor.SECURITY,
+            EventType.TASK_ASSIGNED,
+            f"Assigned \u201c{fix['title']}\u201d to {fix['owner']}",
+            {"task_id": fix["id"], "member": fix["owner"], "title": fix["title"]},
+        )
+
+
+async def _record_browser(recorder: RunRecorder, data: dict[str, Any]) -> None:
+    browser = data["browser"]
+    fix = next(
+        (t for t in data.get("tasks", []) if t.get("id") == f"ui{browser['round'] + 1}"), None
+    )
+    tests = ", ".join(browser.get("test_files", [])) or "no test"
+    if browser.get("passed"):
+        summary = f"Browser test passed ({tests})"
+    elif fix:
+        summary = f"Browser test failed: sent to {fix['owner']} to fix"
+    elif not browser.get("test_files"):
+        summary = "Stopped: QA couldn't write a working browser test"
+    else:
+        summary = "Stopped the release: the browser test still fails"
+    await recorder.record(
+        Actor.QA,
+        EventType.CHECK_FINISHED,
+        summary,
+        {"passed": bool(browser.get("passed")), "browser": True, **browser},
+    )
+    if fix:
+        await recorder.record(
+            Actor.QA,
+            EventType.TASK_ASSIGNED,
+            f"Assigned \u201c{fix['title']}\u201d to {fix['owner']}",
+            {"task_id": fix["id"], "member": fix["owner"], "title": fix["title"]},
+        )

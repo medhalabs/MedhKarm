@@ -37,6 +37,16 @@ export function ApprovalPanel({ runId, gate }: { runId: string; gate: Gate }) {
           <span className="text-zinc-500"> · {formatNumber(gate.tokens)} tokens</span>
         )}
       </div>
+      {gate.security && gate.security.length > 0 && (
+        <div className="text-sm">
+          <p className="font-medium">Vikram (security) flagged:</p>
+          <ul className="list-disc pl-5 font-mono text-xs">
+            {gate.security.map((finding) => (
+              <li key={finding}>{finding}</li>
+            ))}
+          </ul>
+        </div>
+      )}
       {gate.tests && (
         <details className="text-sm">
           <summary className="cursor-pointer font-medium">QA&apos;s test output</summary>

@@ -59,6 +59,7 @@ class ToolLoopEngine:
         instructions: str = SYSTEM_PROMPT,
         tool_sources: list[ToolSource] | tuple[ToolSource, ...] = (),
         existing_project_max_steps: int | None = None,
+        actor: Actor = Actor.DEVELOPER,
     ) -> None:
         """`tools` and `instructions` normally come from the developer role in the team
         template. `apply_patch` is left out by default: in the eval suite (gpt-oss:120b) it
@@ -77,6 +78,7 @@ class ToolLoopEngine:
         self._tools = [spec for spec in TOOL_SPECS if spec["function"]["name"] in allowed]
         self._system_prompt = instructions.strip() + (PATCH_HINT if APPLY_PATCH in allowed else "")
         self._sources = list(tool_sources)
+        self._actor = actor  # who the activity log shows (QA uses this engine too)
 
     async def run_task(
         self, task: DevTask, sandbox: Sandbox, recorder: RunRecorder | None = None
@@ -105,7 +107,11 @@ class ToolLoopEngine:
             # may write files anyway, a patch is just another way to write them.
             offered.add(APPLY_PATCH)
         messages: list[Message] = [
-            {"role": "system", "content": self._system_prompt},
+            {
+                "role": "system",
+                "content": self._system_prompt
+                + (f"\n\n{task.instructions.strip()}" if task.instructions.strip() else ""),
+            },
             {
                 "role": "user",
                 "content": f"Task: {task.description}\n\nTest command: {task.test_command}",
@@ -131,7 +137,7 @@ class ToolLoopEngine:
             tokens += response.usage.total_tokens
             if recorder:
                 await recorder.record(
-                    Actor.DEVELOPER,
+                    self._actor,
                     EventType.MODEL_USED,
                     "Thought about the next step",
                     {"model": self._llm.model_name, "step": steps},
@@ -162,7 +168,7 @@ class ToolLoopEngine:
                         result = await execute_tool(call.name, call.arguments, sandbox)
                     if recorder:
                         await recorder.record(
-                            Actor.DEVELOPER,
+                            self._actor,
                             EventType.TOOL_USED,
                             describe_tool_use(call.name, call.arguments, result),
                             {"tool": call.name, "result": result[:500]},

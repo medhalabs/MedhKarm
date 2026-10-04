@@ -32,7 +32,7 @@ Solid lines exist today; dotted lines are planned. The API never does long work:
 | Integrations (MCP) | `backend/app/features/integrations/` | Running | MCP servers as agent tools, granted per role with limits (tools, read-only, calls per task); first server `python_docs` |
 | Approval rules | `backend/app/features/approvals/` | Running | The team template's rules decide the release gate: ask the founder (default), approve or reject, with reasons |
 | Models | `backend/app/features/models/` | Running | LiteLLM; default `gpt-oss:20b` on Ollama Cloud |
-| Sandbox | `backend/app/features/sandbox/` | Running (Docker) | One isolated container per build run (`medhkarm-sandbox:dev`: Python, Node, pytest), or an OpenHands agent server |
+| Sandbox | `backend/app/features/sandbox/` | Running (Docker) | One isolated container per build run (`medhkarm-sandbox:3`: Python, Node, pytest), or an OpenHands agent server |
 | Developer engine | `backend/app/features/developer_engine/` | Running | Built-in tool loop or OpenHands, chosen by `DEVELOPER_ENGINE` |
 | Team templates | `backend/app/features/teams/` | Running | Teams as settings files; the software team's CTO and developer are built from it |
 | Activity log | `backend/app/features/events/` | Running | Append-only `events` table; every step, tool use and model call; API with live stream |

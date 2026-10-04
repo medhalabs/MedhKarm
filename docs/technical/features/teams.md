@@ -14,6 +14,7 @@ A team is a **settings file**, not code. Each template lists the team's roles (t
 2. `build_team_runtime(settings)` (in `app/workers/wiring.py`) picks the template named by `TEAM_TEMPLATE` (default `software`) and builds the agents from it:
    - **CTO** → the planner: the role's `model` and `instructions`
    - **Developer** → the developer engine: the role's `model`, `tools`, `instructions`, `max_steps` and `mcp` grants (MCP servers it may use, with limits: [integrations.md](integrations.md))
+   - **Developer specialties** (`[[roles.specialties]]`: `id`, `title`, `names`, `instructions`): Isha and Ravi are backend, Arjun frontend. The CTO is told who does what and tags each task with a specialty; `assign()` gives it to a matching developer within the developer limit (else to the team as usual); that specialty's instructions are added to the developer's own for the task (`DevTask.instructions`). The loader rejects unknown or doubly-assigned names.
    - **QA** → the checking step named by the template's `checker` (`test_command` today)
 3. The template's `[approval]` section holds the team's **approval rules** for the release gate ([approvals.md](approvals.md)); the loader rejects rules that use facts the workflow doesn't provide (`WORKFLOW_FACTS` in `catalog.py`).
 4. `TeamService.assemble()` lists who's on the team: each active role, `count` times, named from `display_names` in order. The office and the API use this.
@@ -25,7 +26,7 @@ A team is a **settings file**, not code. Each template lists the team's roles (t
 | `pm` Product Manager | Mira | Yes | Turns a project's goal into a backlog with questions (`instructions`; see [projects.md](projects.md)) |
 | `cto` CTO | Kabir | Yes | Splits the request into tasks and assigns developers (`instructions`), reviews each task (`review_instructions`) |
 | `developer` Developer (1–3, chosen by the CTO per run) | Isha, Arjun, Ravi | Yes | Writes code and tests with `read_file`, `write_file`, `edit_file`, `list_files`, `search`, `run_command`, `finish`, plus the `python_docs` MCP tools (read-only, 10 calls per task); up to 25 steps, 40 on an existing project (`existing_project_max_steps`) |
-| `qa` QA engineer | Tara | Yes | Runs the test command (`checker = "test_command"`) |
+| `qa` QA engineer | Tara | Yes | Runs the test command (`checker = "test_command"`); writes an end-to-end browser test for web changes (tools, instructions, 20 steps) |
 | `devops` DevOps | Neel | No (Phase 2) | Will deploy previews and releases |
 
 Role ids are also the actors in the activity log ([events.md](events.md)).
@@ -104,6 +105,9 @@ None of its own. Role ids are the `actor` values in the activity log; `Actor` in
 
 | Date | Change |
 | --- | --- |
+| 2026-10-04 | QA (Tara) gets tools, instructions and 20 steps to write browser tests |
+| 2026-10-04 | Developer specialties (backend: Isha, Ravi; frontend: Arjun) with their own instructions |
+| 2026-10-04 | `security` role (Vikram, security engineer) and the `security_warnings` approval rule |
 | 2026-10-04 | Mira (PM) active: plans project backlogs with the role's `instructions` and `model`; told never to plan separate testing items |
 | 2026-10-01 | Roles may set `existing_project_max_steps`; developers get `search`, `edit_file` and 40 steps on existing projects |
 | 2026-10-01 | `[[roles.mcp]]` grants (server, tools, read-only, calls per task), validated against the MCP catalog; developers get `python_docs` |

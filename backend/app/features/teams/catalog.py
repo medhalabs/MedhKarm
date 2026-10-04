@@ -37,6 +37,8 @@ WORKFLOW_FACTS: dict[str, frozenset[str]] = {
             "tasks_count",
             "tasks_with_issues",  # tasks accepted with review comments still open
             "tests_passed",
+            "security_warnings",  # the security engineer's non-blocking findings
+            "preview_failed",  # DevOps couldn't put the app online as a preview
         }
     ),
 }

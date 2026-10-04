@@ -53,10 +53,13 @@ class SqlRunRepository:
         gate: dict[str, Any] | None = None,
         error: str | None = None,
         delivery: dict[str, Any] | None = None,
+        deployment: dict[str, Any] | None = None,
     ) -> None:
         values: dict[str, Any] = {"status": status, "gate": gate, "error": error}
         if delivery is not None:
             values["delivery"] = delivery
+        if deployment is not None:
+            values["deployment"] = deployment
         statement = (
             update(RunRow).where(RunRow.id == run_id).values(**values, updated_at=func.now())
         )
@@ -85,6 +88,7 @@ def _to_run(row: RunRow) -> Run:
         gate=row.gate,
         error=row.error,
         delivery=row.delivery,
+        deployment=row.deployment,
         created_at=row.created_at,
         updated_at=row.updated_at,
     )

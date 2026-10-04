@@ -71,6 +71,7 @@ class RunService:
         gate: dict[str, Any] | None = None,
         error: str | None = None,
         delivery: dict[str, Any] | None = None,
+        deployment: dict[str, Any] | None = None,
     ) -> None:
         """Workers report progress here."""
-        await self._runs.set_status(run_id, status, gate, error, delivery)
+        await self._runs.set_status(run_id, status, gate, error, delivery, deployment)

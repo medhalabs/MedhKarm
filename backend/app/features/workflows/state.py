@@ -22,6 +22,14 @@ class BuildState(TypedDict, total=False):
     dev_result: dict[str, Any]  # all developer work so far, totalled (DevResult-shaped)
     verified: bool  # our own re-run of the tests passed
     verify_output: str
+    security: dict[str, Any]  # the security engineer's last report (SecurityReport-shaped)
+    security_rounds: int  # fix rounds the security engineer has asked for
+    security_passed: bool  # no blocking security findings remain
+    browser: dict[str, Any]  # QA's browser test: needed, passed, test files, output, round
+    browser_rounds: int  # fix rounds the browser test has asked for
+    browser_passed: bool  # the browser test passes (or none was needed)
+    preview: dict[str, Any]  # DevOps' preview before the gate (Deployment-shaped)
+    deployment: dict[str, Any]  # the production deployment after approval (Deployment-shaped)
     approved: bool  # the founder's decision at the release gate
     feedback: str  # the founder's note at the gate, if any
     approval: dict[str, Any]  # the approval rules' verdict at the gate (Verdict-shaped)

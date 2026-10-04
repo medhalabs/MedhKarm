@@ -42,6 +42,7 @@ Rules and index: [docs/technical/README.md](docs/technical/README.md).
 - Any change to behaviour, API, data model, events or config updates the doc in the same change, with a changelog line.
 - Cross-cutting pieces (overview, local setup, auth flow, event log, workflow engine, deployment) get their own doc in `docs/technical/`.
 - Write for a newcomer: plain language first, then the code map, API, data model, decisions and troubleshooting.
+- Any gap found while building or testing (missing, half-done, untested) goes into [docs/10-gaps.md](docs/10-gaps.md) the same day; move it to Filled when done.
 
 ## Quality
 

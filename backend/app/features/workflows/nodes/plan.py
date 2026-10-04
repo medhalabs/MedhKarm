@@ -17,15 +17,25 @@ def make_plan_node(
     instructions: str = PLANNER_PROMPT,
     developer_names: list[str] | None = None,
     max_developers: int = 1,
+    specialties: dict[str, str] | None = None,
 ) -> BuildNode:
     """`instructions`, `developer_names` and `max_developers` normally come from the team
     template (CTO and developer roles)."""
     names = developer_names or ["Developer"]
 
     async def plan(state: BuildState) -> dict[str, Any]:
+        people = [
+            f"{n} ({specialties[n]})" if specialties and n in specialties else n for n in names
+        ]
         team = (
-            f"You can use up to {min(max_developers, len(names))} developers: {', '.join(names)}."
+            f"You can use up to {min(max_developers, len(names))} developers: {', '.join(people)}."
         )
+        if specialties:
+            kinds = sorted(set(specialties.values()))
+            team += (
+                f" Give each task the specialty it needs ({', '.join(kinds)} or any); "
+                "split work that needs both into separate tasks."
+            )
         if state.get("codebase_map"):  # an existing project: plan changes to it, not a rewrite
             team = (
                 f"{state['codebase_map']}\n\nChange this existing project; keep its structure "
@@ -39,7 +49,7 @@ def make_plan_node(
             [PLAN_TOOL],
         )
         cto_plan = parse_plan(response, state["request"])
-        tasks = assign(cto_plan, names, max_developers)
+        tasks = assign(cto_plan, names, max_developers, specialties)
         lines = [f"{i + 1}. {t['title']} ({t['owner']})" for i, t in enumerate(tasks)]
         return {
             "plan": "\n".join([cto_plan.summary, *lines]).strip(),
