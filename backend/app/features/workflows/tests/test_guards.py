@@ -89,3 +89,26 @@ def test_recognises_requests_for_tests() -> None:
     assert asks_for_tests("Add a /health endpoint\nAdd tests")
     assert not asks_for_tests("Rename the latest() helper in contest.py")
     assert not asks_for_tests("Behaviour must not change and the existing tests must pass")
+
+
+def test_spots_tests_that_check_nothing() -> None:
+    from app.features.workflows.guards import hollow_tests
+
+    files = {
+        "tests/test_dummy.py": "def test_ok():\n    assert True\n",
+        "tests/test_empty.py": "def test_add():\n    add(2, 3)  # assert add(2, 3) == 5\n",
+        "tests/test_real.py": "def test_add():\n    assert add(2, 3) == 5\n",
+        "tests/test_raises.py": (
+            "def test_bad():\n    with pytest.raises(ValueError):\n        parse('x')\n"
+        ),
+        "tests/conftest.py": "import pytest\n",
+        "src/cart.test.ts": "test('total', () => { expect(true).toBe(true); });\n",
+        "src/cart.spec.ts": "it('total', () => { expect(total([1, 2])).toBe(3); });\n",
+        "app.py": "assert True\n",
+    }
+
+    assert sorted(hollow_tests(files)) == [
+        "src/cart.test.ts",
+        "tests/test_dummy.py",
+        "tests/test_empty.py",
+    ]

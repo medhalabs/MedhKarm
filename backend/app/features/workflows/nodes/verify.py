@@ -7,8 +7,14 @@ If they still fail after that, the release stops without asking the founder."""
 
 from typing import Any
 
-from app.features.sandbox.interfaces import SandboxProvider
-from app.features.workflows.guards import asks_for_tests, is_test_file
+from app.features.sandbox.exceptions import SandboxError
+from app.features.sandbox.interfaces import Sandbox, SandboxProvider
+from app.features.workflows.guards import (
+    asks_for_tests,
+    hollow_feedback,
+    hollow_tests,
+    is_test_file,
+)
 from app.features.workflows.interfaces import WorkChecker
 from app.features.workflows.nodes.base import BuildNode
 from app.features.workflows.state import BuildState
@@ -33,10 +39,13 @@ def make_verify_node(
                 "verify_output": "No files were changed: nothing to release.",
             }
         update: dict[str, Any]
+        sandbox = await sandboxes.attach(state["sandbox_id"])
+        hollow = hollow_tests(await _read_tests(sandbox, changed))
         if asks_for_tests(state["request"]) and not any(is_test_file(f) for f in changed):
             update = {"verified": False, "verify_output": NO_TESTS, "checks": []}
+        elif hollow:  # tests that check nothing make "tests pass" meaningless
+            update = {"verified": False, "verify_output": hollow_feedback(hollow), "checks": []}
         else:
-            sandbox = await sandboxes.attach(state["sandbox_id"])
             result = await checker.check(state, sandbox)
             update = {
                 "verified": result.passed,
@@ -86,3 +95,14 @@ def _fix_task(update: dict[str, Any], test_command: str, owner: str, round_: int
 
 def _blocks(check: dict[str, Any]) -> bool:
     return not (check.get("passed") or check.get("skipped") or check.get("already_failing"))
+
+
+async def _read_tests(sandbox: Sandbox, changed: list[str]) -> dict[str, str]:
+    files: dict[str, str] = {}
+    for path in changed:
+        if is_test_file(path):
+            try:
+                files[path] = await sandbox.read_file(path)
+            except SandboxError:
+                continue
+    return files

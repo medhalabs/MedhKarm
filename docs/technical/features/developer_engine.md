@@ -147,6 +147,7 @@ OpenHands used about 10× the tokens on this small task: its system prompt and t
 
 | Date | Change |
 | --- | --- |
+| 2026-10-05 | The workspace snapshot skips `node_modules`, `venv`, `__pycache__` and hidden folders, so installing a package doesn't count as thousands of changed files; `list_files` shows at most 400 paths. Found in the first live run on the starter |
 | 2026-10-04 | `ToolLoopEngine(actor=...)`: whose work the activity log shows (QA's browser tests use `qa`) |
 | 2026-10-04 | `DevTask.instructions`: extra instructions for one task (the developer's specialty), added to the system prompt |
 | 2026-10-01 | `explain_symbol` tool (with `CODE_GRAPH=true`): rebuilds Graphify's code graph (about half a second) and explains a class, function or method: its file and line, methods, what it calls and uses, and what uses it; an ambiguous name is explained for each match (up to 3); without Graphify it points to `search` |

@@ -54,7 +54,8 @@ async def test_a_new_app_starts_from_the_starter_with_its_modules() -> None:
 
     state = outcome.state
     assert state["scaffold"]["starter"] == "nextjs" and state["scaffold"]["modules"] == ["auth"]
-    assert state["test_command"] == "npm test"
+    assert state["test_command"] == "npm run typecheck && npm test"
+    assert "never add another database client" in str(llm.calls[0])
     assert "lib/auth/index.ts" in state["codebase_map"]  # mapped like an existing project
     [scaffolded] = [e for e in events.events if e.type == EventType.PROJECT_SCAFFOLDED]
     assert scaffolded.actor == "devops"

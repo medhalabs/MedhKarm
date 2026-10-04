@@ -187,7 +187,6 @@ def build_engine(
         SYSTEM_PROMPT,
         ToolLoopEngine,
     )
-    from app.features.sandbox.providers.docker_provider import DockerSandboxProvider
 
     tools = list(role.tools) if role and role.tools else list(DEFAULT_TOOLS)
     if settings.builtin_apply_patch and "apply_patch" not in tools:
@@ -204,4 +203,27 @@ def build_engine(
         tool_sources=tool_sources(role.mcp) if role else [],
         existing_project_max_steps=role.existing_project_max_steps if role else None,
     )
-    return builtin, DockerSandboxProvider(settings.sandbox_image)
+    return builtin, sandbox_provider(settings)
+
+
+def sandbox_provider(settings: Settings) -> SandboxProvider:
+    """Docker on this machine, or Daytona (hosted) when SANDBOX_PROVIDER=daytona."""
+    if settings.sandbox_provider == "daytona":
+        from daytona import AsyncDaytona, DaytonaConfig
+
+        from app.features.sandbox.providers.daytona_provider import DaytonaSandboxProvider
+
+        if settings.daytona_api_key is None:
+            raise RuntimeError("SANDBOX_PROVIDER=daytona needs DAYTONA_API_KEY")
+        client = AsyncDaytona(
+            DaytonaConfig(
+                api_key=settings.daytona_api_key.get_secret_value(),
+                target=settings.daytona_target,
+            )
+        )
+        return DaytonaSandboxProvider(
+            client, image_dir=SANDBOX_IMAGE_DIR, snapshot=settings.daytona_snapshot
+        )
+    from app.features.sandbox.providers.docker_provider import DockerSandboxProvider
+
+    return DockerSandboxProvider(settings.sandbox_image)

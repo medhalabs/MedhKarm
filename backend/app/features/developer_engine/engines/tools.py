@@ -109,6 +109,7 @@ TOOL_SPECS: list[ToolSpec] = [
 
 MAX_OUTPUT_CHARS = 4000
 READ_LINES = 150  # lines per read_file call when no range is given
+MAX_LISTED_FILES = 400  # list_files shows at most this many paths
 SEARCH_LINES = 60
 # write_file may not shrink an existing file of this many lines to under half: that was a
 # fragment replacing a whole module (live run, Oct 1, 2026). edit_file is for changes.
@@ -141,7 +142,11 @@ async def execute_tool(name: str, arguments: dict[str, Any], sandbox: Sandbox) -
                 str(arguments["pattern"]), str(arguments.get("path") or "."), sandbox
             )
         if name == "list_files":
-            return "\n".join(await sandbox.list_files()) or "(empty workspace)"
+            files = await sandbox.list_files()
+            if len(files) > MAX_LISTED_FILES:  # a listing must never swamp the model's context
+                more = len(files) - MAX_LISTED_FILES
+                files = [*files[:MAX_LISTED_FILES], f"... and {more} more (use search)"]
+            return "\n".join(files) or "(empty workspace)"
         if name == APPLY_PATCH:
             return await _apply_patch(str(arguments["input"]), sandbox)
         if name == "run_command":

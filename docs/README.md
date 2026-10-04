@@ -15,6 +15,8 @@ Planning documents for the AI Virtual Office product. **Start with [08-product-p
 | [08-product-plan-v2.md](08-product-plan-v2.md) | **Current product plan:** AI workforce, team templates, launch order |
 | [09-gate-1-report.md](09-gate-1-report.md) | Gate 1 (engine and team templates): passed Oct 1, 2026, with easy-to-advanced results |
 | [10-gaps.md](10-gaps.md) | **Known gaps**: everything missing, half-done or untested, and when we'll fill it |
+| [11-hosted-sandbox.md](11-hosted-sandbox.md) | Hosted sandbox comparison (E2B, Daytona, Modal, Fly) for customer code; decision by Nov 13 |
+| [12-gate-2-report.md](12-gate-2-report.md) | Gate 2 (software team): passed Oct 5, 2026: 18/20 evals, cost and time per task, draft prices |
 | [mockups/office-demo.html](mockups/office-demo.html) | Clickable prototype for interviews: idea → questions → plan → team → animated office → standup → release ([shareable link](https://claude.ai/artifact/8eBgvzgr8ycDaJd6HZnwSZ)) |
 | [technical/](technical/README.md) | Technical documentation for every feature (knowledge transfer for newcomers) |
 

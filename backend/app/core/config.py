@@ -31,6 +31,12 @@ class Settings(BaseSettings):
     sandbox_image: str = "medhkarm-sandbox:4"
     # Python + Node + test tools, built from backend/sandbox-image/ (see features/evals.md)
     eval_sandbox_image: str = "medhkarm-sandbox:4"
+    # Where runs' sandboxes live: "docker" (this machine) or "daytona" (hosted, for customers'
+    # code from the beta on; docs/11-hosted-sandbox.md). Daytona needs DAYTONA_API_KEY.
+    sandbox_provider: Literal["docker", "daytona"] = "docker"
+    daytona_api_key: SecretStr | None = None
+    daytona_target: str = "us"
+    daytona_snapshot: str | None = None  # a prepared snapshot of our image; else built from it
 
     # GitHub: clone founders' private repositories and open pull requests with released work.
     # A fine-grained token with Contents and Pull requests (read and write) on those repos.

@@ -1,6 +1,6 @@
 # Starters (starter repo and ready-made modules)
 
-**Status:** Built (Phase 2): stack choice, Next.js and Python starters, four modules. The starter is checked in the sandbox (install, tests, type-check, lint, build, Semgrep, real Postgres); a run that starts from it hasn't run live yet (Phase 2 end test pass)  
+**Status:** Done (Phase 2): stack choice, Next.js and Python starters, four modules; tested live end to end (Oct 5, 2026)  
 **Code:** `backend/app/features/starters/` · files in `backend/starters/` · workflow step `backend/app/features/workflows/nodes/scaffold.py` · `frontend/src/features/starters/` · migration `0008_run_stack`  
 **Last updated:** 2026-10-05
 
@@ -149,7 +149,14 @@ FastAPI with `app/store.py`: the same collections idea on SQLite (`DATABASE_PATH
 
 ## Known limitations and gotchas
 
-- Not yet run live end to end: the free model building on the starter, Tara's browser test on Next.js, a Vercel preview of it (Phase 2 end test pass).
+- **First live run (Oct 5, 2026, gpt-oss:20b), failed at QA.** The cafe feedback wall: Neel set up the starter with sign-in and the admin dashboard; Kabir planned 5 tasks.
+  - What went wrong: Isha wrote her own Supabase helper instead of using `lib/db`, imported it with a wrong `../../` path, and hit her step limit three times.
+  - What worked: her tests passed, but QA's type-check, lint and build caught the broken import, and the fix round didn't solve it. The run stopped before the gate.
+  - Fixed since: the starter's rules are now in every developer brief, and the developers' test command type-checks.
+- **Second live run (Oct 5, 2026, same request and model): reached the gate.**
+  - Kabir planned 3 tasks: the API to Isha, the home and admin pages to Arjun. Arjun reused the dashboard module (added `messages` to `ADMIN_COLLECTIONS`).
+  - QA caught a lint error (`any`) and a build error (`"use client"` not first). Isha's fix round, after one send-back from Kabir, made tests, types, lint and build pass.
+  - Tara's Playwright test passed on the Next.js app, Vikram found nothing, and Neel's Vercel preview was ready.
 - Local mode on Vercel keeps data in each server instance's memory: on a preview, accounts and records can vanish between requests. Connect a database (`DATABASE_URL`) for anything real.
 - Supabase Auth and real Razorpay/Stripe test-mode payments are covered by unit tests only, not tried against the services.
 - Modules exist only for the Next.js API; a split (Python API + Next.js) project gets none, and QA's checks and Neel's preview look only at the project root (so neither half of a split project is checked or previewed).
@@ -170,4 +177,5 @@ FastAPI with `app/store.py`: the same collections idea on SQLite (`DATABASE_PATH
 
 | Date | Change |
 | --- | --- |
+| 2026-10-05 | After the first live run (cafe feedback wall, failed QA): the starter's rules go into every developer brief (`starter.toml` `rules`: use `getStore()` from `@/lib/db`, `@/` imports, no other database client); the developers' test command is `npm run typecheck && npm test` |
 | 2026-10-05 | Created: stack choice (founder → request → defaults), Next.js and Python starters, modules auth/payments/reminders/dashboards, Docker hosting files, the `scaffold` step, `project.scaffolded`, `runs.stack`/`projects.stack`, sandbox image `medhkarm-sandbox:4` (Node 22, npm cache) |

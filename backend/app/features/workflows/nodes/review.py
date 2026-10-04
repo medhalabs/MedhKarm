@@ -14,6 +14,8 @@ from app.features.sandbox.interfaces import Sandbox, SandboxProvider
 from app.features.workflows.cto import REVIEW_TOOL, ReviewDecision, parse_review
 from app.features.workflows.guards import (
     asks_for_tests,
+    hollow_feedback,
+    hollow_tests,
     is_test_file,
     missing_tests_feedback,
     shadow_feedback,
@@ -44,8 +46,15 @@ def make_review_node(
 
         cto_tokens = 0
         shadows = shadowed_test_tools(task.get("files_changed", []))
+        hollow = (
+            hollow_tests(await _test_files(await sandboxes.attach(state["sandbox_id"]), task))
+            if not shadows and task.get("files_changed")
+            else []
+        )
         if shadows:
             verdict = ReviewDecision(decision="revise", feedback=shadow_feedback(shadows))
+        elif hollow:
+            verdict = ReviewDecision(decision="revise", feedback=hollow_feedback(hollow))
         elif not task.get("files_changed"):
             # An existing project's tests pass untouched, so passing tests prove nothing here.
             verdict = ReviewDecision(
@@ -126,3 +135,15 @@ async def _review_brief(task: dict[str, Any], sandbox: Sandbox) -> str:
 def after_review(state: BuildState) -> str:
     """Back to the developer for the next (or revised) task, or on to QA when all are done."""
     return "develop" if state.get("current_task", 0) < len(state.get("tasks", [])) else "verify"
+
+
+async def _test_files(sandbox: Sandbox, task: dict[str, Any]) -> dict[str, str]:
+    """The task's changed test files, path -> text (unreadable ones skipped)."""
+    files: dict[str, str] = {}
+    for path in task.get("files_changed", []):
+        if is_test_file(path):
+            try:
+                files[path] = await sandbox.read_file(path)
+            except SandboxError:
+                continue
+    return files

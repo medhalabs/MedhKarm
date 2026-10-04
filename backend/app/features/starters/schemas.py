@@ -47,6 +47,7 @@ class Stack(BaseModel):
     layout: Layout | None = None
     modules: list[str] = Field(default_factory=list)
     custom: list[str] = Field(default_factory=list)  # choices the team builds without our parts
+    rules: str = ""  # the starter's rules for developers
     notes: str = ""
 
     def table(self) -> str:
@@ -68,6 +69,8 @@ class Stack(BaseModel):
                 + (f" with ready-made modules: {', '.join(self.modules)}" if self.modules else "")
                 + ". Read AGENTS.md first; build on these parts instead of rewriting them."
             )
+            if self.rules:
+                lines.append("Rules for this project:\n" + self.rules.strip())
         for item in self.custom:
             lines.append(f"- {item}")
         if self.notes:
@@ -81,6 +84,7 @@ class StarterSpec(BaseModel):
     description: str
     setup_command: str
     test_command: str
+    rules: str = ""  # what every developer must follow, put in their brief
 
 
 class ModuleSpec(BaseModel):

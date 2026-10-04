@@ -62,8 +62,11 @@ class DockerSandbox:
         return result.output
 
     async def list_files(self) -> list[str]:
+        # Dependencies and caches (node_modules, venv, __pycache__, hidden folders) aren't the
+        # project's own files: tens of thousands of them would swamp any listing.
         result = await self.run(
-            "find . -type f -not -path '*/.*' -not -path '*/__pycache__/*' | sed 's|^./||' | sort"
+            "find . \\( -name node_modules -o -name __pycache__ -o -name venv -o -name '.?*' \\)"
+            " -prune -o -type f -print | sed 's|^./||' | sort"
         )
         return [line for line in result.output.splitlines() if line]
 

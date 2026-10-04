@@ -16,6 +16,15 @@ An isolated, throwaway workspace where agents write and run code, so AI-written 
 4. Every path goes through `safe_relative_path()`: absolute paths and `..` are refused with `UnsafePathError`.
 5. The sandbox's id is the container id. `attach(id)` reconnects to it, which lets a paused run continue in a different process. `destroy(id)` removes it.
 
+### Daytona (hosted, from the beta)
+
+`DaytonaSandboxProvider` (`providers/daytona_provider.py`, chosen Oct 5, 2026: [11-hosted-sandbox.md](../../11-hosted-sandbox.md)):
+- Same contract and the same image: built from `backend/sandbox-image/`'s Dockerfile (Daytona caches the build), or from a prepared snapshot (`DAYTONA_SNAPSHOT`). 2 vCPU, 2 GB, 10 GB disk; workspace `/workspace`; labelled `medhkarm=sandbox`.
+- Commands run through `process.exec` wrapped in `timeout`, like Docker; files go through `fs.upload_file` / `fs.download_file`.
+- After 30 minutes without activity a sandbox **stops and keeps its files**. A run waiting days at the founder's gate costs storage only, and `attach` starts the sandbox again.
+- Switch with `SANDBOX_PROVIDER=daytona` and `DAYTONA_API_KEY` (optional `DAYTONA_TARGET`, default `us`). The default stays `docker` while Pavan is the only user.
+- Unit-tested with a fake client. Not yet run against Daytona (no account until the beta).
+
 ### OpenHands agent-server sandbox
 
 Used with the OpenHands developer engine (`DEVELOPER_ENGINE=openhands`).
@@ -90,6 +99,8 @@ None yet.
 
 | Date | Change |
 | --- | --- |
+| 2026-10-05 | `DaytonaSandboxProvider` (hosted, for customers' code from the beta) behind `SANDBOX_PROVIDER` (default `docker`); `daytona` SDK added |
+| 2026-10-05 | `list_files` skips dependency and cache folders (`node_modules`, `venv`, `__pycache__`, hidden folders): on the starter, a listing went from 22,229 files (about 324k tokens, past the model's limit) to 53 |
 | 2026-10-05 | Image `medhkarm-sandbox:4`: Node 22 with npm and corepack from the official image (Debian's `nodejs` had no npm, so JavaScript projects couldn't install); the Next.js starter's packages pre-loaded in the npm cache (`/opt/medhkarm/npm-cache`), so it installs offline in about 9 s; 3.24 GB. The starter's install, tests, type-check, lint and build fit the 1 CPU / 1 GB limit (about 41 s) |
 | 2026-10-04 | Image `medhkarm-sandbox:3`: adds Playwright 1.63.0, pytest-playwright 0.9.0, uvicorn and headless Chromium (image 2.86 GB, from 1.21 GB) |
 | 2026-10-04 | Image `medhkarm-sandbox:2`: adds Semgrep 1.179.0, pip-audit 2.10.1 and `/opt/medhkarm/semgrep.yml` |

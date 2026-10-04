@@ -41,7 +41,7 @@ uv run uvicorn app.main:app --reload --port 8000
 
 - API: http://127.0.0.1:8000 · interactive docs: http://127.0.0.1:8000/docs · health: http://127.0.0.1:8000/health
 - Before pushing: `uv run ruff check . && uv run ruff format --check . && uv run mypy app tests && uv run lint-imports && uv run pytest`
-- Tests that need real Docker: `uv run pytest -m integration`
+- Tests that need real Docker: `uv run pytest -m integration` (they use their own database, `medhkarm_test`, created and migrated on first use by `backend/conftest.py`; set `TEST_DATABASE_URL` to use another)
 
 ### Run a build (agents writing code)
 

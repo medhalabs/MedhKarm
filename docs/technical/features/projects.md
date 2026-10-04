@@ -137,5 +137,6 @@ Planning: `run.started`, `model.used` (PM), `plan.created`, `run.finished` (`sta
 
 | Date | Change |
 | --- | --- |
+| 2026-10-05 | Tested live end to end: "Tip splitter" (6 items planned by Mira with 3 questions); item 1 released into the new private repo `tip-splitter-ec7529`; item 2 cloned it, built on it, passed QA and security, opened PR #1, which merged automatically on approval |
 | 2026-10-05 | `stack` (the founder's stack choices): passed to every item's run, so the first one starts from the starter; Mira's planning brief includes it ("plan features, not set-up"); stack fields on the new-project form |
 | 2026-10-04 | Created: projects, the PM's backlog, editing and approval, items as runs, autopilot with a daily limit, pull-request merges and following, admin pages |

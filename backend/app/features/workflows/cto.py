@@ -206,6 +206,9 @@ def _validate_plan(data: Any) -> CtoPlan | None:
 
 TITLE_KEYS = ("title", "name", "task", "summary")
 SPECIALTY_KEYS = ("specialty", "speciality", "area", "role", "skill")
+# A task titled like page work is frontend work, whatever the plan says
+UI_WORDS = re.compile(r"\b(ui|page|pages|form|screen|component|layout|styling|frontend)\b", re.I)
+API_WORDS = re.compile(r"\b(api|route|endpoint|database|migration|schema|server)\b", re.I)
 SKIP_KEYS = {*TITLE_KEYS, *SPECIALTY_KEYS, "description", "developer", "owner", "assignee", "id"}
 
 
@@ -232,4 +235,6 @@ def _normalise_task(raw: Any) -> PlannedTask | None:
         (str(raw[k]).strip().lower() for k in SPECIALTY_KEYS if str(raw.get(k, "")).strip()),
         "any",
     )
+    if UI_WORDS.search(title) and not API_WORDS.search(title):
+        specialty = "frontend"  # small models tag page work "backend" (live run, Oct 5, 2026)
     return PlannedTask(title=title, description=full, specialty=specialty) if title else None

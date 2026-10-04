@@ -52,7 +52,7 @@ def test_a_python_api_with_a_frontend_is_split() -> None:
     )
     setup, test = service.commands(stack)
     assert setup.startswith("(cd api && pip install") and "(cd web && npm ci" in setup
-    assert test == "(cd api && python -m pytest -q) && (cd web && npm test)"
+    assert test == "(cd api && python -m pytest -q) && (cd web && npm run typecheck && npm test)"
 
 
 def test_nothing_to_compose_without_a_starter() -> None:
@@ -68,7 +68,7 @@ async def test_scaffold_writes_the_files_and_installs() -> None:
     result = await service.scaffold(sandbox, stack)
 
     assert result is not None and result.setup_ok
-    assert result.modules == ["payments"] and result.test_command == "npm test"
+    assert result.modules == ["payments"] and result.test_command == "npm run typecheck && npm test"
     assert sandbox.commands == ["npm ci --prefer-offline --no-audit --no-fund"]
     assert "lib/payments/razorpay.ts" in sandbox.files
 

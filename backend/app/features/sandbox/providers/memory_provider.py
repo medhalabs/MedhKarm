@@ -32,7 +32,10 @@ class InMemorySandbox:
             lines = [
                 f"{hashlib.sha1(content.encode()).hexdigest()}  {path}"
                 for path, content in sorted(self.files.items())
-                if not any(part.startswith(".") for part in path.split("/"))
+                if not any(
+                    part.startswith(".") or part in ("node_modules", "__pycache__", "venv")
+                    for part in path.split("/")
+                )
             ]
             return CommandResult(exit_code=0, output="\n".join(lines))
         return self._on_command(command, self.files)

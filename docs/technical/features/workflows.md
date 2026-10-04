@@ -171,6 +171,8 @@ LangGraph creates and owns its tables in our Postgres (`checkpoints`, `checkpoin
 
 | Date | Change |
 | --- | --- |
+| 2026-10-05 | A task titled like page work (UI, page, form, screen, component…) and not API work is tagged `frontend`, whatever the CTO's plan says (a live plan gave "Add UI for submitting feedback" to the backend developer) |
+| 2026-10-05 | `hollow_tests()` in `guards.py`: test files that define tests but check nothing (`assert True`, `expect(true).toBe(true)`, no assertion) are sent back by the review without a model call, and QA fails them (then the usual fix round) |
 | 2026-10-05 | `scaffold` step after `prepare` (starter and modules for new projects, `stack`, `stack_brief`, `scaffold` in the state; `WorkflowService.start(..., stack=)`); the stack brief goes into the plan and developer briefs; Tara's brief says how to start a Next.js app |
 | 2026-10-04 | QA checks: `QualityChecker` runs the tests plus the project's build, type-check and lint (`syntax`, `types`, `lint`, `build`, `ruff`, `mypy`); `checks_baseline` measured in `connect` so old failures don't block; one fix round (`qa1`, "Make QA's checks pass", `qa_rounds`); `state.checks`; `after_verify` |
 | 2026-10-04 | `preview` step (DevOps) after security; production deploy in `finish` after approval |

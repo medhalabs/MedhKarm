@@ -104,13 +104,13 @@ Goal: the software team delivers working, tested changes on new and existing pro
 
 Building in the mornings, beta recruiting in the afternoons. Early sign for the gate: at least 8 of 20 evals passing by Nov 13.
 
-- [x] Connect an existing GitHub repo; agents map the codebase before changing it (JavaScript/TypeScript and Python first). Done Oct 3, 2026: clone, map before planning, install/test detection, pull request on release ([repos.md](technical/features/repos.md)); new projects get a private repository on release (tested live Oct 2). Still to confirm live: the pull request on an existing repo
-- [ ] Backlog: the PM splits a goal into tasks; agents work through them across days. Built Oct 4, 2026: projects, Mira's backlog (edit, approve), items as runs, autopilot with a daily limit, approved work merged or waiting for your merge ([projects.md](technical/features/projects.md)). Left: an item released end to end live (the first live item failed QA on the free model)
-- [ ] Starter repo and ready-made modules for new projects (auth, payments, reminders, dashboards). Built Oct 5, 2026: the founder's stack choice wins (any frontend, API language, database, hosting or payment provider; empty = Next.js, Supabase, Vercel, Razorpay); a tested Next.js starter that runs with no keys, a Python API starter, modules for sign-in, payments (Razorpay or Stripe), reminders and an admin dashboard, Docker files for servers ([starters.md](technical/features/starters.md)). Left: live test in the Phase 2 end pass
-- [ ] QA writes and runs tests; build, type-check, lint and tests must pass. Built Oct 4, 2026: QA runs the tests plus the project's own build, type-check and lint (npm scripts, `tsc`, ruff, mypy, a Python syntax check); checks that already failed before the run don't block; one fix round back to a developer ([workflows.md](technical/features/workflows.md)). Left: live test in the Phase 2 end pass
+- [x] Connect an existing GitHub repo; agents map the codebase before changing it (JavaScript/TypeScript and Python first). Done Oct 3, 2026: clone, map before planning, install/test detection, pull request on release ([repos.md](technical/features/repos.md)); new projects get a private repository on release (tested live Oct 2). Pull request on an existing repo confirmed live Oct 5
+- [x] Backlog: the PM splits a goal into tasks; agents work through them across days. Done Oct 5, 2026: projects, Mira's backlog (edit, approve), items as runs, autopilot with a daily limit, approved work merged or waiting for your merge; tested live end to end (Tip splitter: new repo, then a pull request that auto-merged) ([projects.md](technical/features/projects.md))
+- [x] Starter repo and ready-made modules for new projects (auth, payments, reminders, dashboards). Done Oct 5, 2026 (tested live: a cafe feedback wall reached the gate with a preview): the founder's stack choice wins (any frontend, API language, database, hosting or payment provider; empty = Next.js, Supabase, Vercel, Razorpay); a tested Next.js starter that runs with no keys, a Python API starter, modules for sign-in, payments (Razorpay or Stripe), reminders and an admin dashboard, Docker files for servers ([starters.md](technical/features/starters.md)). Left: live test in the Phase 2 end pass
+- [x] QA writes and runs tests; build, type-check, lint and tests must pass. Done Oct 5, 2026 (live: caught lint and build errors, the fix round solved them): QA runs the tests plus the project's own build, type-check and lint (npm scripts, `tsc`, ruff, mypy, a Python syntax check); checks that already failed before the run don't block; one fix round back to a developer ([workflows.md](technical/features/workflows.md))
 - [x] Preview deploys; production only after the release gate. Done Oct 5, 2026 with Neel (below)
-- [ ] Choose the hosted sandbox (E2B, Fly Machines, Daytona or Modal) for customer code
-- [x] Eval runner: all 20 tasks nightly, both developer engines, with pass rate, cost and time per task. Done Oct 4, 2026: every agent's tokens metered per task, ₹ cost at the run's model and at Claude Haiku/Sonnet/Opus prices, history and comparison, nightly with `EVAL_NIGHTLY=true` (OpenHands opt-in) ([evals.md](technical/features/evals.md)). A full fresh baseline is still to run
+- [x] Choose the hosted sandbox (E2B, Fly Machines, Daytona or Modal) for customer code. Done Oct 5, 2026: **Daytona** ([11-hosted-sandbox.md](11-hosted-sandbox.md)); provider built, switched on when the beta starts (local Docker until then)
+- [x] Eval runner: all 20 tasks nightly, both developer engines, with pass rate, cost and time per task. Done Oct 4, 2026: every agent's tokens metered per task, ₹ cost at the run's model and at Claude Haiku/Sonnet/Opus prices, history and comparison, nightly with `EVAL_NIGHTLY=true` (OpenHands opt-in) ([evals.md](technical/features/evals.md)). Fresh baseline Oct 5: 18 of 20
 - [ ] Model × role tests: which models fill which seats
 - [x] Automated scans: npm audit, Semgrep, run by Vikram (security engineer), who can block a release. Done Oct 4, 2026: secrets, 15 offline Semgrep rules, pip-audit/npm audit on changed files after QA; blocking problems go back to a developer once, warnings go to your gate; tested live ([security.md](technical/features/security.md))
 - [x] Neel (DevOps) joins the team with preview deploys. Done Oct 5, 2026: Vercel preview before your gate, production after approval, both tested live (word counter live at a public URL) ([deploys.md](technical/features/deploys.md))
@@ -118,13 +118,10 @@ Building in the mornings, beta recruiting in the afternoons. Early sign for the 
 - [x] Tara (QA) writes end-to-end browser tests for web apps. Done Oct 4, 2026: Playwright in the sandbox; for web changes Tara writes one test, we run it, failures go to the frontend developer once; tested live (BMI calculator)
 
 **Phase 2 end test pass (all at once, before Gate 2):** decided Oct 4, 2026: build everything first, then test together.
-- Full fresh 20-task eval baseline, then `EVAL_NIGHTLY=true` (G-02); finish the Graphify A/B (G-03)
+- ~~Full fresh 20-task eval baseline~~ done Oct 5 (18/20); switch on `EVAL_NIGHTLY=true` when you're ready to spend the quota nightly
 - Model × role tests (needs the baseline)
-- A backlog item released end to end: private repo created, next item builds on it, auto-merge (G-05)
-- A pull request on an existing repository (G-06)
-- Everything built after Oct 4 (QA checks, starter repo and modules), live
 
-**Gate 2:** at least 12 of 20 eval tasks pass without help; cost and time per task known; prices drafted from those numbers.
+**Gate 2:** at least 12 of 20 eval tasks pass without help; cost and time per task known; prices drafted from those numbers. **Passed Oct 5, 2026:** 18 of 20, median 7 min and 119k tokens per task, draft prices ₹799 / ₹1,999 a month ([12-gate-2-report.md](12-gate-2-report.md)).
 
 ## Phase 3 — Office and private beta (Nov 30, 2026 – Jan 29, 2027; launch Feb 15, 2027)
 
@@ -224,5 +221,5 @@ What Phase 1 showed: with AI tools, code for a well-defined piece takes days, no
 - [x] Interview round 2 dropped; beta commitments asked for directly, by Nov 27 (Oct 3, 2026)
 - [ ] Buy medhkarm.in (by Oct 16, 2026)
 - [ ] Paid-model budget for evals and beta (by Nov 13, 2026)
-- [ ] Hosted sandbox for customer code (by Nov 13, 2026)
+- [x] Hosted sandbox for customer code (by Nov 13, 2026): Daytona, decided Oct 5
 - [ ] Business registration and Razorpay (by Dec 18, 2026)

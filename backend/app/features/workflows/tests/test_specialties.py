@@ -108,3 +108,14 @@ def test_the_software_team_has_backend_and_frontend_developers() -> None:
 
     assert developer.specialty_of() == SPECIALTIES
     assert all(s.instructions for s in developer.specialties)
+
+
+def test_page_work_goes_to_frontend_whatever_the_plan_says() -> None:
+    from app.features.workflows.cto import _normalise_task
+
+    ui = _normalise_task(
+        {"title": "Add UI for submitting feedback on home page", "specialty": "backend"}
+    )
+    api = _normalise_task({"title": "Add API route for posting messages", "specialty": "backend"})
+    assert ui is not None and ui.specialty == "frontend"
+    assert api is not None and api.specialty == "backend"

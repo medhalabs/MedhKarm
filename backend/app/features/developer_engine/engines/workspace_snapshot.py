@@ -2,9 +2,11 @@
 
 from app.features.sandbox.interfaces import Sandbox
 
+# The project's own files: dependencies and caches (node_modules, venv, __pycache__, hidden
+# folders) are skipped, so installing a package doesn't "change" thousands of files.
 HASH_COMMAND = (
-    "find . -type f -not -path '*/.*' -not -path '*/__pycache__/*' -exec sha1sum {} + "
-    "2>/dev/null | sed 's|  ./|  |'"
+    "find . \\( -name node_modules -o -name __pycache__ -o -name venv -o -name '.?*' \\)"
+    " -prune -o -type f -exec sha1sum {} + 2>/dev/null | sed 's|  ./|  |'"
 )
 
 

@@ -33,7 +33,10 @@ class StarterService:
         return self._catalog.modules()
 
     def resolve(self, request: str, choice: StackChoice) -> Stack:
-        return resolve_stack(request, choice, self._catalog.modules())
+        stack = resolve_stack(request, choice, self._catalog.modules())
+        if stack.starter and stack.layout == "single":
+            stack.rules = self._catalog.starter(stack.starter).rules
+        return stack
 
     def compose(self, stack: Stack) -> dict[str, str]:
         """Every file of the new project, path -> text. Empty when the stack has no starter."""
