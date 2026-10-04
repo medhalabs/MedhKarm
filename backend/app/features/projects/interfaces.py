@@ -10,7 +10,11 @@ class ProjectRepository(Protocol):
 
     async def get_project(self, project_id: str) -> Project | None: ...
 
-    async def list_projects(self, limit: int = 50) -> list[Project]:
+    async def adopt_unowned(self, company_id: str) -> int:
+        """Gives projects without a company to this one; how many."""
+        ...
+
+    async def list_projects(self, limit: int = 50, company_id: str | None = None) -> list[Project]:
         """Newest first."""
         ...
 
@@ -55,7 +59,7 @@ class ProjectRepository(Protocol):
 class RunStarter(Protocol):
     """What the backlog needs from runs (RunService satisfies it)."""
 
-    async def start(self, body: StartRun) -> Run: ...
+    async def start(self, body: StartRun, company_id: str | None = None) -> Run: ...
 
     async def get(self, run_id: str) -> Run: ...
 

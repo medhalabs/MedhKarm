@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from app.core.errors import register_error_handlers
+from app.features.auth.tests.helpers import OTHER_COMPANY, sign_in
 from app.features.jobs.stores.memory_queue import InMemoryJobQueue
 from app.features.runs.dependencies import get_run_service
 from app.features.runs.memory_repository import InMemoryRunRepository
@@ -18,6 +19,7 @@ def test_start_list_get_and_approve() -> None:
     register_error_handlers(app)
     app.include_router(router)
     app.dependency_overrides[get_run_service] = lambda: service
+    sign_in(app)
     api = TestClient(app)
 
     started = api.post("/runs", json={"request": "Build a calculator", "test_command": "pytest"})
@@ -41,3 +43,38 @@ def test_start_list_get_and_approve() -> None:
     assert on_repo["repo"] == repo and on_repo["test_command"] == ""
     bad_name = {"request": "Build a timer", "new_repo_name": "my timer"}
     assert api.post("/runs", json=bad_name).status_code == 422
+
+
+def test_runs_belong_to_the_founders_company() -> None:
+    service = RunService(InMemoryRunRepository(), InMemoryJobQueue())
+    app = FastAPI()
+    register_error_handlers(app)
+    app.include_router(router)
+    app.dependency_overrides[get_run_service] = lambda: service
+    sign_in(app)
+    mine = TestClient(app).post("/runs", json={"request": "Build a timer"}).json()
+
+    sign_in(app, OTHER_COMPANY)
+    other = TestClient(app)
+    assert other.get("/runs").json() == []
+    assert other.get(f"/runs/{mine['id']}").status_code == 404
+    assert other.post(f"/runs/{mine['id']}/cancel").status_code == 404
+
+    app.dependency_overrides.clear()
+    app.dependency_overrides[get_run_service] = lambda: service
+    assert TestClient(app).get("/runs").status_code == 401  # not signed in
+
+
+def test_cancel_over_the_api() -> None:
+    service = RunService(InMemoryRunRepository(), InMemoryJobQueue())
+    app = FastAPI()
+    register_error_handlers(app)
+    app.include_router(router)
+    app.dependency_overrides[get_run_service] = lambda: service
+    sign_in(app)
+    api = TestClient(app)
+    run = api.post("/runs", json={"request": "Build a timer"}).json()
+
+    assert api.post(f"/runs/{run['id']}/cancel").json()["status"] == "cancelled"
+    again = api.post(f"/runs/{run['id']}/cancel")
+    assert (again.status_code, again.json()["error"]["code"]) == (409, "run_already_finished")

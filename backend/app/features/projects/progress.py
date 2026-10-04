@@ -79,7 +79,8 @@ class BacklogProgress:
                 create_repo=project.repo is None,
                 new_repo_name=None if project.repo else repo_name_for(project.name, project.id),
                 stack=project.stack or StackChoice(),
-            )
+            ),
+            project.company_id,
         )
         if project.status == ProjectStatus.PAUSED:
             await self._projects.update_project(
@@ -114,6 +115,8 @@ class BacklogProgress:
             await self._block(item, "The team couldn't make the checks pass. Retry or skip it.")
         elif status == RunStatus.ERROR:
             await self._block(item, "Something broke while building it. Retry or skip it.")
+        elif status == RunStatus.CANCELLED:
+            await self._block(item, "You cancelled it. Retry or skip it.")
         await self._finish_if_done(project.id)
 
     async def tick(self) -> None:

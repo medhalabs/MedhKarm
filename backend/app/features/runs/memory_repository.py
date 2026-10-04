@@ -20,10 +20,12 @@ class InMemoryRunRepository:
         repo: RepoSource | None = None,
         new_repo: NewRepo | None = None,
         stack: StackChoice | None = None,
+        company_id: str | None = None,
     ) -> Run:
         now = datetime.now(UTC)
         run = Run(
             id=run_id,
+            company_id=company_id,
             request=request,
             test_command=test_command,
             repo=repo,
@@ -40,9 +42,19 @@ class InMemoryRunRepository:
         run = self.runs.get(run_id)
         return run.model_copy() if run else None
 
-    async def list(self, limit: int = 50) -> list[Run]:
-        newest = sorted(self.runs.values(), key=lambda r: r.created_at, reverse=True)
+    async def list(self, limit: int = 50, company_id: str | None = None) -> list[Run]:
+        runs = [r for r in self.runs.values() if not company_id or r.company_id == company_id]
+        newest = sorted(runs, key=lambda r: r.created_at, reverse=True)
         return [r.model_copy() for r in newest[:limit]]
+
+    async def ids_for(self, company_id: str) -> set[str]:
+        return {r.id for r in self.runs.values() if r.company_id == company_id}
+
+    async def adopt_unowned(self, company_id: str) -> int:
+        unowned = [r for r in self.runs.values() if r.company_id is None]
+        for run in unowned:
+            run.company_id = company_id
+        return len(unowned)
 
     async def set_status(
         self,

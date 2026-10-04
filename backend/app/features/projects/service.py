@@ -32,10 +32,11 @@ class ProjectService:
         self._projects = projects
         self._jobs = jobs
 
-    async def create(self, body: NewProject) -> ProjectDetail:
+    async def create(self, body: NewProject, company_id: str | None = None) -> ProjectDetail:
         project = await self._projects.create_project(
             uuid.uuid4().hex[:12],
             {
+                "company_id": company_id,
                 "name": body.name,
                 "goal": body.goal,
                 "repo": body.repo,
@@ -54,8 +55,18 @@ class ProjectService:
         items = await self._projects.list_items(project_id)
         return ProjectDetail(**project.model_dump(), items=items)
 
-    async def list(self, limit: int = 50) -> list[Project]:
-        return await self._projects.list_projects(min(max(limit, 1), 200))
+    async def list(self, limit: int = 50, company_id: str | None = None) -> list[Project]:
+        return await self._projects.list_projects(min(max(limit, 1), 200), company_id)
+
+    async def owned(self, project_id: str, company_id: str) -> Project:
+        """The project, if it's this company's; otherwise "not found"."""
+        project = await self._project(project_id)
+        if project.company_id != company_id:
+            raise ProjectNotFoundError(f"No project {project_id}")
+        return project
+
+    async def adopt_unowned(self, company_id: str) -> int:
+        return await self._projects.adopt_unowned(company_id)
 
     async def update(self, project_id: str, body: ProjectUpdate) -> ProjectDetail:
         await self._project(project_id)

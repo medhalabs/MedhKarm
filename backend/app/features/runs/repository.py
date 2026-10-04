@@ -1,5 +1,6 @@
 """RunRepository on Postgres."""
 
+import uuid
 from typing import Any
 
 from sqlalchemy import func, select, update
@@ -23,8 +24,10 @@ class SqlRunRepository:
         repo: RepoSource | None = None,
         new_repo: NewRepo | None = None,
         stack: StackChoice | None = None,
+        company_id: str | None = None,
     ) -> Run:
         row = RunRow(
+            company_id=uuid.UUID(company_id) if company_id else None,
             id=run_id,
             request=request,
             test_command=test_command,
@@ -44,10 +47,27 @@ class SqlRunRepository:
             row = await session.get(RunRow, run_id)
             return _to_run(row) if row else None
 
-    async def list(self, limit: int = 50) -> list[Run]:
+    async def list(self, limit: int = 50, company_id: str | None = None) -> list[Run]:
         query = select(RunRow).order_by(RunRow.created_at.desc()).limit(limit)
+        if company_id:
+            query = query.where(RunRow.company_id == uuid.UUID(company_id))
         async with self._sessions() as session:
             return [_to_run(row) for row in (await session.scalars(query)).all()]
+
+    async def ids_for(self, company_id: str) -> set[str]:
+        query = select(RunRow.id).where(RunRow.company_id == uuid.UUID(company_id))
+        async with self._sessions() as session:
+            return set((await session.scalars(query)).all())
+
+    async def adopt_unowned(self, company_id: str) -> int:
+        statement = (
+            update(RunRow)
+            .where(RunRow.company_id.is_(None))
+            .values(company_id=uuid.UUID(company_id))
+            .returning(RunRow.id)
+        )
+        async with self._sessions() as session, session.begin():
+            return len((await session.scalars(statement)).all())
 
     async def set_status(
         self,
@@ -83,6 +103,7 @@ class SqlRunRepository:
 def _to_run(row: RunRow) -> Run:
     return Run(
         id=row.id,
+        company_id=str(row.company_id) if row.company_id else None,
         request=row.request,
         test_command=row.test_command,
         repo=RepoSource.model_validate(row.repo) if row.repo else None,

@@ -6,7 +6,12 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from app.core.errors import register_error_handlers
+from app.features.auth.tests.helpers import sign_in
 from app.features.events.stores.memory_store import InMemoryEventStore
+from app.features.jobs.stores.memory_queue import InMemoryJobQueue
+from app.features.runs.dependencies import get_run_service
+from app.features.runs.memory_repository import InMemoryRunRepository
+from app.features.runs.service import RunService
 from app.features.standups.dependencies import get_standup_service
 from app.features.standups.router import router
 from app.features.standups.service import StandupService
@@ -20,6 +25,10 @@ def client() -> TestClient:
     register_error_handlers(app)
     app.include_router(router)
     app.dependency_overrides[get_standup_service] = lambda: service
+    app.dependency_overrides[get_run_service] = lambda: RunService(
+        InMemoryRunRepository(), InMemoryJobQueue()
+    )
+    sign_in(app)
     return TestClient(app)
 
 

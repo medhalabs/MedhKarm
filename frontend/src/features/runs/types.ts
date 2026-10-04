@@ -3,7 +3,14 @@ import type { StackChoiceInput } from "@/features/starters";
 // Mirrors backend/app/features/runs/schemas.py.
 
 export type RunStatus =
-  "queued" | "running" | "waiting_for_approval" | "released" | "rejected" | "failed" | "error";
+  | "queued"
+  | "running"
+  | "waiting_for_approval"
+  | "released"
+  | "rejected"
+  | "failed"
+  | "error"
+  | "cancelled";
 
 /** What the founder is asked at the release gate (backend: workflows/nodes/approval.py). */
 export type Gate = {

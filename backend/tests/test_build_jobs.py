@@ -2,11 +2,13 @@
 graph, the founder approves over the API, a worker resumes. Also: a worker crash mid-run,
 giving up, and the morning standup schedule."""
 
+import asyncio
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
+import pytest
 from langgraph.checkpoint.memory import InMemorySaver
 
 from app.features.developer_engine.engines.tool_loop_engine import ToolLoopEngine
@@ -18,16 +20,17 @@ from app.features.jobs.service import JobRunner
 from app.features.jobs.stores.memory_queue import InMemoryJobQueue
 from app.features.models.providers.scripted_provider import ScriptedLLMProvider
 from app.features.models.schemas import LLMResponse, Message, ToolCall, ToolSpec
+from app.features.runs.exceptions import RunAlreadyFinishedError, RunNotWaitingError
 from app.features.runs.memory_repository import InMemoryRunRepository
 from app.features.runs.schemas import ApprovalDecision, RunStatus, StartRun
-from app.features.runs.service import RESUME_JOB, START_JOB, RunService
+from app.features.runs.service import CANCEL_JOB, RESUME_JOB, START_JOB, RunService
 from app.features.sandbox.providers.memory_provider import InMemorySandboxProvider
 from app.features.sandbox.schemas import CommandResult
 from app.features.standups.schemas import Standup
 from app.features.standups.service import StandupService
 from app.features.workflows.graphs.build_app import build_app_graph
 from app.features.workflows.service import WorkflowService
-from app.workers.handlers.build import ResumeBuild, StartBuild
+from app.workers.handlers.build import CancelBuild, ResumeBuild, StartBuild
 from app.workers.handlers.standup import SEND_STANDUP, SendStandup, standup_schedule
 
 
@@ -85,6 +88,7 @@ class Office:
         handlers: dict[str, JobHandler] = {
             START_JOB: StartBuild(self.runs, workflow, self.sandboxes, self.events, listener),
             RESUME_JOB: ResumeBuild(self.runs, workflow, self.sandboxes, self.events, listener),
+            CANCEL_JOB: CancelBuild(workflow, self.sandboxes, self.events, listener),
         }
         self.worker = JobRunner(self.queue, handlers, "w1", retry_base=timedelta(0))
 
@@ -200,3 +204,64 @@ async def test_the_listener_hears_runs_that_give_up() -> None:
     await office.worker.run_once()
 
     assert listener.calls == [(run.id, RunStatus.ERROR)]
+
+
+async def test_cancel_at_the_gate_removes_the_sandbox() -> None:
+    office = Office(ScriptedLLMProvider(list(SCRIPT)))
+    run = await office.runs.start(StartRun(request="Build a.py", test_command="pytest"))
+    await office.worker.run_once()
+    assert len(office.sandboxes.sandboxes) == 1  # kept while waiting
+
+    cancelled = await office.runs.cancel(run.id)
+    await office.worker.run_once()  # the cancel job
+
+    assert cancelled.status == RunStatus.CANCELLED
+    assert office.sandboxes.sandboxes == {}
+    assert office.events.events[-1].summary == "Cancelled by you"
+    with pytest.raises(RunNotWaitingError):  # nothing left to approve
+        await office.runs.decide(run.id, ApprovalDecision(approved=True))
+    with pytest.raises(RunAlreadyFinishedError):
+        await office.runs.cancel(run.id)
+
+
+async def test_a_run_cancelled_before_a_worker_picks_it_up_never_starts() -> None:
+    office = Office(ScriptedLLMProvider([]))  # any model call would fail the test
+    run = await office.runs.start(StartRun(request="Build a.py", test_command="pytest"))
+
+    await office.runs.cancel(run.id)
+    await office.worker.run_once()  # the start job: skipped
+    await office.worker.run_once()  # the cancel job
+
+    assert (await office.runs.get(run.id)).status == RunStatus.CANCELLED
+    assert EventType.PLAN_CREATED not in office.types()
+    assert [j.status for j in office.queue.jobs] == [JobStatus.DONE, JobStatus.DONE]
+
+
+class StuckLLM(ScriptedLLMProvider):
+    """Never answers: like a long model call the founder gets tired of."""
+
+    def __init__(self) -> None:
+        super().__init__([])
+        self.called = asyncio.Event()
+
+    async def complete(
+        self, messages: list[Message], tools: list[ToolSpec] | None = None
+    ) -> LLMResponse:
+        self.called.set()
+        await asyncio.Event().wait()
+        raise AssertionError("unreachable")
+
+
+async def test_cancel_stops_a_run_in_the_middle(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("app.workers.handlers.build.CANCEL_POLL_SECONDS", 0.01)
+    llm = StuckLLM()
+    office = Office(llm)
+    run = await office.runs.start(StartRun(request="Build a.py", test_command="pytest"))
+
+    working = asyncio.create_task(office.worker.run_once())
+    await asyncio.wait_for(llm.called.wait(), 5)  # the CTO is thinking
+    await office.runs.cancel(run.id)
+    await asyncio.wait_for(working, 5)  # the worker let go
+
+    assert (await office.runs.get(run.id)).status == RunStatus.CANCELLED
+    assert office.queue.jobs[0].status == JobStatus.DONE

@@ -29,8 +29,15 @@ class InMemoryProjectRepository:
         project = self.projects.get(project_id)
         return project.model_copy() if project else None
 
-    async def list_projects(self, limit: int = 50) -> list[Project]:
-        newest = sorted(self.projects.values(), key=lambda p: p.created_at, reverse=True)
+    async def adopt_unowned(self, company_id: str) -> int:
+        unowned = [p for p in self.projects.values() if p.company_id is None]
+        for project in unowned:
+            project.company_id = company_id
+        return len(unowned)
+
+    async def list_projects(self, limit: int = 50, company_id: str | None = None) -> list[Project]:
+        mine = [p for p in self.projects.values() if not company_id or p.company_id == company_id]
+        newest = sorted(mine, key=lambda p: p.created_at, reverse=True)
         return [p.model_copy() for p in newest[:limit]]
 
     async def update_project(self, project_id: str, values: dict[str, Any]) -> Project:

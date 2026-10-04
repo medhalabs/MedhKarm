@@ -11,19 +11,19 @@ Last updated: Oct 5, 2026.
 | Id | Gap | Why it matters | Found | Fix idea |
 | --- | --- | --- | --- | --- |
 | G-01 | **The free model fails the hardest tasks**: 18 of 20 evals pass, but a reminders feature timed out and a slugify module ran out of steps; Gate 1's cron parser failed too | Beta users bring harder work than the evals | Oct 1, Oct 5 | Model × role tests with a paid model; more steps or smaller tasks for hard ones |
+| G-40 | A run waiting at the gate lost its sandbox container (cafe wall, Oct 5). Cause unknown: not the eval runner (it removes only its own), Docker's event history had expired | Approving a waiting run must always work | Oct 5 | Watch for it again; if it repeats, keep the work outside the sandbox (push a branch before the gate) so approval never depends on the container |
 
 ## Before the beta (by Dec 7, 2026)
 
 | Id | Gap | Why it matters | Found | Fix idea |
 | --- | --- | --- | --- | --- |
-| G-08 | **No sign-in, no companies.** API and admin page are open to anyone who can reach them; `company_id` is empty everywhere, no row-level security | Required before anyone else uses it | Oct 1 | Supabase auth, a companies feature, `company_id` required with RLS |
-| G-09 | Runs can't be cancelled | A runaway run burns tokens | Oct 1 | Cancel endpoint + job release + sandbox removal |
 | G-10 | Standup goes to the worker's log only, and covers every run (not per company) | "A standup every morning" was the interview ask | Oct 1 | Email or WhatsApp delivery; filter by company |
 | G-11 | Local Docker sandbox only; Daytona chosen and its provider built, but not switched on or tried against Daytona | Beta users' code can't run on this laptop | Sep 30 | At the beta: Daytona account, `SANDBOX_PROVIDER=daytona`, one eval run on it |
 | G-12 | Mira doesn't read an existing repository's code when planning, and there's no back-and-forth: she lists questions, you edit and ask again | Plans for existing projects are generic | Oct 4 | Give her the codebase map; answer her questions in the page |
 | G-13 | Frontend API types are written by hand, not generated from the OpenAPI spec (`shared/api/generated/` is empty) | Types can drift from the backend | Oct 1 | Add the generator to the frontend build |
 | G-35 | Local mode on Vercel keeps data in each server instance's memory: on a preview, accounts and records can vanish between requests | Founders try previews; sign-up that forgets you looks broken | Oct 5 | A free database per project for previews (Supabase/Neon), or Vercel's storage, set as `DATABASE_URL` by Neel |
 | G-14 | No readiness check (database, Redis) on `/health` | Deploys can't tell a broken backend | Oct 1 | `/health/ready` |
+| G-41 | Sign-in scopes data in the application only: Postgres row-level security isn't enforced (the app connects as the table owner); no password reset, rate limits on log-in, server-side log-out or teammates | A bug in one query could show another company's data; locked-out founders need us | Oct 5 | A non-owner database role with RLS policies on `company_id`; reset emails with the email service; log-in attempt limits |
 
 ## Later
 
@@ -62,6 +62,8 @@ Last updated: Oct 5, 2026.
 | — | No security checks on releases | Oct 4, 2026 | Vikram ([security.md](technical/features/security.md)) |
 | — | Listing the project read all of `node_modules` (22,229 files, about 324k tokens) and broke the first live run on the starter | Oct 5, 2026 | Listing and change detection skip dependency folders; listing capped at 400 ([sandbox.md](technical/features/sandbox.md)) |
 | G-02 | Eval results were stale (measured before the CTO, security, specialties, browser tests) | Oct 5, 2026 | Fresh baseline with the whole team: 18 of 20 ([12-gate-2-report.md](12-gate-2-report.md)) |
+| G-08 | No sign-in, no companies: API and admin open to anyone | Oct 5, 2026 | Email + password accounts, companies, every route scoped by company ([auth.md](technical/features/auth.md)); RLS still to do (G-41) |
+| G-09 | Runs couldn't be cancelled | Oct 5, 2026 | `POST /runs/{id}/cancel` and a Cancel button; running workers stop, sandboxes removed ([runs.md](technical/features/runs.md)) |
 | G-34 | The starter had never run live end to end | Oct 5, 2026 | Second live run (cafe feedback wall, gpt-oss:20b) reached the gate: starter + modules, API to Isha, pages to Arjun, QA caught lint/build errors and the fix round solved them, Tara's browser test passed, Vikram clean, Neel's preview ready ([starters.md](technical/features/starters.md)) |
 | G-05 | A backlog item had never been released end to end live | Oct 5, 2026 | Live: project "Tip splitter": item 1 created the private repo `tip-splitter-ec7529`, item 2 cloned it, built on it, opened PR #1 and it auto-merged after approval ([projects.md](technical/features/projects.md)) |
 | G-06 | A pull request on an existing repository had never been tested live | Oct 5, 2026 | Same live test: item 2 ran on the existing repo (mapped its code) and delivered as a pull request. A founder-owned repo takes the same path and waits for their merge |

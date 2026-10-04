@@ -88,6 +88,7 @@ class ProjectUpdate(BaseModel):
 
 class Project(BaseModel):
     id: str
+    company_id: str | None = None  # whose project it is (None: made before sign-in existed)
     name: str
     goal: str
     repo: RepoSource | None = None

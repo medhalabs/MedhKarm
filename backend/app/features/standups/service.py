@@ -46,11 +46,14 @@ class StandupService:
             raise StandupDayInFutureError(f"No standup for {day} yet")
         return since, min(end, now)
 
-    async def for_day(self, day: date | None = None) -> Standup:
+    async def for_day(self, day: date | None = None, only: set[str] | None = None) -> Standup:
+        """`only`: the runs this standup may cover (a company's); None covers every run."""
         day = day or self.today()
         since, until = self.window(day)
         histories = {
-            run_id: await self._history(run_id, until) for run_id in await self._runs(since, until)
+            run_id: await self._history(run_id, until)
+            for run_id in await self._runs(since, until)
+            if only is None or run_id in only
         }
         return build_standup(histories, day, self._timezone, since, until, self._stall_after)
 

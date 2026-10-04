@@ -13,7 +13,7 @@ class FakeRuns:
         self.started: list[StartRun] = []
         self.runs: dict[str, Run] = {}
 
-    async def start(self, body: StartRun) -> Run:
+    async def start(self, body: StartRun, company_id: str | None = None) -> Run:
         self.started.append(body)
         now = datetime.now(UTC)
         run = Run(

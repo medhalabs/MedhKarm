@@ -5,6 +5,8 @@ starts, a run interrupted mid-way (worker died, deploy) carries on from its last
 step, and a run already at the gate or finished is only reported.
 """
 
+import asyncio
+import contextlib
 import logging
 from collections.abc import Callable
 from contextlib import AbstractAsyncContextManager
@@ -23,6 +25,8 @@ from app.features.workflows.service import WorkflowService
 
 WorkflowFactory = Callable[[], AbstractAsyncContextManager[WorkflowService]]
 logger = logging.getLogger(__name__)
+CANCEL_POLL_SECONDS = 3.0  # how often a running build checks whether the founder cancelled it
+CANCELLED = {"status": RunStatus.CANCELLED}
 
 
 class RunListener(Protocol):
@@ -57,9 +61,18 @@ class _BuildHandler:
 
     async def run(self, payload: dict[str, Any]) -> dict[str, Any] | None:
         run = await self._load(payload)
+        if run.status == RunStatus.CANCELLED:
+            return {"run_id": run.id, **CANCELLED}
         await self._runs.set_status(run.id, RunStatus.RUNNING)
-        async with self._workflow() as workflow:
-            outcome = await self._advance(workflow, run, payload)
+        try:
+            async with self._workflow() as workflow:
+                outcome = await self._until_cancelled(run.id, self._advance(workflow, run, payload))
+        except Exception:
+            if await self._cancelled(run.id):  # its sandbox was removed under it: expected
+                return {"run_id": run.id, **CANCELLED}
+            raise
+        if outcome is None or await self._cancelled(run.id):
+            return {"run_id": run.id, **CANCELLED}
         status = await self._report(outcome)
         if self._listener and status != RunStatus.WAITING_FOR_APPROVAL:
             # A failure here retries the job; the run is already finished, so only this repeats.
@@ -71,11 +84,34 @@ class _BuildHandler:
     ) -> RunOutcome:
         raise NotImplementedError
 
+    async def _until_cancelled(self, run_id: str, work: Any) -> RunOutcome | None:
+        """Runs `work`, stopping it as soon as the founder cancels the run (None then)."""
+        task: asyncio.Task[RunOutcome] = asyncio.ensure_future(work)
+        watch = asyncio.ensure_future(self._watch(run_id))
+        done, _ = await asyncio.wait({task, watch}, return_when=asyncio.FIRST_COMPLETED)
+        if task in done:
+            watch.cancel()
+            return task.result()
+        task.cancel()
+        with contextlib.suppress(asyncio.CancelledError, Exception):
+            await task
+        return None
+
+    async def _watch(self, run_id: str) -> None:
+        while not await self._cancelled(run_id):  # noqa: ASYNC110 (polls the database)
+            await asyncio.sleep(CANCEL_POLL_SECONDS)
+
+    async def _cancelled(self, run_id: str) -> bool:
+        try:
+            return (await self._runs.get(run_id)).status == RunStatus.CANCELLED
+        except RunNotFoundError:
+            return False
+
     async def give_up(self, payload: dict[str, Any], error: str) -> None:
         """Out of retries: mark the run, tell the log, and remove its sandbox."""
         run_id = str(payload.get("run_id", ""))
-        if not run_id:
-            return
+        if not run_id or await self._cancelled(run_id):
+            return  # a cancelled run stays cancelled; the cancel job tidies up
         await self._runs.set_status(run_id, RunStatus.ERROR, error=error)
         await RunRecorder(self._events, run_id).record(
             Actor.SYSTEM,
@@ -149,3 +185,38 @@ class ResumeBuild(_BuildHandler):
         if current.next_nodes:
             return await workflow.continue_run(run.id)
         return current
+
+
+class CancelBuild:
+    """After the founder cancels: remove the run's sandbox, record it, and tell the backlog.
+    Safe to repeat."""
+
+    def __init__(
+        self,
+        workflow: WorkflowFactory,
+        sandboxes: SandboxProvider,
+        events: EventStore | None = None,
+        listener: RunListener | None = None,
+    ) -> None:
+        self._workflow = workflow
+        self._sandboxes = sandboxes
+        self._events = events
+        self._listener = listener
+
+    async def run(self, payload: dict[str, Any]) -> dict[str, Any] | None:
+        run_id = str(payload.get("run_id", ""))
+        if not run_id:
+            raise PermanentJobError(f"No run in cancel job: {payload}")
+        async with self._workflow() as workflow:
+            sandbox_id = (await workflow.get(run_id)).state.get("sandbox_id")
+        if sandbox_id:
+            await self._sandboxes.destroy(sandbox_id)
+        await RunRecorder(self._events, run_id).record(
+            Actor.FOUNDER, EventType.RUN_FINISHED, "Cancelled by you", {"status": "cancelled"}
+        )
+        if self._listener:
+            await self._listener.on_run_finished(run_id, RunStatus.CANCELLED)
+        return {"run_id": run_id, **CANCELLED}
+
+    async def give_up(self, payload: dict[str, Any], error: str) -> None:
+        logger.error("Couldn't tidy up cancelled run %s: %s", payload.get("run_id"), error)

@@ -19,6 +19,10 @@ class Settings(BaseSettings):
 
     cors_origins: list[str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
 
+    # Sign-in: signs session tokens. Required outside development (any long random string).
+    auth_secret: SecretStr | None = None
+    auth_token_days: int = 30
+
     # Models (LiteLLM model names, e.g. "ollama_chat/gpt-oss:120b")
     # gpt-oss:20b: 0 errors in the eval suite; gpt-oss:120b hit Ollama Cloud 500s on 1 in 4 tasks.
     default_model: str = "ollama_chat/gpt-oss:20b"

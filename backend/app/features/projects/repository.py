@@ -38,8 +38,20 @@ class SqlProjectRepository:
             row = await session.get(ProjectRow, project_id)
             return _to_project(row) if row else None
 
-    async def list_projects(self, limit: int = 50) -> list[Project]:
+    async def adopt_unowned(self, company_id: str) -> int:
+        statement = (
+            update(ProjectRow)
+            .where(ProjectRow.company_id.is_(None))
+            .values(company_id=uuid.UUID(company_id))
+            .returning(ProjectRow.id)
+        )
+        async with self._sessions() as session, session.begin():
+            return len((await session.scalars(statement)).all())
+
+    async def list_projects(self, limit: int = 50, company_id: str | None = None) -> list[Project]:
         query = select(ProjectRow).order_by(ProjectRow.created_at.desc()).limit(limit)
+        if company_id:
+            query = query.where(ProjectRow.company_id == uuid.UUID(company_id))
         async with self._sessions() as session:
             return [_to_project(r) for r in (await session.scalars(query)).all()]
 
@@ -170,6 +182,8 @@ def _project_values(values: dict[str, Any]) -> dict[str, Any]:
     if "repo" in out:
         repo = out["repo"]
         out["repo"] = repo.model_dump() if isinstance(repo, RepoSource) else repo
+    if out.get("company_id"):
+        out["company_id"] = uuid.UUID(str(out["company_id"]))
     if isinstance(out.get("stack"), StackChoice):
         out["stack"] = out["stack"].model_dump(mode="json")
     return out
@@ -178,6 +192,7 @@ def _project_values(values: dict[str, Any]) -> dict[str, Any]:
 def _to_project(row: ProjectRow) -> Project:
     return Project(
         id=row.id,
+        company_id=str(row.company_id) if row.company_id else None,
         name=row.name,
         goal=row.goal,
         repo=RepoSource.model_validate(row.repo) if row.repo else None,

@@ -14,6 +14,7 @@ const LOOKS: Record<RunStatus, StatusLook> = {
   rejected: { label: "Stopped by you", tone: "neutral", active: false },
   failed: { label: "Checks failed", tone: "bad", active: false },
   error: { label: "Something broke", tone: "bad", active: false },
+  cancelled: { label: "Cancelled", tone: "neutral", active: false },
 };
 
 export function describeStatus(status: RunStatus): StatusLook {

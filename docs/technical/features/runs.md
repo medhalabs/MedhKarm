@@ -125,6 +125,7 @@ None of its own. The workflow records the run's events ([workflows.md](workflows
 
 | Date | Change |
 | --- | --- |
+| 2026-10-05 | **Cancel:** `POST /runs/{id}/cancel` (status `cancelled`, 409 `run_already_finished` when over); a running worker stops within ~3 s (it watches the status), a queued run never starts, and a `build.cancel` job removes the sandbox and records "Cancelled by you"; Cancel button on the run page. **Sign-in:** runs carry `company_id`; every route needs a signed-in founder and only shows their company's runs ([auth.md](auth.md)) |
 | 2026-10-04 | `deployment` (where the released app is live, migration 0007); the admin page shows the preview link at the gate and the live link |
 | 2026-10-05 | `stack` on start and on runs (migration `0008`); new projects no longer default to `pytest -q` (detected from the starter); admin form: "Stack for a new project" |
 | 2026-10-01 | New projects: `create_repo` / `new_repo_name` on start, `new_repo` on runs (migration `0005`); admin form checkbox and name; run page shows the created repository |

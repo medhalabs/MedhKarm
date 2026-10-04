@@ -6,6 +6,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from app.core.errors import register_error_handlers
+from app.features.auth.tests.helpers import sign_in
 from app.features.jobs.stores.memory_queue import InMemoryJobQueue
 from app.features.projects.dependencies import get_backlog_progress, get_project_service
 from app.features.projects.memory_repository import InMemoryProjectRepository
@@ -23,6 +24,7 @@ def test_create_plan_approve_edit_and_start() -> None:
     app.include_router(router)
     app.dependency_overrides[get_project_service] = lambda: ProjectService(repo, InMemoryJobQueue())
     app.dependency_overrides[get_backlog_progress] = lambda: BacklogProgress(repo, runs)
+    sign_in(app)
     api = TestClient(app)
 
     created = api.post("/projects", json={"name": "Habits", "goal": "Track daily habits"})

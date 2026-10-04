@@ -8,8 +8,10 @@ from fastapi.responses import StreamingResponse
 from app.features.events.dependencies import get_event_service
 from app.features.events.schemas import Event, RunTotals
 from app.features.events.service import EventService
+from app.features.runs.dependencies import owned_run
 
-router = APIRouter(prefix="/runs/{run_id}", tags=["events"])
+# Every route here is about one run: the caller must be signed in and own it.
+router = APIRouter(prefix="/runs/{run_id}", tags=["events"], dependencies=[Depends(owned_run)])
 Service = Annotated[EventService, Depends(get_event_service)]
 
 

@@ -1,7 +1,7 @@
 "use server";
 
-// Server actions for the admin forms. They run on the Next.js server and call the backend API.
-// No sign-in yet: like the API itself, keep the admin page on localhost until auth lands.
+// Server actions for the admin forms. They run on the Next.js server and call the backend API
+// as the signed-in founder (the API client adds their session token).
 
 import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
@@ -37,6 +37,11 @@ export async function decideAction(
   }
   refresh();
   return { error: null };
+}
+
+export async function cancelRunAction(runId: string): Promise<void> {
+  await apiPost<Run>(`/runs/${encodeURIComponent(runId)}/cancel`, {});
+  refresh();
 }
 
 function describeError(error: unknown): string {

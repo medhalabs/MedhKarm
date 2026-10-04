@@ -18,6 +18,19 @@ class RunStatus(StrEnum):
     REJECTED = "rejected"
     FAILED = "failed"  # the work didn't pass its checks
     ERROR = "error"  # something broke (model, sandbox, worker) and retries ran out
+    CANCELLED = "cancelled"  # the founder stopped it
+
+
+# A run in one of these is over: nothing more happens to it.
+FINAL_STATUSES = frozenset(
+    {
+        RunStatus.RELEASED,
+        RunStatus.REJECTED,
+        RunStatus.FAILED,
+        RunStatus.ERROR,
+        RunStatus.CANCELLED,
+    }
+)
 
 
 class StartRun(BaseModel):
@@ -44,6 +57,7 @@ class ApprovalDecision(BaseModel):
 
 class Run(BaseModel):
     id: str
+    company_id: str | None = None  # whose run it is (None: made before sign-in existed)
     request: str
     test_command: str  # empty: detected from the repository when the run starts
     repo: RepoSource | None = None

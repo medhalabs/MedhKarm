@@ -3,8 +3,9 @@ each call here returns at once."""
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query, Response, status
+from fastapi import APIRouter, Depends, Query, Request, Response, status
 
+from app.features.auth.dependencies import SignedIn
 from app.features.projects.dependencies import get_backlog_progress, get_project_service
 from app.features.projects.progress import BacklogProgress
 from app.features.projects.schemas import (
@@ -18,22 +19,31 @@ from app.features.projects.schemas import (
 )
 from app.features.projects.service import ProjectService
 
-router = APIRouter(prefix="/projects", tags=["projects"])
 Service = Annotated[ProjectService, Depends(get_project_service)]
+
+
+async def _guard(request: Request, who: SignedIn, service: Service) -> None:
+    """Every route needs a signed-in founder; one about a project needs it to be theirs."""
+    project_id = request.path_params.get("project_id")
+    if project_id:
+        await service.owned(project_id, who.company_id)
+
+
+router = APIRouter(prefix="/projects", tags=["projects"], dependencies=[Depends(_guard)])
 Progress = Annotated[BacklogProgress, Depends(get_backlog_progress)]
 
 
 @router.post("", response_model=ProjectDetail, status_code=status.HTTP_202_ACCEPTED)
-async def create_project(body: NewProject, service: Service) -> ProjectDetail:
+async def create_project(body: NewProject, who: SignedIn, service: Service) -> ProjectDetail:
     """Create the project; the PM starts planning its backlog."""
-    return await service.create(body)
+    return await service.create(body, who.company_id)
 
 
 @router.get("", response_model=list[Project])
 async def list_projects(
-    service: Service, limit: Annotated[int, Query(ge=1, le=200)] = 50
+    who: SignedIn, service: Service, limit: Annotated[int, Query(ge=1, le=200)] = 50
 ) -> list[Project]:
-    return await service.list(limit)
+    return await service.list(limit, who.company_id)
 
 
 @router.get("/{project_id}", response_model=ProjectDetail)

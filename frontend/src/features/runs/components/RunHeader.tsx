@@ -1,7 +1,10 @@
 import { formatDateTime, timeAgo } from "@/shared/lib/format";
 
-import type { Run } from "../types";
+import type { Run, RunStatus } from "../types";
+import { CancelRunButton } from "./CancelRunButton";
 import { RunStatusBadge } from "./RunStatusBadge";
+
+const CANCELLABLE: RunStatus[] = ["queued", "running", "waiting_for_approval"];
 
 export function RunHeader({ run }: { run: Run }) {
   return (
@@ -12,6 +15,11 @@ export function RunHeader({ run }: { run: Run }) {
         <span className="text-xs text-zinc-500">
           started {formatDateTime(run.created_at)} · last change {timeAgo(run.updated_at)}
         </span>
+        {CANCELLABLE.includes(run.status) && (
+          <span className="ml-auto">
+            <CancelRunButton runId={run.id} />
+          </span>
+        )}
       </div>
       <p className="text-lg leading-snug font-medium whitespace-pre-line">{run.request}</p>
       {run.repo && (

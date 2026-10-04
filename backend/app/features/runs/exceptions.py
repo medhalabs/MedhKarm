@@ -7,3 +7,7 @@ class RunNotFoundError(NotFoundError):
 
 class RunNotWaitingError(ConflictError):
     code = "run_not_waiting_for_approval"
+
+
+class RunAlreadyFinishedError(ConflictError):
+    code = "run_already_finished"

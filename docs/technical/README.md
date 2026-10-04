@@ -39,5 +39,7 @@ Knowledge transfer for anyone working on the code: what each part is, how it wor
 | security | [features/security.md](features/security.md) | Vikram, the security engineer: secrets, Semgrep and dependency scans on every release |
 | deploys | [features/deploys.md](features/deploys.md) | Neel (DevOps): Vercel preview before the gate, production after approval |
 | starters | [features/starters.md](features/starters.md) | New projects start from a tested starter with ready-made modules (sign-in, payments, reminders, admin dashboard), in the stack the founder chose |
+| auth | [features/auth.md](features/auth.md) | Email and password sign-in; every route scoped to the founder's company |
+| companies | [features/companies.md](features/companies.md) | The founder's business: everything belongs to one |
 | approvals | [features/approvals.md](features/approvals.md) | Approval rules at the release gate: ask, approve or reject, with reasons |
 | repos | [features/repos.md](features/repos.md) | Founders' GitHub repositories: clone, map before planning, pull request on release |

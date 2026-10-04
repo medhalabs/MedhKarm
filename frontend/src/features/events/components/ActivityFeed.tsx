@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { formatNumber } from "@/shared/lib/format";
 
-import { eventStreamUrl } from "../api/listEvents";
+import { eventStreamUrl } from "../api/streamUrl";
 import { isFinished, mergeEvents, STATUS_CHANGING, totalTokens } from "../describeEvent";
 import { EVENT_TYPES, type ActivityEvent } from "../types";
 import { EventRow } from "./EventRow";
