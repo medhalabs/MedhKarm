@@ -18,6 +18,7 @@ from app.features.projects.schemas import (
     Size,
 )
 from app.features.repos.schemas import RepoSource
+from app.features.starters.schemas import StackChoice
 
 
 class SqlProjectRepository:
@@ -169,6 +170,8 @@ def _project_values(values: dict[str, Any]) -> dict[str, Any]:
     if "repo" in out:
         repo = out["repo"]
         out["repo"] = repo.model_dump() if isinstance(repo, RepoSource) else repo
+    if isinstance(out.get("stack"), StackChoice):
+        out["stack"] = out["stack"].model_dump(mode="json")
     return out
 
 
@@ -180,6 +183,7 @@ def _to_project(row: ProjectRow) -> Project:
         repo=RepoSource.model_validate(row.repo) if row.repo else None,
         repo_owned=row.repo_owned,
         test_command=row.test_command,
+        stack=StackChoice.model_validate(row.stack) if row.stack else None,
         status=ProjectStatus(row.status),
         autopilot=row.autopilot,
         daily_limit=row.daily_limit,

@@ -141,6 +141,7 @@ This feature *is* the event log. Other features call `RunRecorder.record()`.
 
 | Date | Change |
 | --- | --- |
+| 2026-10-05 | `project.scaffolded` from `devops`: the stack and the starter set up for a new project |
 | 2026-10-04 | QA's `check.finished` lists each check (`data.checks`) and says who got the fix task; QA records `task.assigned` for it |
 | 2026-10-04 | `deploy.finished` events from `devops` |
 | 2026-10-04 | `security.finished` events and the `security` actor (Vikram) |

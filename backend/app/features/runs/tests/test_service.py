@@ -18,9 +18,27 @@ async def test_start_records_the_run_and_queues_a_job() -> None:
 
     run = await runs.start(StartRun(request="Build a calculator"))
 
-    assert (run.status, run.test_command) == (RunStatus.QUEUED, "pytest -q")
+    # A new project's test command comes from its starter; the stack is the team's to pick
+    assert (run.status, run.test_command) == (RunStatus.QUEUED, "")
+    assert run.stack is not None and run.stack.empty
     [job] = queue.jobs
     assert (job.kind, job.payload, job.max_attempts) == (START_JOB, {"run_id": run.id}, 2)
+
+
+async def test_a_repo_run_has_no_stack_and_keeps_the_founders_choices_otherwise() -> None:
+    runs, _, _ = service()
+
+    on_repo = await runs.start(
+        StartRun(
+            request="Fix the cart", repo={"url": "https://github.com/a/b"}, stack={"api": "java"}
+        )
+    )
+    new = await runs.start(
+        StartRun(request="A booking site", stack={"api": "Python", "hosting": "AWS"})
+    )
+
+    assert on_repo.stack is None
+    assert new.stack is not None and (new.stack.api, new.stack.hosting) == ("python", "aws")
 
 
 async def test_approval_only_when_waiting_and_only_once() -> None:

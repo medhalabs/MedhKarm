@@ -9,6 +9,10 @@ class BuildState(TypedDict, total=False):
     test_command: str  # shell command that decides "done" (detected from the repo if empty)
     repo: dict[str, Any]  # the founder's GitHub repository (RepoSource-shaped), if any
     new_repo: dict[str, Any]  # no repo: create one on release (NewRepo-shaped; absent = don't)
+    stack_choice: dict[str, Any]  # the founder's stack choices (StackChoice-shaped), new projects
+    stack: dict[str, Any]  # the stack the run builds on (Stack-shaped), decided by `scaffold`
+    stack_brief: str  # the stack, as text for the CTO and the developers
+    scaffold: dict[str, Any]  # the starter and modules put in the workspace (ScaffoldResult)
     repo_commit: str  # the commit the team started from
     codebase_map: str  # what the team learned about the project before changing it
     setup_ok: bool  # installing the project's dependencies worked

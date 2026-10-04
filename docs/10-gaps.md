@@ -4,7 +4,7 @@ Everything we know is missing, half-done or untested, in one place, so nothing f
 
 **How to keep it:** a gap found while building or testing gets a line here the same day (and in its feature doc). When it's filled, move it to **Filled** with the date and where. Ids never change.
 
-Last updated: Oct 4, 2026.
+Last updated: Oct 5, 2026.
 
 ## Before Gate 2 (by Nov 27, 2026)
 
@@ -15,6 +15,7 @@ Last updated: Oct 4, 2026.
 | G-03 | Code-graph (Graphify) A/B comparison unfinished (graph on: 10 of 13 so far, about 29% more tokens) | Decide whether to keep it | Oct 2 | Finish with the eval runner; lean: keep off |
 | G-05 | A backlog item has never been released end to end live (repo created, next item builds on it, auto-merge) | The backlog's core promise | Oct 4 | One live run with your OK to create the repo |
 | G-06 | A pull request on an existing repository has never been tested live against GitHub (skipped Oct 3) | Founders with existing projects | Oct 3 | Test with the first beta user's repo, or a test repo |
+| G-34 | The starter hasn't run live end to end: the free model building on it, Tara's browser test on a Next.js app, a Vercel preview of it | It's how every new project will start | Oct 5 | Phase 2 end test pass |
 | G-07 | Integration tests write into the development database; test runs (`probe`, `test-…`) can't be deleted from the append-only log and show as "Blocked" in standups | Misleading standups | Oct 1 | Separate test database (task suggested Oct 1) |
 
 ## Before the beta (by Dec 7, 2026)
@@ -27,6 +28,7 @@ Last updated: Oct 4, 2026.
 | G-11 | Local Docker sandbox only | Beta users' code can't run on this laptop | Sep 30 | Hosted sandbox decision by Nov 13 |
 | G-12 | Mira doesn't read an existing repository's code when planning, and there's no back-and-forth: she lists questions, you edit and ask again | Plans for existing projects are generic | Oct 4 | Give her the codebase map; answer her questions in the page |
 | G-13 | Frontend API types are written by hand, not generated from the OpenAPI spec (`shared/api/generated/` is empty) | Types can drift from the backend | Oct 1 | Add the generator to the frontend build |
+| G-35 | Local mode on Vercel keeps data in each server instance's memory: on a preview, accounts and records can vanish between requests | Founders try previews; sign-up that forgets you looks broken | Oct 5 | A free database per project for previews (Supabase/Neon), or Vercel's storage, set as `DATABASE_URL` by Neel |
 | G-14 | No readiness check (database, Redis) on `/health` | Deploys can't tell a broken backend | Oct 1 | `/health/ready` |
 
 ## Later
@@ -45,13 +47,17 @@ Last updated: Oct 4, 2026.
 | G-24 | The run row and its job are two transactions; finished jobs are never cleaned up | Oct 1 | One transaction; a clean-up job |
 | G-25 | A resumed run uses the current `DEVELOPER_ENGINE`, not the one it started with | Oct 1 | Store the engine in the run's state |
 | G-26 | `models.md` says there's no per-role model choice; roles do set their own model now | Oct 4 | Doc fix |
-| G-27 | The sandbox image is 2.86 GB since Playwright and Chromium (was 1.21 GB): slow first build, more disk | Oct 4 | Playwright's smaller headless-only Chromium; a separate image for web projects |
+| G-27 | The sandbox image is 3.24 GB (Playwright and Chromium, Node 22 and the starter's npm cache; was 1.21 GB): slow first build, more disk | Oct 4 | Playwright's smaller headless-only Chromium; a separate image for web projects |
 | G-28 | Browser tests are proven for Python web apps and plain pages; Node/React dev servers (npm, Next.js) aren't tried yet; QA's test used a fixed port (8000) instead of a free one | Oct 4 | Try on a JS app; tell QA to pick a free port in code |
 | G-29 | Hobby previews are behind Vercel login (302/401), so Neel can't smoke-test them; the founder must be signed in to Vercel | Oct 4 | Vercel "Protection Bypass for Automation" secret: Neel opens the preview and checks the page and API |
-| G-30 | Deploys: production not tested live; no app environment variables (API keys) on Vercel; Flask/Django not detected; inline upload capped at ~6 MB | Oct 4 | Test production on approval; env vars per project; file-upload API for big apps |
+| G-30 | Deploys: no app environment variables (API keys) on Vercel; Flask/Django not detected; inline upload capped at ~6 MB (production tested live Oct 5) | Oct 4 | Test production on approval; env vars per project; file-upload API for big apps |
 | G-31 | Placeholder tests slip through: a developer added `tests/test_dummy.py` with `assert True`; the CTO's review should refuse "tests that check nothing", but didn't, and the guards only catch fake test tools | Oct 4 | A guard for tests with no real assertion (`assert True`, empty bodies); CTO review prompt with an example |
 | G-32 | Eval cost estimates: the OpenHands engine's calls aren't metered (it reports totals only); paid-model figures ignore prompt caching (most tokens are repeated input), so they overstate cost; the ₹ rate in `prices.toml` is set by hand | Oct 4 | Meter OpenHands through its LLM settings; estimate cached input from the conversation shape; update the rate |
 | G-33 | QA checks: `ruff`/`mypy` run only when the project installs them (not in the sandbox image); checks already failing before a run are logged but not shown at the gate; the QA fix task goes to the first developer whatever failed; not tried live on a Node/Next.js project | Oct 4 | Add ruff to the image; show old failures at the gate; route by the failing files' specialty; test in the Phase 2 end pass |
+| G-36 | Starters: modules exist only for the Next.js API; a split project (Python API + Next.js in `api/` and `web/`) gets none, and QA's checks and Neel's preview only look at the project root; no starter for Java, Go, Django, Vue… (the team sets those up) | Oct 5 | Python modules; checks and previews per folder; more starters as founders ask |
+| G-37 | Neel deploys to Vercel only: Docker, DigitalOcean and AWS projects get Dockerfile and compose files but no automatic deploy | Oct 5 | New `DeployTarget` classes (DigitalOcean App Platform, AWS) |
+| G-38 | Module services untested against the real thing: Supabase Auth, Razorpay/Stripe test-mode payments, Resend email (unit tests only); no SMS/WhatsApp reminders; Vercel's free plan runs the reminders cron once a day | Oct 5 | Try each with test keys; an SMS/WhatsApp `Notifier` (MSG91, Gupshup) |
+| G-39 | The stack and modules are picked from the request's words, not understood ("spring" in a sentence; a feature that needs sign-in without saying so) | Oct 5 | Let the CTO confirm or adjust the stack and modules in the plan |
 
 ## Filled
 

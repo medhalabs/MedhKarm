@@ -2,6 +2,7 @@ from typing import Any, Protocol
 
 from app.features.repos.schemas import NewRepo, RepoSource
 from app.features.runs.schemas import Run, RunStatus
+from app.features.starters.schemas import StackChoice
 
 
 class RunRepository(Protocol):
@@ -12,6 +13,7 @@ class RunRepository(Protocol):
         test_command: str,
         repo: RepoSource | None = None,
         new_repo: NewRepo | None = None,
+        stack: StackChoice | None = None,
     ) -> Run: ...
 
     async def get(self, run_id: str) -> Run | None: ...

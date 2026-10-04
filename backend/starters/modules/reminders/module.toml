@@ -1,0 +1,22 @@
+name = "reminders"
+title = "Reminders"
+description = "Scheduled reminders and notifications: store when to send, a cron route sends what's due by email (Resend) or to the log"
+starters = ["nextjs"]
+requires = []
+keywords = ["remind", "reminder", "reminders", "notify", "notification", "notifications", "schedule", "scheduled", "follow up", "follow-up", "due date", "appointment", "email me", "alert"]
+env = """
+# Reminders: the cron route needs this secret (Vercel sends it as a Bearer token).
+CRON_SECRET=
+# Email through Resend (resend.com > API keys). Without it, reminders are written to the log.
+RESEND_API_KEY=
+EMAIL_FROM=App <onboarding@resend.dev>
+"""
+guide = """
+- `lib/reminders/`: `scheduleReminder({ to, subject, message, sendAt })` stores a reminder;
+  `sendDueReminders()` sends everything due and marks it `sent` (or `failed` with the reason).
+- Sending: `lib/reminders/notify.ts` picks email through Resend when `RESEND_API_KEY` is
+  set, else writes to the log. SMS/WhatsApp = a new `Notifier` class there.
+- Running on time: `GET /api/cron/reminders` (needs `Authorization: Bearer $CRON_SECRET`).
+  On Vercel, `vercel.json` calls it (the free plan allows once a day); on Docker, the
+  `cron` service in docker-compose calls it every 5 minutes.
+"""

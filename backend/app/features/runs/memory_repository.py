@@ -5,6 +5,7 @@ from typing import Any
 
 from app.features.repos.schemas import NewRepo, RepoSource
 from app.features.runs.schemas import Run, RunStatus
+from app.features.starters.schemas import StackChoice
 
 
 class InMemoryRunRepository:
@@ -18,6 +19,7 @@ class InMemoryRunRepository:
         test_command: str,
         repo: RepoSource | None = None,
         new_repo: NewRepo | None = None,
+        stack: StackChoice | None = None,
     ) -> Run:
         now = datetime.now(UTC)
         run = Run(
@@ -26,6 +28,7 @@ class InMemoryRunRepository:
             test_command=test_command,
             repo=repo,
             new_repo=new_repo,
+            stack=stack,
             status=RunStatus.QUEUED,
             created_at=now,
             updated_at=now,

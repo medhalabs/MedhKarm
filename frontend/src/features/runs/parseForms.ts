@@ -1,11 +1,14 @@
 /** Reads and checks the admin forms before anything is sent to the backend. */
 
+import { parseStack, type StackChoiceInput } from "@/features/starters";
+
 export type StartRunInput = {
   request: string;
-  test_command?: string; // omitted with a repo: the backend detects it
+  test_command?: string; // omitted: detected from the repo or the new project's starter
   repo?: { url: string; branch: string | null };
   create_repo?: boolean; // without a repo: create one on release (backend default: true)
   new_repo_name?: string;
+  stack?: StackChoiceInput; // without a repo: the stack and modules (empty: the team picks)
 };
 
 const REPO_NAME = /^[A-Za-z0-9._-]{1,100}$/;
@@ -28,11 +31,14 @@ export function parseStartRun(form: FormData): StartRunInput | { error: string }
     const name = String(form.get("new_repo_name") ?? "").trim();
     if (create && name && (!REPO_NAME.test(name) || name === "." || name === ".."))
       return { error: "Repository names use letters, digits, '.', '_' and '-'." };
+    const stack = parseStack(form);
+    if ("error" in stack) return stack;
     return {
       request,
-      test_command: testCommand || "pytest -q",
+      ...(testCommand ? { test_command: testCommand } : {}),
       create_repo: create,
       ...(create && name ? { new_repo_name: name } : {}),
+      stack,
     };
   }
   return {

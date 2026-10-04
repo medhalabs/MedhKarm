@@ -9,12 +9,23 @@ function form(values: Record<string, string>): FormData {
 }
 
 describe("parseStartRun", () => {
-  it("defaults the test command", () => {
+  it("leaves the test command and the stack to the team for a new project", () => {
     expect(parseStartRun(form({ request: " Build a calculator " }))).toEqual({
       request: "Build a calculator",
-      test_command: "pytest -q",
       create_repo: false,
+      stack: {},
     });
+  });
+
+  it("sends the founder's stack for a new project only", () => {
+    expect(
+      parseStartRun(form({ request: "A clinic website", stack_api: "python", module_auth: "on" })),
+    ).toMatchObject({ stack: { api: "python", modules: ["auth"] } });
+    expect(
+      parseStartRun(
+        form({ request: "Add search", repo_url: "https://github.com/a/notes", stack_api: "java" }),
+      ),
+    ).not.toHaveProperty("stack");
   });
 
   it("leaves the test command to the backend for a repo", () => {
@@ -30,9 +41,9 @@ describe("parseStartRun", () => {
       parseStartRun(form({ request: "Build a timer", create_repo: "on", new_repo_name: "timer" })),
     ).toEqual({
       request: "Build a timer",
-      test_command: "pytest -q",
       create_repo: true,
       new_repo_name: "timer",
+      stack: {},
     });
     expect(
       parseStartRun(

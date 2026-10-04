@@ -1,0 +1,31 @@
+name = "payments"
+title = "Payments"
+description = "Take payments in rupees: Razorpay (UPI, cards, netbanking) or Stripe behind one interface, with signature checks and a payments record"
+starters = ["nextjs"]
+requires = []
+keywords = ["pay", "payment", "payments", "checkout", "subscription", "subscribe", "razorpay", "stripe", "upi", "buy", "purchase", "order online", "donation", "donate", "fees", "invoice"]
+env = """
+# Payments: which provider takes the money ({{payments}} chosen for this project).
+PAYMENTS_PROVIDER={{payments}}
+# Razorpay (Dashboard > Account & Settings > API keys; test keys start with rzp_test_).
+RAZORPAY_KEY_ID=
+RAZORPAY_KEY_SECRET=
+RAZORPAY_WEBHOOK_SECRET=
+# Stripe (Developers > API keys; test keys start with sk_test_).
+STRIPE_SECRET_KEY=
+STRIPE_WEBHOOK_SECRET=
+# Where Stripe sends people back to (your site's address).
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
+"""
+guide = """
+- `lib/payments/`: `getPayments()` returns the provider set by `PAYMENTS_PROVIDER`
+  (Razorpay or Stripe), or null when its keys aren't set (the pay button then says payments
+  aren't connected). Amounts are in paise (₹499 = 49900).
+- Flow: `POST /api/payments/order` creates an order and a `payments` record (status
+  `created`) → `<PayButton>` opens Razorpay Checkout (or redirects to Stripe Checkout) →
+  `POST /api/payments/verify` (Razorpay) or the webhook marks it `paid`. Never trust the
+  browser: a payment is paid only after a signature check.
+- Webhooks: `POST /api/payments/webhook` (set it in the provider's dashboard).
+- Example page: /pay. Another provider = a new class in `lib/payments/` implementing
+  `PaymentProvider`, picked in `lib/payments/index.ts`.
+"""

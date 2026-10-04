@@ -108,7 +108,7 @@ None.
 ## Dependencies
 
 - **Other features used:** `workflows` (`WorkflowService`, build graph, `WorkChecker`), `sandbox`, `developer_engine` and `models` (through the shared wiring in `app/workers/wiring.py`)
-- **Sandbox image:** `medhkarm-sandbox:3` (Python 3.13, Node 20, pytest, FastAPI, httpx2), built automatically from `backend/sandbox-image/` on first use. The OpenHands engine uses its own image and installs the test tools at the start of each task.
+- **Sandbox image:** `medhkarm-sandbox:4` (Python 3.13, Node 22 with npm, pytest, FastAPI, httpx2), built automatically from `backend/sandbox-image/` on first use. The OpenHands engine uses its own image and installs the test tools at the start of each task.
 - **Config:** `EVAL_SANDBOX_IMAGE`, plus the usual model and engine settings
 
 ## Design decisions

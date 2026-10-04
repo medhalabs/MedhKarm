@@ -23,6 +23,7 @@ from app.features.repos.github import GitHubRepoHost
 from app.features.repos.service import RepoService
 from app.features.sandbox.interfaces import SandboxProvider
 from app.features.security.service import SecurityReview
+from app.features.starters.service import StarterService
 from app.features.teams.loader import load_templates
 from app.features.teams.schemas import RoleSpec, TeamTemplate
 from app.features.teams.service import TeamService
@@ -155,6 +156,7 @@ async def workflow_service(
             browser_tester=team.browser_tester,
             qa_name=team.qa_name,
             deploys=team.deploys,
+            starters=StarterService(),
             repos=RepoService(
                 GitHubRepoHost(settings.github_token),
                 GraphifyCodeGraph() if settings.code_graph else None,

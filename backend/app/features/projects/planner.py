@@ -89,6 +89,20 @@ class BacklogPlanner:
                 f"It's an existing codebase ({project.repo.url}); the team reads the code "
                 "before building each item, so plan changes to that project."
             )
+        elif project.stack and not project.stack.empty:
+            chosen = ", ".join(
+                f"{field}: {value}"
+                for field, value in project.stack.model_dump(
+                    exclude={"modules", "starter", "notes"}
+                ).items()
+                if value
+            )
+            parts.append(
+                f"The founder chose this stack: {chosen}. The first item starts the project "
+                "from our starter (sign-in, payments, reminders and an admin dashboard come "
+                "ready-made when needed), so plan features, not set-up."
+                + (f"\nTheir notes: {project.stack.notes}" if project.stack.notes else "")
+            )
         built = [
             i.title
             for i in await self._projects.list_items(project.id)

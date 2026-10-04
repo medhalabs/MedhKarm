@@ -1,0 +1,20 @@
+# How this project is built
+
+Started from the MedhKarm Python API starter. Keep to this structure so every part stays tested.
+
+## Stack
+
+{{stack_table}}
+
+## Layout
+
+- `app/main.py`: the FastAPI app and its routes; split into `app/routes/` as it grows.
+- `app/store.py`: the data layer (SQLite: `DATABASE_PATH`, memory by default). Routes use
+  only `store`, so a move to Postgres changes this file alone.
+- `tests/`: pytest tests with FastAPI's `TestClient` (`python -m pytest -q`).
+
+## Rules
+
+- Works with no setup (memory database), so tests run anywhere.
+- Never commit secrets: read settings from environment variables.
+- Before finishing: `python -m pytest -q` passes.

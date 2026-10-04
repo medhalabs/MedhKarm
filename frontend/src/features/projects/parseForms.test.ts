@@ -20,6 +20,7 @@ describe("parseNewProject", () => {
       repo: null,
       autopilot: true,
       daily_limit: 3,
+      stack: {},
     });
   });
 

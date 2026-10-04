@@ -74,6 +74,8 @@ def _brief(state: BuildState, task: dict[str, Any], index: int, count: int) -> s
         if state.get("codebase_map")
         else ""
     )
+    if state.get("stack_brief"):
+        project = f"{state['stack_brief']}\n\n{project}"
     brief = (
         f"{state['request']}\n\n{project}The CTO's plan:\n{state.get('plan', '')}\n\n"
         f"Your task ({index + 1} of {count}): {task['title']}\n{task.get('description', '')}\n"

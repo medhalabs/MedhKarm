@@ -63,7 +63,7 @@ Forms are React forms with **server actions** (`api/actions.ts`): the Next.js se
 
 | Method | Path | Purpose | Auth |
 | --- | --- | --- | --- |
-| POST | `/runs` | Start a run: `{"request": "...", "test_command": "pytest -q", "repo": {"url": "https://github.com/owner/name", "branch": null}}` → 202 with the run. `repo` is optional ([repos.md](repos.md)); without it, `create_repo` (default `true`) and `new_repo_name` ask for a new private repository on release; `test_command` is optional: `pytest -q` for a new project, detected from the project with a repo | None yet |
+| POST | `/runs` | Start a run: `{"request": "...", "test_command": "pytest -q", "repo": {"url": "https://github.com/owner/name", "branch": null}}` → 202 with the run. `repo` is optional ([repos.md](repos.md)); without it, `create_repo` (default `true`) and `new_repo_name` ask for a new private repository on release; `test_command` is optional: detected from the repo, or from the starter a new project begins with (`npm test`; `python -m pytest -q` for an empty project). Without a repo, `stack` (`StackChoice`: frontend, api, database, hosting, payments, modules, starter, notes; all optional) sets up the project from our starter ([starters.md](starters.md)) | None yet |
 | GET | `/runs?limit=50` | Runs, newest first (limit 1–200) | None yet |
 | GET | `/runs/{run_id}` | One run: status, `gate` while waiting, `error` if it broke | None yet |
 | POST | `/runs/{run_id}/approval` | `{"approved": true, "feedback": ""}` → 202 | None yet |
@@ -81,7 +81,7 @@ curl -X POST 127.0.0.1:8000/runs/<run_id>/approval -H 'content-type: application
 
 | Table | Key columns | Notes |
 | --- | --- | --- |
-| `runs` | `id` (same as the LangGraph thread id and the events' `run_id`), `request`, `test_command` (empty: detected when the run starts), `repo` (jsonb, the GitHub repository), `delivery` (jsonb, the pull request with the released work), `status`, `gate` (jsonb: question, `reasons` and `rules` from the approval rules, summary, files, tokens, tests), `error`, `created_at`, `updated_at`, `company_id` (nullable) | Index on `created_at`. The detail of a run lives in the event log and the checkpoint; this row is its current status, for lists and approvals |
+| `runs` | `id` (same as the LangGraph thread id and the events' `run_id`), `request`, `test_command` (empty: detected when the run starts), `repo` (jsonb, the GitHub repository), `stack` (jsonb, the founder's stack choices for a new project, migration `0008`), `delivery` (jsonb, the pull request with the released work), `status`, `gate` (jsonb: question, `reasons` and `rules` from the approval rules, summary, files, tokens, tests), `error`, `created_at`, `updated_at`, `company_id` (nullable) | Index on `created_at`. The detail of a run lives in the event log and the checkpoint; this row is its current status, for lists and approvals |
 
 ## Events
 
@@ -109,7 +109,7 @@ None of its own. The workflow records the run's events ([workflows.md](workflows
 ## Known limitations and gotchas
 
 - No sign-in or companies yet: anyone who can reach the API or the admin page can start and approve runs (server actions are reachable by POST too). Keep both on localhost until auth lands.
-- The default test command `pytest -q` relies on the default sandbox image (`medhkarm-sandbox:3`), which has pytest. With another `SANDBOX_IMAGE`, install the test tools in the test command.
+- The detected test commands rely on the default sandbox image (`medhkarm-sandbox:4`: pytest, Node 22 with npm). With another `SANDBOX_IMAGE`, install the test tools in the test command.
 - Cancelling a running build isn't supported yet.
 - Runs started from the command line (`build_run start`) have no `runs` row, so they don't appear in `GET /runs` (their events and standup still work).
 
@@ -126,6 +126,7 @@ None of its own. The workflow records the run's events ([workflows.md](workflows
 | Date | Change |
 | --- | --- |
 | 2026-10-04 | `deployment` (where the released app is live, migration 0007); the admin page shows the preview link at the gate and the live link |
+| 2026-10-05 | `stack` on start and on runs (migration `0008`); new projects no longer default to `pytest -q` (detected from the starter); admin form: "Stack for a new project" |
 | 2026-10-01 | New projects: `create_repo` / `new_repo_name` on start, `new_repo` on runs (migration `0005`); admin form checkbox and name; run page shows the created repository |
 | 2026-10-01 | Runs on an existing GitHub repository: optional `repo` on start, `repo` and `delivery` on runs (migration `0004`), test command optional; admin form and run page show the repo and the pull request ([repos.md](repos.md)) |
 | 2026-10-01 | Admin page: start, list, watch and approve runs in the browser |

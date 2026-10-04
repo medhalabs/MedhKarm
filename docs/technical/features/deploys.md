@@ -1,8 +1,8 @@
 # Deploys (DevOps, Neel)
 
-**Status:** Built (Phase 2): a preview before the release gate, production after approval, on Vercel. Preview tested live (Oct 4, 2026); production not yet tested live  
+**Status:** Done (Phase 2): a preview before the release gate, production after approval, on Vercel. Both tested live (Oct 4, 2026)  
 **Code:** `backend/app/features/deploys/` · workflow steps `nodes/preview.py` and `nodes/finish.py` · migration `backend/alembic/versions/0007_run_deployment.py`  
-**Last updated:** 2026-10-04
+**Last updated:** 2026-10-05
 
 ## What it is
 
@@ -74,12 +74,11 @@ None of its own: `GET /runs/{id}` → `gate.preview_url` / `gate.preview_error`,
 ## How to run and test
 
 - Tests: `uv run pytest app/features/deploys app/features/workflows/tests/test_preview_step.py` (detection, files, Vercel with a fake API, preview → gate → production, nothing live without approval).
-- **Live test (Oct 4, 2026):** a word counter (FastAPI + page). QA's tests and Tara's browser test passed and security was clean. Neel's preview reached `READY` on Vercel as `medhkarm-4d3ea47bde94-…vercel.app`; the run waited at the gate. The preview answers 302 (sign in to Vercel) and 401 for the API, because Hobby previews are protected; the founder, signed in, can open it.
+- **Live test (Oct 4, 2026):** a word counter (FastAPI + page). QA's tests and Tara's browser test passed and security was clean. Neel's preview reached `READY` on Vercel as `medhkarm-4d3ea47bde94-…vercel.app`; the run waited at the gate. The preview answers 302 (sign in to Vercel) and 401 for the API, because Hobby previews are protected; the founder, signed in, can open it. After the founder approved, `finish` deployed to production: `READY` at `https://medhkarm-4d3ea47bde94.vercel.app` (public). Checked Oct 5: the page answers 200 and `POST /api/count` returns `{"words":3,"characters":15,"reading_minutes":1}` for "hello big world".
 
 ## Known limitations and gotchas
 
 - Hobby previews are behind Vercel login, so Neel can't check them himself (see gaps: protection bypass).
-- Production hasn't been exercised live yet.
 - Inline files: about 6 MB and 300 files at most; binary assets are sent as base64 within that.
 - Environment variables (API keys) for the app aren't set on Vercel yet.
 - Python apps other than FastAPI (Flask, Django) aren't detected yet.
@@ -96,4 +95,5 @@ None of its own: `GET /runs/{id}` → `gate.preview_url` / `gate.preview_error`,
 
 | Date | Change |
 | --- | --- |
+| 2026-10-05 | Production deploy tested live (word counter, public URL) |
 | 2026-10-04 | Created: app detection, Vercel previews before the gate, production after approval, `runs.deployment` |

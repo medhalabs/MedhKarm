@@ -1,0 +1,23 @@
+# How this project is built
+
+Started from the MedhKarm Next.js starter. Keep to this structure so every part stays tested.
+
+## Stack
+
+{{stack_table}}
+
+## Layout
+
+- `app/`: pages and API routes (Next.js App Router). Server components by default; add
+  `"use client"` only for interactive parts.
+- `lib/`: logic, one job per file. `lib/config.ts` reads settings; nothing is required.
+- `lib/db/`: the data layer. Use `getStore().collection<T>("name")` for records; it runs
+  locally (memory / `.data/`) with no keys and on Postgres when `DATABASE_URL` is set
+  (Supabase's connection string works). Add migrations in `db/migrations/` for new tables.
+- `tests/`: vitest unit tests (`npm test`) for everything in `lib/`.
+{{modules_section}}
+## Rules
+
+- Every feature works in local mode (no keys), so tests and previews run anywhere.
+- Never commit secrets: new settings go in `.env.example` with a comment, read through `lib/config.ts`.
+- Before finishing: `npm test`, `npm run typecheck`, `npm run lint` and `npm run build` pass.

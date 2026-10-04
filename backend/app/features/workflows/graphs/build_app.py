@@ -1,4 +1,4 @@
-"""Build graph: prepare → connect → plan → (develop → review)* → verify → browser QA →
+"""Build graph: prepare → scaffold → connect → plan → (develop → review)* → verify → browser QA →
 security → preview → (release gate) → finish.
 
 QA (verify) runs the tests, build, type-check and lint; failures go back to a developer once.
@@ -21,6 +21,7 @@ from app.features.models.interfaces import LLMProvider
 from app.features.repos.service import RepoService
 from app.features.sandbox.interfaces import SandboxProvider
 from app.features.security.service import SecurityReview
+from app.features.starters.service import StarterService
 from app.features.workflows.checkers.quality import QualityChecker
 from app.features.workflows.checkers.test_command import TestCommandChecker
 from app.features.workflows.interfaces import WorkChecker
@@ -33,6 +34,7 @@ from app.features.workflows.nodes.plan import PLANNER_PROMPT, make_plan_node
 from app.features.workflows.nodes.prepare import make_prepare_node
 from app.features.workflows.nodes.preview import make_preview_node
 from app.features.workflows.nodes.review import REVIEW_PROMPT, after_review, make_review_node
+from app.features.workflows.nodes.scaffold import make_scaffold_node
 from app.features.workflows.nodes.security import after_security, make_security_node
 from app.features.workflows.nodes.verify import after_verify, make_verify_node
 from app.features.workflows.state import BuildState
@@ -58,6 +60,7 @@ def build_app_graph(
     browser_tester: DeveloperEngine | None = None,
     qa_name: str = "QA",
     deploys: DeployService | None = None,
+    starters: StarterService | None = None,
 ) -> CompiledStateGraph[BuildState, None, BuildState, BuildState]:
     """`planner` is the CTO's model: it plans and reviews. The role settings normally come from
     the team template (see app/workers/wiring.py). `approval_policy` decides the release gate:
@@ -67,10 +70,12 @@ def build_app_graph(
     `specialties` (developer name -> specialty) and `specialty_instructions` let the CTO assign
     tasks to specialists, who get their specialty's instructions. `browser_tester` is QA's
     engine for end-to-end browser tests of web changes; without one, none are written.
-    `deploys` is DevOps: a preview before the gate, production after approval."""
+    `deploys` is DevOps: a preview before the gate, production after approval. `starters` sets
+    up new projects from our starter and modules; without one, they start empty."""
     repos = repos or RepoService()
     graph = StateGraph(BuildState)
     graph.add_node("prepare", make_prepare_node(sandboxes))
+    graph.add_node("scaffold", make_scaffold_node(sandboxes, starters))
     graph.add_node("connect", make_connect_node(sandboxes, repos))
     graph.add_node(
         "plan",
@@ -107,7 +112,8 @@ def build_app_graph(
     graph.add_node("finish", make_finish_node(sandboxes, repos, deploys))
 
     graph.add_edge(START, "prepare")
-    graph.add_edge("prepare", "connect")
+    graph.add_edge("prepare", "scaffold")
+    graph.add_edge("scaffold", "connect")
     graph.add_edge("connect", "plan")
     graph.add_edge("plan", "develop")
     graph.add_edge("develop", "review")

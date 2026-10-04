@@ -30,6 +30,7 @@ from app.features.projects.schemas import (
 )
 from app.features.repos.schemas import RepoSource, repo_name_for
 from app.features.runs.schemas import RunStatus, StartRun
+from app.features.starters.schemas import StackChoice
 
 logger = logging.getLogger(__name__)
 
@@ -77,6 +78,7 @@ class BacklogProgress:
                 repo=project.repo,
                 create_repo=project.repo is None,
                 new_repo_name=None if project.repo else repo_name_for(project.name, project.id),
+                stack=project.stack or StackChoice(),
             )
         )
         if project.status == ProjectStatus.PAUSED:

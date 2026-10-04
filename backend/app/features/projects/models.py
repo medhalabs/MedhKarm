@@ -21,6 +21,7 @@ class ProjectRow(Base):
     repo: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
     repo_owned: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
     test_command: Mapped[str] = mapped_column(Text, nullable=False, server_default="")
+    stack: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
     status: Mapped[str] = mapped_column(String(20), nullable=False)
     autopilot: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
     daily_limit: Mapped[int] = mapped_column(Integer, nullable=False, server_default="2")

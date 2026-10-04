@@ -1,11 +1,14 @@
 /** Reads and checks the projects forms before anything is sent to the backend. */
 
+import { parseStack, type StackChoiceInput } from "@/features/starters";
+
 export type NewProjectInput = {
   name: string;
   goal: string;
   repo: { url: string } | null;
   autopilot: boolean;
   daily_limit: number;
+  stack?: StackChoiceInput; // a new project's stack and modules (empty: the team picks)
 };
 
 export type NewItemInput = { title: string; description: string; acceptance: string[] };
@@ -21,12 +24,15 @@ export function parseNewProject(form: FormData): NewProjectInput | { error: stri
     return { error: "Use the repository's GitHub address: https://github.com/owner/name" };
   if (!Number.isInteger(limit) || limit < 1 || limit > 10)
     return { error: "Items per day is a number from 1 to 10." };
+  const stack = repoUrl ? null : parseStack(form);
+  if (stack && "error" in stack) return stack;
   return {
     name,
     goal,
     repo: repoUrl ? { url: repoUrl } : null,
     autopilot: form.get("autopilot") === "on",
     daily_limit: limit,
+    ...(stack ? { stack } : {}),
   };
 }
 

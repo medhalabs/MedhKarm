@@ -40,6 +40,7 @@ class ProjectService:
                 "goal": body.goal,
                 "repo": body.repo,
                 "test_command": body.test_command or "",
+                "stack": None if body.repo else body.stack,
                 "status": ProjectStatus.PLANNING,
                 "autopilot": body.autopilot,
                 "daily_limit": body.daily_limit,

@@ -2,6 +2,8 @@
 
 import { useActionState } from "react";
 
+import { StackFields } from "@/features/starters";
+
 import { startRunAction } from "../api/actions";
 import type { FormState } from "../types";
 
@@ -63,9 +65,10 @@ export function StartRunForm() {
           />
         </label>
       </div>
+      <StackFields />
       <div className="flex flex-wrap items-end gap-3">
         <label className="flex flex-1 flex-col gap-1 text-sm font-medium">
-          Test command (decides when it&apos;s done; detected for a repo if empty)
+          Test command (decides when it&apos;s done; detected if empty)
           <input
             name="test_command"
             placeholder="python -m pytest -q"

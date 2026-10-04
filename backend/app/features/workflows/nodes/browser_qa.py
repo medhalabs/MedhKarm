@@ -31,8 +31,9 @@ Files they changed: {files}
 
 Write ONE end-to-end browser test for it in {e2e_dir}/test_<short_name>.py with
 pytest-playwright (use its `page` fixture). In the test, start the app the way it really
-runs (for example `python -m uvicorn app:app --port <a free port>` with subprocess, or
-`python -m http.server` for plain pages), wait until it answers, then use the page like a
+runs (for example `python -m uvicorn app:app --port <a free port>` with subprocess,
+`python -m http.server` for plain pages, or for Next.js `npm run build` once and then
+`npx next start -p <a free port>`), wait until it answers, then use the page like a
 person: open it, fill in forms, click, and check what appears. Cover the main journey the
 request describes. Stop the server at the end.
 Run `{command}`. Fix the TEST until it reflects the request. If the app itself is broken,

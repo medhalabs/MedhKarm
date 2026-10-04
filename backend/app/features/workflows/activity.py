@@ -15,6 +15,8 @@ async def record_step(recorder: RunRecorder, node: str, data: dict[str, Any]) ->
             "Thought about the plan" if node == "plan" else "Reviewed the work",
             tokens=int(data["cto_tokens"]),
         )
+    if node == "scaffold" and data.get("stack"):
+        await _record_scaffold(recorder, data)
     if node == "connect" and data.get("codebase_map"):
         first_line = str(data["codebase_map"]).splitlines()[0]
         await recorder.record(
@@ -133,6 +135,45 @@ async def record_step(recorder: RunRecorder, node: str, data: dict[str, Any]) ->
         await recorder.record(
             Actor.SYSTEM, EventType.RUN_FINISHED, summaries.get(status, status), {"status": status}
         )
+
+
+STARTER_NAMES = {"nextjs": "Next.js", "fastapi": "Python API"}
+MODULE_NAMES = {
+    "auth": "sign-in",
+    "payments": "payments",
+    "reminders": "reminders",
+    "dashboards": "an admin dashboard",
+}
+
+
+async def _record_scaffold(recorder: RunRecorder, data: dict[str, Any]) -> None:
+    stack, scaffold = data["stack"], data.get("scaffold")
+    parts = f"{stack['frontend']} + {stack['api']}, {stack['database']}, {stack['hosting']}"
+    if scaffold:
+        modules = [MODULE_NAMES.get(m, m) for m in scaffold.get("modules", [])]
+        starter = STARTER_NAMES.get(scaffold["starter"], scaffold["starter"])
+        summary = (
+            f"Set up the project from our {starter} starter"
+            + (f" with {', '.join(modules)}" if modules else "")
+            + f" ({parts})"
+            + ("" if scaffold.get("setup_ok", True) else ". Installing it failed")
+        )
+    else:
+        summary = f"Chose the stack: {parts}"
+    await recorder.record(
+        Actor.DEVOPS,
+        EventType.PROJECT_SCAFFOLDED,
+        summary,
+        {
+            "stack": stack,
+            **(
+                {"scaffold": {k: v for k, v in scaffold.items() if k != "files"}}
+                | {"files": len(scaffold.get("files", []))}
+                if scaffold
+                else {}
+            ),
+        },
+    )
 
 
 def _task_brief(task: dict[str, Any]) -> dict[str, Any]:

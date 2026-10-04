@@ -1,0 +1,6 @@
+# The Next.js starter: one app for pages and API routes. Runs with no keys (local mode).
+name = "nextjs"
+title = "Next.js"
+description = "Next.js app (pages and API routes) with a data layer that runs locally and on Supabase or any Postgres"
+setup_command = "npm ci --prefer-offline --no-audit --no-fund"
+test_command = "npm test"

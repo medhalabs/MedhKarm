@@ -28,9 +28,9 @@ class Settings(BaseSettings):
     # Sandbox
     # Python + Node + pytest, built from backend/sandbox-image/ on first use. A bare
     # python:3.13-slim has no pytest, and developers then faked it (see workflows/guards.py).
-    sandbox_image: str = "medhkarm-sandbox:3"
+    sandbox_image: str = "medhkarm-sandbox:4"
     # Python + Node + test tools, built from backend/sandbox-image/ (see features/evals.md)
-    eval_sandbox_image: str = "medhkarm-sandbox:3"
+    eval_sandbox_image: str = "medhkarm-sandbox:4"
 
     # GitHub: clone founders' private repositories and open pull requests with released work.
     # A fine-grained token with Contents and Pull requests (read and write) on those repos.

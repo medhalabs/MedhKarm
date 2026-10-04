@@ -89,6 +89,7 @@ async def test_reports_each_step() -> None:
 
     assert seen == [
         "prepare",
+        "scaffold",
         "connect",
         "plan",
         "develop",

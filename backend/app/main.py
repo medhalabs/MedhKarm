@@ -12,6 +12,7 @@ from app.features.integrations.router import router as integrations_router
 from app.features.projects.router import router as projects_router
 from app.features.runs.router import router as runs_router
 from app.features.standups.router import router as standups_router
+from app.features.starters.router import router as starters_router
 from app.features.teams.router import router as teams_router
 
 
@@ -37,6 +38,7 @@ def create_app() -> FastAPI:
     app.include_router(teams_router)
     app.include_router(standups_router)
     app.include_router(integrations_router)
+    app.include_router(starters_router)
 
     return app
 

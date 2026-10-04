@@ -22,6 +22,7 @@ class RunRow(Base):
     status: Mapped[str] = mapped_column(String(30), nullable=False)
     repo: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
     new_repo: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
+    stack: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
     gate: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
     delivery: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
     deployment: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)

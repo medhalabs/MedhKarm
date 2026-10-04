@@ -1,0 +1,4 @@
+# Extra files for where the app will run. Vercel needs none (it builds Next.js itself).
+[docker]
+hosts = ["docker", "digitalocean", "aws", "gcp", "azure", "railway", "render", "fly", "vps"]
+dir = "hosting/docker"

@@ -1,0 +1,24 @@
+# Runs the app with its own Postgres: `docker compose up --build` → http://localhost:3000
+# On a server (DigitalOcean droplet, AWS EC2/Lightsail): same command; put HTTPS in front.
+services:
+  app:
+    build: .
+    ports: ["3000:3000"]
+    env_file: [.env]
+    environment:
+      DATABASE_URL: postgres://app:app@db:5432/app
+    depends_on: [db]
+    restart: unless-stopped
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app
+      POSTGRES_DB: app
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      - ./db/migrations:/docker-entrypoint-initdb.d:ro
+    restart: unless-stopped
+{{cron_service}}
+volumes:
+  db-data:

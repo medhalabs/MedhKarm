@@ -1,3 +1,5 @@
+import type { StackChoiceInput } from "@/features/starters";
+
 // Mirrors backend/app/features/runs/schemas.py.
 
 export type RunStatus =
@@ -47,6 +49,7 @@ export type Run = {
   test_command: string; // empty: detected from the repository when the run starts
   repo: RepoSource | null;
   new_repo: { name: string | null } | null; // a repository to create on release
+  stack: StackChoiceInput | null; // the founder's stack choices (new projects)
   status: RunStatus;
   gate: Gate | null;
   error: string | null;

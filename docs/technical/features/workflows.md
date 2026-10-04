@@ -13,7 +13,8 @@ The sequence of steps a build goes through, run by LangGraph: the CTO plans task
 ```mermaid
 flowchart LR
     S((start)) --> PR[prepare<br/>create the sandbox]
-    PR --> C[connect<br/>clone the repo, map it,<br/>install it]
+    PR --> SC[scaffold<br/>new project: starter<br/>+ modules]
+    SC --> C[connect<br/>clone the repo, map it,<br/>install it]
     C --> P[plan<br/>CTO splits into tasks,<br/>assigns developers]
     P --> D[develop<br/>assigned developer<br/>works on current task]
     D --> R{review<br/>CTO checks the task}
@@ -28,6 +29,7 @@ flowchart LR
 ```
 
 0. **prepare** — creates the run's sandbox (unless one was given, as the eval runner does), so its id is saved in a checkpoint before any work. A retry or another worker then re-attaches to it instead of creating a new one.
+0. **scaffold** — for a new project with stack choices: decides the stack (the founder's choices, then the request's words, then Next.js/Supabase/Vercel/Razorpay) and, for an app, writes our starter and its modules into the workspace and installs them offline; sets the test command and `stack_brief`, which the CTO's plan and every developer brief include ([starters.md](starters.md)). Repo runs and non-empty workspaces are left alone.
 0. **connect** — gets to know the project before anyone plans: clones the founder's repository if the run has one, maps the code (files, languages, outline, how to install and test) and installs it, and fills in the test command if none was given ([repos.md](repos.md)). Then it runs QA's quality checks once on the project as found (`checks_baseline`, see verify). For a new project with an empty workspace it does nothing.
 1. **plan** — the CTO (with the codebase map, for an existing project) (template role `cto`: model and `instructions`) answers with the `submit_plan` tool: a summary, how many developers to use, and 1–5 tasks in order. `assign()` gives each task an id (`t1`…) and an owner, round-robin over the developers' names (up to the developer role's `max_count`). The plan is read leniently (see `cto.py`): small models name fields their own way, and if no usable plan comes back the fallback is one task covering the whole request.
 2. **develop** — re-attaches to the run's sandbox by id; the current task's owner works on it through the `DeveloperEngine`. The brief has the request, the CTO's plan, "your task (i of n)", and, on a second attempt, the CTO's requested changes. Tasks run one after another in the same workspace, so later tasks build on earlier ones.
@@ -82,6 +84,7 @@ Live test (Oct 4, 2026): a BMI calculator (FastAPI + a page). Kabir split it int
 | `nodes/base.py` | `BuildNode` Protocol: the shape every node factory returns |
 | `cto.py` | The CTO's plan and review as data: `submit_plan` / `submit_review` tools, lenient parsing, `assign()` |
 | `nodes/prepare.py` | First node: creates the sandbox |
+| `nodes/scaffold.py` | New projects: stack, starter and modules ([starters.md](starters.md)) |
 | `nodes/connect.py` | Clones and maps the project (`RepoService`), sets the test command if empty |
 | `nodes/plan.py` | CTO planning node |
 | `nodes/review.py` | CTO review node and `after_review` routing |
@@ -168,6 +171,7 @@ LangGraph creates and owns its tables in our Postgres (`checkpoints`, `checkpoin
 
 | Date | Change |
 | --- | --- |
+| 2026-10-05 | `scaffold` step after `prepare` (starter and modules for new projects, `stack`, `stack_brief`, `scaffold` in the state; `WorkflowService.start(..., stack=)`); the stack brief goes into the plan and developer briefs; Tara's brief says how to start a Next.js app |
 | 2026-10-04 | QA checks: `QualityChecker` runs the tests plus the project's build, type-check and lint (`syntax`, `types`, `lint`, `build`, `ruff`, `mypy`); `checks_baseline` measured in `connect` so old failures don't block; one fix round (`qa1`, "Make QA's checks pass", `qa_rounds`); `state.checks`; `after_verify` |
 | 2026-10-04 | `preview` step (DevOps) after security; production deploy in `finish` after approval |
 | 2026-10-04 | `browser_qa` step: QA writes an end-to-end Playwright test for web changes; one fix round for the frontend developer; `finish` fails runs whose browser test still fails |

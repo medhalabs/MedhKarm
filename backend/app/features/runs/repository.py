@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from app.features.repos.schemas import NewRepo, RepoSource
 from app.features.runs.models import RunRow
 from app.features.runs.schemas import Run, RunStatus
+from app.features.starters.schemas import StackChoice
 
 
 class SqlRunRepository:
@@ -21,6 +22,7 @@ class SqlRunRepository:
         test_command: str,
         repo: RepoSource | None = None,
         new_repo: NewRepo | None = None,
+        stack: StackChoice | None = None,
     ) -> Run:
         row = RunRow(
             id=run_id,
@@ -28,6 +30,7 @@ class SqlRunRepository:
             test_command=test_command,
             repo=repo.model_dump(mode="json") if repo else None,
             new_repo=new_repo.model_dump(mode="json") if new_repo else None,
+            stack=stack.model_dump(mode="json") if stack else None,
             status=RunStatus.QUEUED,
         )
         async with self._sessions() as session, session.begin():
@@ -84,6 +87,7 @@ def _to_run(row: RunRow) -> Run:
         test_command=row.test_command,
         repo=RepoSource.model_validate(row.repo) if row.repo else None,
         new_repo=NewRepo.model_validate(row.new_repo) if row.new_repo else None,
+        stack=StackChoice.model_validate(row.stack) if row.stack else None,
         status=RunStatus(row.status),
         gate=row.gate,
         error=row.error,

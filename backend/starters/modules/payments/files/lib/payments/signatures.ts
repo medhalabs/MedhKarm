@@ -1,0 +1,11 @@
+import { createHmac, timingSafeEqual } from "node:crypto";
+
+export function hmacHex(secret: string, message: string): string {
+  return createHmac("sha256", secret).update(message).digest("hex");
+}
+
+export function sameHex(a: string, b: string): boolean {
+  const left = Buffer.from(a, "utf8");
+  const right = Buffer.from(b, "utf8");
+  return left.length === right.length && timingSafeEqual(left, right);
+}

@@ -1,11 +1,20 @@
 # Development sandbox for the built-in developer engine and the eval suite.
 # Python + Node.js with the test tools tasks need, so runs don't download packages.
-# Build: docker build -t medhkarm-sandbox:3 backend/sandbox-image (the worker builds it if missing)
+# Build: docker build -t medhkarm-sandbox:4 backend/sandbox-image (the worker builds it if missing)
+FROM node:22-slim AS node
+
 FROM python:3.13-slim
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends nodejs git \
+    && apt-get install -y --no-install-recommends git \
     && rm -rf /var/lib/apt/lists/*
+
+# Node.js 22 with npm and corepack (Debian's nodejs package has no npm)
+COPY --from=node /usr/local/bin/node /usr/local/bin/node
+COPY --from=node /usr/local/lib/node_modules /usr/local/lib/node_modules
+RUN ln -s ../lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
+    && ln -s ../lib/node_modules/npm/bin/npx-cli.js /usr/local/bin/npx \
+    && ln -s ../lib/node_modules/corepack/dist/corepack.js /usr/local/bin/corepack
 
 RUN pip install --no-cache-dir pytest fastapi httpx2 pydantic
 
@@ -20,5 +29,15 @@ COPY semgrep.yml /opt/medhkarm/semgrep.yml
 RUN pip install --no-cache-dir playwright==1.63.0 pytest-playwright==0.9.0 uvicorn \
     && python -m playwright install --with-deps chromium \
     && rm -rf /var/lib/apt/lists/*
+
+# Starters (backend/starters/): the Next.js starter's packages in the npm cache, so a new
+# project installs in seconds without downloading. Copies of its package.json and lockfile
+# (a test keeps them in step).
+ENV npm_config_cache=/opt/medhkarm/npm-cache
+COPY starter-deps /opt/medhkarm/starter-deps
+RUN cd /opt/medhkarm/starter-deps/nextjs \
+    && npm ci --no-audit --no-fund \
+    && rm -rf node_modules \
+    && chmod -R a+rwX /opt/medhkarm/npm-cache
 
 WORKDIR /workspace

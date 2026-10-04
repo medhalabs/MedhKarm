@@ -41,6 +41,8 @@ def make_plan_node(
                 f"{state['codebase_map']}\n\nChange this existing project; keep its structure "
                 f"and style. Tests run with: {state['test_command']}\n\n{team}"
             )
+        if state.get("stack_brief"):
+            team = f"{state['stack_brief']}\n\n{team}"
         response = await llm.complete(
             [
                 {"role": "system", "content": instructions.strip()},

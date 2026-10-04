@@ -44,7 +44,7 @@ flowchart LR
 | `service.py` | `SecurityReview`, `default_scanners()` |
 | `workflows/nodes/security.py` | The step: scan, fix task (`sec1`), `after_security` routing |
 | `workflows/activity.py` | `security.finished` and the fix task's `task.assigned` |
-| `sandbox-image/semgrep.yml` · `Dockerfile` | Our rules; Semgrep 1.179.0 and pip-audit 2.10.1 in `medhkarm-sandbox:3` |
+| `sandbox-image/semgrep.yml` · `Dockerfile` | Our rules; Semgrep 1.179.0 and pip-audit 2.10.1 in `medhkarm-sandbox:4` |
 
 ## API
 
@@ -61,7 +61,7 @@ None: the report is in the run's checkpoint (`state.security`, `security_rounds`
 ## Dependencies
 
 - **Used by:** `workflows` (the step), wired in `app/workers/wiring.py` when the team template has an **active `security` role**; without one, the step passes everything through
-- **Tools:** the sandbox image `medhkarm-sandbox:3` (built automatically if missing); without Semgrep or pip-audit in a sandbox (e.g. the OpenHands image), those scanners add a note and the secrets scan still runs
+- **Tools:** the sandbox image `medhkarm-sandbox:4` (built automatically if missing); without Semgrep or pip-audit in a sandbox (e.g. the OpenHands image), those scanners add a note and the secrets scan still runs
 - **Config:** the `security` role in the team template; the `security_warnings` approval fact and rule
 
 ## Design decisions
@@ -77,7 +77,7 @@ None: the report is in the run's checkpoint (`state.security`, `security_rounds`
 
 - Unit tests: `uv run pytest app/features/security app/features/workflows/tests/test_security_step.py`
 - Rules in a real sandbox: `uv run pytest -m integration app/features/security`
-- Rules by hand: `docker run --rm -v "$PWD":/workspace medhkarm-sandbox:3 semgrep scan --config /opt/medhkarm/semgrep.yml --metrics=off .`
+- Rules by hand: `docker run --rm -v "$PWD":/workspace medhkarm-sandbox:4 semgrep scan --config /opt/medhkarm/semgrep.yml --metrics=off .`
 - **Live test (Oct 4, 2026, gpt-oss:20b):** a backup helper requested "with `shell=True` for simplicity". QA passed it. Vikram found `py-shell-true` at `backup.py:60` and sent "Fix the security findings" to Isha. She rewrote it as `subprocess.run(cmd, ...)` with an argument list, Kabir approved, QA passed, and Vikram's second scan was clean. The run then waited at the gate.
 
 ## Known limitations and gotchas
@@ -92,7 +92,7 @@ None: the report is in the run's checkpoint (`state.security`, `security_rounds`
 
 | Symptom | Likely cause | Fix |
 | --- | --- | --- |
-| Note "Semgrep or its rules aren't in this sandbox" | An old image, or the OpenHands sandbox | Use `medhkarm-sandbox:3` (`SANDBOX_IMAGE`) |
+| Note "Semgrep or its rules aren't in this sandbox" | An old image, or the OpenHands sandbox | Use `medhkarm-sandbox:4` (`SANDBOX_IMAGE`) |
 | A false alarm blocks a release | A rule too strict for the case | Adjust `sandbox-image/semgrep.yml` (rebuild the image with a new tag) |
 | No Vikram events at all | The team template has no active `security` role | Check `teams/templates/software.toml` |
 

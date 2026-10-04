@@ -1,3 +1,5 @@
+import type { StackChoiceInput } from "@/features/starters";
+
 // Mirrors backend/app/features/projects/schemas.py.
 
 export type ProjectStatus = "planning" | "plan_ready" | "active" | "paused" | "done";
@@ -29,6 +31,7 @@ export type Project = {
   repo: { url: string; branch: string | null } | null;
   repo_owned: boolean;
   test_command: string;
+  stack: StackChoiceInput | null; // the founder's stack choices (new projects)
   status: ProjectStatus;
   autopilot: boolean;
   daily_limit: number;

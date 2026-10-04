@@ -35,11 +35,13 @@ class WorkflowService:
         sandbox_id: str | None = None,
         repo: dict[str, Any] | None = None,
         new_repo: dict[str, Any] | None = None,
+        stack: dict[str, Any] | None = None,
     ) -> RunOutcome:
         """Start a run. Pass `sandbox_id` to work in an existing, prepared sandbox, and `repo`
         (RepoSource-shaped) to work on the founder's repository. An empty `test_command` is
         detected from the project. `new_repo` (NewRepo-shaped) asks for a new private
-        repository with the released work, when there's no `repo`."""
+        repository with the released work, when there's no `repo`. `stack` (StackChoice-shaped)
+        lets a new project start from a starter with ready-made modules; None: never."""
         initial: BuildState = {"run_id": run_id, "request": request, "test_command": test_command}
         if sandbox_id:
             initial["sandbox_id"] = sandbox_id
@@ -47,6 +49,8 @@ class WorkflowService:
             initial["repo"] = repo
         elif new_repo is not None:
             initial["new_repo"] = new_repo
+        if stack is not None and not repo:
+            initial["stack_choice"] = stack
         await self._recorder(run_id).record(
             Actor.FOUNDER,
             EventType.RUN_STARTED,

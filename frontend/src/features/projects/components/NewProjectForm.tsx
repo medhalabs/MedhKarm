@@ -2,6 +2,8 @@
 
 import { useActionState } from "react";
 
+import { StackFields } from "@/features/starters";
+
 import { createProjectAction } from "../api/actions";
 import type { FormState } from "../types";
 
@@ -49,6 +51,7 @@ export function NewProjectForm() {
           className={`${field} font-mono text-sm`}
         />
       </label>
+      <StackFields />
       <div className="flex flex-wrap items-center gap-4 text-sm">
         <label className="flex items-center gap-2">
           <input type="checkbox" name="autopilot" />

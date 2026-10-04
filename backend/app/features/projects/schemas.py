@@ -6,6 +6,7 @@ from enum import StrEnum
 from pydantic import BaseModel, Field
 
 from app.features.repos.schemas import RepoSource
+from app.features.starters.schemas import StackChoice
 
 
 class ProjectStatus(StrEnum):
@@ -71,6 +72,8 @@ class NewProject(BaseModel):
     goal: str = Field(min_length=10, max_length=5000)  # what the founder wants, in their words
     repo: RepoSource | None = None  # an existing repository; None = a new project
     test_command: str | None = Field(default=None, min_length=1, max_length=500)
+    # A new project's stack and ready-made modules (empty choices: the team decides)
+    stack: StackChoice = Field(default_factory=StackChoice)
     autopilot: bool = False  # work through the backlog on its own, day after day
     daily_limit: int = Field(default=2, ge=1, le=10)  # items started per day on autopilot
 
@@ -90,6 +93,7 @@ class Project(BaseModel):
     repo: RepoSource | None = None
     repo_owned: bool = False  # MedhKarm created the repository (its PRs merge on approval)
     test_command: str = ""
+    stack: StackChoice | None = None  # the founder's stack choices (new projects)
     status: ProjectStatus
     autopilot: bool
     daily_limit: int

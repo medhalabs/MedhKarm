@@ -72,7 +72,7 @@ Items: `proposed` → `todo` (approved) → `in_progress` (its run works or wait
 
 | Method | Path | Purpose |
 | --- | --- | --- |
-| POST | `/projects` | Create (`name`, `goal`, optional `repo`, `test_command`, `autopilot`, `daily_limit` 1–10) → 202; planning starts |
+| POST | `/projects` | Create (`name`, `goal`, optional `repo`, `test_command`, `stack` for a new project, `autopilot`, `daily_limit` 1–10) → 202; planning starts |
 | GET | `/projects` · `/projects/{id}` | List (newest first) · one project with its backlog |
 | PATCH | `/projects/{id}` | Name, goal, test command, autopilot, daily limit |
 | POST | `/projects/{id}/plan` · `/plan/approve` | Ask Mira again · approve the proposed items |
@@ -87,7 +87,7 @@ Errors: 404 `project_not_found`, `backlog_item_not_found`; 409 `backlog_conflict
 
 | Table | Key columns | Notes |
 | --- | --- | --- |
-| `projects` | `id`, `name`, `goal`, `repo` (jsonb), `repo_owned`, `test_command`, `status`, `autopilot`, `daily_limit`, `questions` (jsonb), `error`, `company_id` (nullable) | |
+| `projects` | `id`, `name`, `goal`, `repo` (jsonb), `repo_owned`, `test_command`, `stack` (jsonb, migration `0008`), `status`, `autopilot`, `daily_limit`, `questions` (jsonb), `error`, `company_id` (nullable) | |
 | `backlog_items` | `id`, `project_id` (FK, cascade), `position`, `title`, `description`, `acceptance` (jsonb), `size`, `status`, `run_id`, `attempts`, `note`, `pull_request_url`, `started_at`, `done_at` | Indexes `(project_id, position)` and `run_id` |
 
 ## Events
@@ -137,4 +137,5 @@ Planning: `run.started`, `model.used` (PM), `plan.created`, `run.finished` (`sta
 
 | Date | Change |
 | --- | --- |
+| 2026-10-05 | `stack` (the founder's stack choices): passed to every item's run, so the first one starts from the starter; Mira's planning brief includes it ("plan features, not set-up"); stack fields on the new-project form |
 | 2026-10-04 | Created: projects, the PM's backlog, editing and approval, items as runs, autopilot with a daily limit, pull-request merges and following, admin pages |

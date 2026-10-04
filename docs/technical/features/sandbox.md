@@ -10,7 +10,7 @@ An isolated, throwaway workspace where agents write and run code, so AI-written 
 
 ## How it works
 
-1. `DockerSandboxProvider.create()` starts a container from `SANDBOX_IMAGE` (default `medhkarm-sandbox:3`: Python, Node, pytest; built from `backend/sandbox-image/` on first use by `ensure_sandbox_image()` in `app/workers/wiring.py`) running `sleep infinity`, labelled `medhkarm.sandbox=true`, limited to 1 CPU and 1 GB of memory. The workspace is `/workspace`.
+1. `DockerSandboxProvider.create()` starts a container from `SANDBOX_IMAGE` (default `medhkarm-sandbox:4`: Python, Node 22 with npm, pytest, the Next.js starter's packages in the npm cache; built from `backend/sandbox-image/` on first use by `ensure_sandbox_image()` in `app/workers/wiring.py`) running `sleep infinity`, labelled `medhkarm.sandbox=true`, limited to 1 CPU and 1 GB of memory. The workspace is `/workspace`.
 2. `run(command, timeout_seconds)` executes via `docker exec` wrapped in `timeout`; exit code 124 means it timed out. Output is stdout and stderr combined.
 3. `write_file` uploads a tar archive; `read_file` runs `cat`; `list_files` lists files, skipping hidden folders and `__pycache__`.
 4. Every path goes through `safe_relative_path()`: absolute paths and `..` are refused with `UnsafePathError`.
@@ -90,6 +90,7 @@ None yet.
 
 | Date | Change |
 | --- | --- |
+| 2026-10-05 | Image `medhkarm-sandbox:4`: Node 22 with npm and corepack from the official image (Debian's `nodejs` had no npm, so JavaScript projects couldn't install); the Next.js starter's packages pre-loaded in the npm cache (`/opt/medhkarm/npm-cache`), so it installs offline in about 9 s; 3.24 GB. The starter's install, tests, type-check, lint and build fit the 1 CPU / 1 GB limit (about 41 s) |
 | 2026-10-04 | Image `medhkarm-sandbox:3`: adds Playwright 1.63.0, pytest-playwright 0.9.0, uvicorn and headless Chromium (image 2.86 GB, from 1.21 GB) |
 | 2026-10-04 | Image `medhkarm-sandbox:2`: adds Semgrep 1.179.0, pip-audit 2.10.1 and `/opt/medhkarm/semgrep.yml` |
 | 2026-10-01 | `medhkarm-sandbox:dev` image gains `graphifyy==0.9.73` (code graph, about 100 MB); rebuild with `docker build -t medhkarm-sandbox:dev backend/sandbox-image` |

@@ -11,6 +11,7 @@ class EventType(StrEnum):
     RUN_STARTED = "run.started"
     RUN_RESUMED = "run.resumed"
     RUN_FINISHED = "run.finished"
+    PROJECT_SCAFFOLDED = "project.scaffolded"
     CODEBASE_MAPPED = "codebase.mapped"
     PLAN_CREATED = "plan.created"
     TASK_ASSIGNED = "task.assigned"

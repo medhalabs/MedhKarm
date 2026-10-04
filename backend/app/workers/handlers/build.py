@@ -125,7 +125,12 @@ class StartBuild(_BuildHandler):
             repo = run.repo.model_dump(mode="json") if run.repo else None
             new_repo = run.new_repo.model_dump(mode="json") if run.new_repo else None
             return await workflow.start(
-                run.id, run.request, run.test_command, repo=repo, new_repo=new_repo
+                run.id,
+                run.request,
+                run.test_command,
+                repo=repo,
+                new_repo=new_repo,
+                stack=run.stack.model_dump(mode="json") if run.stack else None,
             )
         if current.next_nodes and not current.waiting_for_approval:
             return await workflow.continue_run(run.id)

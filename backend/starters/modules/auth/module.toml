@@ -1,0 +1,21 @@
+name = "auth"
+title = "Sign-in"
+description = "Email and password accounts: sign up, log in, log out, protected pages. Local accounts with no keys; Supabase Auth when its keys are set"
+starters = ["nextjs"]
+requires = []
+keywords = ["login", "log in", "sign in", "signin", "sign up", "signup", "account", "accounts", "users", "user profile", "password", "auth", "members", "my orders", "dashboard for each"]
+env = """
+# Sign-in. Local accounts need only SESSION_SECRET (any long random string) in production.
+SESSION_SECRET=
+# Supabase Auth instead (Project Settings > API): both set = Supabase is used.
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+"""
+guide = """
+- `lib/auth/`: `currentUser()` (or null), `requireUser()` (redirects to /login) in server
+  components and route handlers; `signUp`, `logIn`, `logOut` in `app/login/actions.ts`.
+- Local accounts: users in the `users` collection, passwords hashed with scrypt, a signed
+  session cookie (`SESSION_SECRET`). With Supabase keys set, Supabase Auth is used instead.
+- Pages: /login, /signup, /account (an example protected page). Protect a page by calling
+  `await requireUser()` at the top of it.
+"""

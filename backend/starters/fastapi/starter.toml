@@ -1,0 +1,6 @@
+# The Python API starter: FastAPI with a small data layer (SQLite with no setup).
+name = "fastapi"
+title = "Python API (FastAPI)"
+description = "FastAPI app with a data layer on SQLite (no setup) and tests with pytest"
+setup_command = "pip install -q -r requirements.txt"
+test_command = "python -m pytest -q"

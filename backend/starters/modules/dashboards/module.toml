@@ -1,0 +1,17 @@
+name = "dashboards"
+title = "Admin dashboard"
+description = "An admin page for the owner: totals, a chart of the last 14 days and the latest records of each collection, for admins only"
+starters = ["nextjs"]
+requires = ["auth"]
+keywords = ["admin", "dashboard", "dashboards", "report", "reports", "analytics", "stats", "statistics", "back office", "manage users", "overview"]
+env = """
+# Admin dashboard: emails allowed into /admin, comma-separated.
+ADMIN_EMAILS=
+"""
+guide = """
+- `/admin`: for signed-in users whose email is in `ADMIN_EMAILS` (others get a 404).
+  Shows a total and the latest records for each collection in `ADMIN_COLLECTIONS`
+  (`lib/admin/stats.ts`) and a chart of new records per day.
+- Add a collection to the dashboard: add it to `ADMIN_COLLECTIONS`. Charts: `<BarChart>`
+  (`components/BarChart.tsx`, no chart library) with `perDay()` from `lib/admin/stats.ts`.
+"""
