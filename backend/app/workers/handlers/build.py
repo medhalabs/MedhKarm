@@ -5,9 +5,10 @@ starts, a run interrupted mid-way (worker died, deploy) carries on from its last
 step, and a run already at the gate or finished is only reported.
 """
 
+import logging
 from collections.abc import Callable
 from contextlib import AbstractAsyncContextManager
-from typing import Any
+from typing import Any, Protocol
 
 from app.features.events.interfaces import EventStore
 from app.features.events.schemas import Actor, EventType
@@ -21,6 +22,16 @@ from app.features.workflows.schemas import RunOutcome
 from app.features.workflows.service import WorkflowService
 
 WorkflowFactory = Callable[[], AbstractAsyncContextManager[WorkflowService]]
+logger = logging.getLogger(__name__)
+
+
+class RunListener(Protocol):
+    """Told when a run ends (the backlog moves its item on). Must be safe to call twice."""
+
+    async def on_run_finished(
+        self, run_id: str, status: RunStatus, delivery: dict[str, Any] | None = None
+    ) -> None: ...
+
 
 FINISHED = {
     "released": RunStatus.RELEASED,
@@ -36,11 +47,13 @@ class _BuildHandler:
         workflow: WorkflowFactory,
         sandboxes: SandboxProvider,
         events: EventStore | None = None,
+        listener: RunListener | None = None,
     ) -> None:
         self._runs = runs
         self._workflow = workflow
         self._sandboxes = sandboxes
         self._events = events
+        self._listener = listener
 
     async def run(self, payload: dict[str, Any]) -> dict[str, Any] | None:
         run = await self._load(payload)
@@ -48,6 +61,9 @@ class _BuildHandler:
         async with self._workflow() as workflow:
             outcome = await self._advance(workflow, run, payload)
         status = await self._report(outcome)
+        if self._listener and status != RunStatus.WAITING_FOR_APPROVAL:
+            # A failure here retries the job; the run is already finished, so only this repeats.
+            await self._listener.on_run_finished(run.id, status, outcome.state.get("delivery"))
         return {"run_id": run.id, "status": status}
 
     async def _advance(
@@ -71,6 +87,11 @@ class _BuildHandler:
             sandbox_id = (await workflow.get(run_id)).state.get("sandbox_id")
         if sandbox_id:
             await self._sandboxes.destroy(sandbox_id)
+        if self._listener:
+            try:
+                await self._listener.on_run_finished(run_id, RunStatus.ERROR)
+            except Exception:  # the backlog's tick catches up with the run's status later
+                logger.exception("Couldn't report run %s's failure to its listener", run_id)
 
     async def _load(self, payload: dict[str, Any]) -> Run:
         try:

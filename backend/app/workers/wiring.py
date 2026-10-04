@@ -58,13 +58,15 @@ class TeamRuntime:
     developer_names: list[str]
     max_developers: int
     approval_policy: ApprovalPolicy  # what happens at the release gate
+    pm: LLMProvider  # the PM's model: plans project backlogs
+    pm_instructions: str
     engine: DeveloperEngine  # the developer
     sandboxes: SandboxProvider
 
 
 def build_team_runtime(settings: Settings) -> TeamRuntime:
     template = TeamService(load_templates()).get_template(settings.team_template)
-    cto, developer = template.role("cto"), template.role("developer")
+    cto, developer, pm = template.role("cto"), template.role("developer"), template.role("pm")
     engine, sandboxes = build_engine(settings, developer)
     return TeamRuntime(
         template=template,
@@ -74,6 +76,8 @@ def build_team_runtime(settings: Settings) -> TeamRuntime:
         developer_names=developer.display_names,
         max_developers=developer.max_count,
         approval_policy=template.approval,
+        pm=build_provider(settings, pm.model),
+        pm_instructions=pm.instructions,
         engine=engine,
         sandboxes=sandboxes,
     )

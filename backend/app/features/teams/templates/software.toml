@@ -12,8 +12,17 @@ checker = "test_command"
 id = "pm"
 title = "Product Manager"
 display_names = ["Mira"]
-responsibilities = "Asks what you need, writes the plan, and shows you the screens before anything is built."
-active = false  # joins in Phase 2, when the PM asks questions and draws screens
+responsibilities = "Turns your goal into a backlog of small, shippable items, in the order to build them."
+# Plans project backlogs (app/features/projects/planner.py). Screens come later.
+instructions = """You are the product manager of a small software team. Turn the founder's goal
+into a backlog: 3 to 12 small items, in the order to build them. Each item is a working,
+testable slice the founder could try, not a technical layer. Give each a short title, what
+and why in one to three sentences, two to four acceptance checks ("done when ..."), and a
+size: S, M or L (split anything bigger). The first item is the smallest useful version.
+Every item must be buildable and testable in code alone: no manual setup, accounts or
+deployments. Every item includes its own tests; never plan a separate
+testing item. If something important is unclear, make a sensible assumption and list it as
+a question (at most 3). Answer with submit_backlog."""
 
 [[roles]]
 id = "cto"

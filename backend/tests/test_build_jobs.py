@@ -63,7 +63,9 @@ class FlakyLLM(ScriptedLLMProvider):
 class Office:
     """API side and worker side, sharing in-memory storage."""
 
-    def __init__(self, llm: ScriptedLLMProvider, max_attempts: int = 3) -> None:
+    def __init__(
+        self, llm: ScriptedLLMProvider, max_attempts: int = 3, listener: Any = None
+    ) -> None:
         self.queue = InMemoryJobQueue()
         self.events = InMemoryEventStore()
         self.repo = InMemoryRunRepository()
@@ -81,8 +83,8 @@ class Office:
             yield self.workflow_service
 
         handlers: dict[str, JobHandler] = {
-            START_JOB: StartBuild(self.runs, workflow, self.sandboxes, self.events),
-            RESUME_JOB: ResumeBuild(self.runs, workflow, self.sandboxes, self.events),
+            START_JOB: StartBuild(self.runs, workflow, self.sandboxes, self.events, listener),
+            RESUME_JOB: ResumeBuild(self.runs, workflow, self.sandboxes, self.events, listener),
         }
         self.worker = JobRunner(self.queue, handlers, "w1", retry_base=timedelta(0))
 
@@ -165,3 +167,36 @@ async def test_standup_is_queued_once_a_day_after_the_hour() -> None:
     assert (job.unique_key, job.status) == ("standup.send:2026-10-01", JobStatus.DONE)
     assert job.result is not None and job.result["sent_to"] == "log"
     assert sent[0].startswith("Standup for Thu 01 Oct 2026")
+
+
+class Listener:
+    def __init__(self) -> None:
+        self.calls: list[tuple[str, RunStatus]] = []
+
+    async def on_run_finished(
+        self, run_id: str, status: RunStatus, delivery: dict[str, Any] | None = None
+    ) -> None:
+        self.calls.append((run_id, status))
+
+
+async def test_the_listener_hears_finished_runs_not_paused_ones() -> None:
+    listener = Listener()
+    office = Office(ScriptedLLMProvider(list(SCRIPT)), listener=listener)
+    run = await office.runs.start(StartRun(request="Build a.py", test_command="pytest"))
+
+    await office.worker.run_once()  # paused at the gate: not finished
+    assert listener.calls == []
+    await office.runs.decide(run.id, ApprovalDecision(approved=False))
+    await office.worker.run_once()
+
+    assert listener.calls == [(run.id, RunStatus.REJECTED)]
+
+
+async def test_the_listener_hears_runs_that_give_up() -> None:
+    listener = Listener()
+    office = Office(FlakyLLM(list(SCRIPT), fail_on={2}), max_attempts=1, listener=listener)
+    run = await office.runs.start(StartRun(request="Build a.py", test_command="pytest"))
+
+    await office.worker.run_once()
+
+    assert listener.calls == [(run.id, RunStatus.ERROR)]

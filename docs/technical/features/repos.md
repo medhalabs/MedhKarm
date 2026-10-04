@@ -171,6 +171,7 @@ Rerun 3 (with `edit_file`): reached the release gate with a correct `peek()` add
 
 | Date | Change |
 | --- | --- |
+| 2026-10-04 | `pull_request_state` and `merge_pull_request` (squash) for backlogs: MedhKarm-created repositories merge on approval; the founder's repository is followed until merged |
 | 2026-10-01 | New projects: a private repository created on release (`create_repo`, `new_repo_name`; `new_repo` on runs, migration `0005`) |
 | 2026-10-01 | Code graph experiment (`CODE_GRAPH`): Graphify's most connected code in the map; `graphify-out/` kept out of the workspace and pull requests |
 | 2026-10-01 | Live test on `pallets/itsdangerous`; no-changes guard added in the workflow |

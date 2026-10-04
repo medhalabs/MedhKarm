@@ -16,6 +16,7 @@ class ProjectStatus(StrEnum):
     REJECTED = "rejected"
     FAILED = "failed"
     ERROR = "error"  # something broke and the worker gave up
+    PLANNED = "planned"  # the PM planned a backlog (waits for the founder's approval)
 
 
 class StandupItem(BaseModel):

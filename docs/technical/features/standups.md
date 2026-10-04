@@ -144,6 +144,7 @@ Consumes: `run.started` (project name), `task.assigned`, `work.started`, `work.f
 
 | Date | Change |
 | --- | --- |
+| 2026-10-04 | Planning runs (`run.finished` status `planned`) listed under Done: "Mira planned the backlog: N items" |
 | 2026-10-01 | Standup page in the admin (`/admin/standup`) |
 | 2026-10-01 | "Needs you" says why when an approval rule asked |
 | 2026-10-01 | Sent every morning by the worker (`standup.send` job, `StandupDelivery`, `LogDelivery`); `error` runs listed under Blocked |

@@ -35,5 +35,6 @@ Knowledge transfer for anyone working on the code: what each part is, how it wor
 | runs | [features/runs.md](features/runs.md) | Start, list and approve build runs over HTTP and in the admin page (`/admin`) |
 | jobs | [features/jobs.md](features/jobs.md) | Postgres job queue and the worker: builds and the morning standup |
 | integrations | [features/integrations.md](features/integrations.md) | MCP servers as agent tools, with per-role limits; `python_docs` server |
+| projects | [features/projects.md](features/projects.md) | Projects and their backlog: the PM plans, items become runs, autopilot across days |
 | approvals | [features/approvals.md](features/approvals.md) | Approval rules at the release gate: ask, approve or reject, with reasons |
 | repos | [features/repos.md](features/repos.md) | Founders' GitHub repositories: clone, map before planning, pull request on release |

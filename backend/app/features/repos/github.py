@@ -8,6 +8,7 @@ is skipped with a reason.
 """
 
 import base64
+import re
 import shlex
 from contextlib import AsyncExitStack
 
@@ -19,6 +20,7 @@ from app.features.repos.schemas import Delivery, DeliveryStatus, RepoSource
 from app.features.sandbox.interfaces import Sandbox
 
 API = "https://api.github.com"
+PULL_URL = re.compile(r"^https://github\.com/([^/]+)/([^/]+)/pull/(\d+)/?$")
 AUTHOR = "-c user.name='MedhKarm' -c user.email='team@medhkarm.ai'"
 CLONE_TIMEOUT = 300
 # Never committed, even if the repository's own .gitignore misses them (setup and tests make them)
@@ -181,6 +183,31 @@ class GitHubRepoHost:
             data = created.json()
             return str(data["html_url"]), str(data["clone_url"])
 
+    async def pull_request_state(self, url: str) -> str:
+        """ "open", "merged" or "closed" (a backlog waits for the founder to merge)."""
+        async with AsyncExitStack() as stack:
+            http = await self._client(stack)
+            response = await http.get(_pull_api(url), headers=self._headers())
+            if not response.is_success:
+                raise RepoError(f"GitHub didn't find the pull request ({response.status_code})")
+            data = response.json()
+            if data.get("merged"):
+                return "merged"
+            return "closed" if data.get("state") == "closed" else "open"
+
+    async def merge_pull_request(self, url: str, title: str) -> bool:
+        """Squash-merge it (for repositories MedhKarm created, once the founder approved)."""
+        if not self._token:
+            return False
+        async with AsyncExitStack() as stack:
+            http = await self._client(stack)
+            response = await http.put(
+                f"{_pull_api(url)}/merge",
+                headers=self._headers(),
+                json={"merge_method": "squash", "commit_title": title[:200]},
+            )
+            return response.is_success
+
     def _headers(self) -> dict[str, str]:
         return {
             "Authorization": f"Bearer {self._token}",
@@ -213,3 +240,11 @@ class GitHubRepoHost:
             return text
         basic = base64.b64encode(f"x-access-token:{self._token}".encode()).decode()
         return text.replace(self._token, "***").replace(basic, "***")
+
+
+def _pull_api(url: str) -> str:
+    match = PULL_URL.match(url.strip())
+    if not match:
+        raise RepoError(f"Not a GitHub pull request address: {url}")
+    owner, name, number = match.groups()
+    return f"{API}/repos/{owner}/{name}/pulls/{number}"

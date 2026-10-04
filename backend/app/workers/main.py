@@ -21,11 +21,17 @@ from app.features.events.stores.sql_store import SqlEventStore
 from app.features.jobs.interfaces import JobHandler
 from app.features.jobs.service import JobRunner
 from app.features.jobs.stores.sql_queue import SqlJobQueue
+from app.features.projects.planner import BacklogPlanner
+from app.features.projects.progress import BacklogProgress
+from app.features.projects.repository import SqlProjectRepository
+from app.features.projects.service import PLAN_JOB
+from app.features.repos.github import GitHubRepoHost
 from app.features.runs.repository import SqlRunRepository
 from app.features.runs.service import RESUME_JOB, START_JOB, RunService
 from app.features.standups.delivery.log_delivery import LogDelivery
 from app.features.standups.dependencies import get_standup_service
 from app.features.workflows.service import WorkflowService
+from app.workers.handlers.backlog import PlanBacklog, backlog_schedule
 from app.workers.handlers.build import ResumeBuild, StartBuild
 from app.workers.handlers.standup import SEND_STANDUP, SendStandup, standup_schedule
 from app.workers.wiring import build_team_runtime, ensure_sandbox_image, workflow_service
@@ -43,13 +49,19 @@ async def main() -> None:
         ensure_sandbox_image(settings.sandbox_image)
     team = build_team_runtime(settings)
     standups = get_standup_service()
+    projects = SqlProjectRepository(session_factory)
+    progress = BacklogProgress(
+        projects, runs, GitHubRepoHost(settings.github_token), settings.standup_timezone
+    )
+    planner = BacklogPlanner(team.pm, projects, events, team.pm_instructions)
 
     def workflow() -> AbstractAsyncContextManager[WorkflowService]:
         return workflow_service(settings, team)
 
     handlers: dict[str, JobHandler] = {
-        START_JOB: StartBuild(runs, workflow, team.sandboxes, events),
-        RESUME_JOB: ResumeBuild(runs, workflow, team.sandboxes, events),
+        START_JOB: StartBuild(runs, workflow, team.sandboxes, events, progress),
+        RESUME_JOB: ResumeBuild(runs, workflow, team.sandboxes, events, progress),
+        PLAN_JOB: PlanBacklog(planner, projects),
         SEND_STANDUP: SendStandup(standups, LogDelivery()),
     }
     runner = JobRunner(
@@ -60,7 +72,10 @@ async def main() -> None:
         retry_base=timedelta(seconds=settings.job_retry_seconds),
         concurrency=settings.worker_concurrency,
         poll_seconds=settings.worker_poll_seconds,
-        periodic=[standup_schedule(queue, standups)] if settings.standup_schedule else [],
+        periodic=[
+            backlog_schedule(progress),
+            *([standup_schedule(queue, standups)] if settings.standup_schedule else []),
+        ],
     )
 
     stop = asyncio.Event()

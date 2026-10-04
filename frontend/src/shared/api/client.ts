@@ -30,6 +30,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     );
   }
 
+  if (response.status === 204) return undefined as T;
   return (await response.json()) as T;
 }
 
@@ -44,4 +45,12 @@ export function apiGet<T>(path: string, init?: RequestInit): Promise<T> {
 
 export function apiPost<T>(path: string, body: unknown, init?: RequestInit): Promise<T> {
   return request<T>(path, { ...init, method: "POST", body: JSON.stringify(body) });
+}
+
+export function apiPatch<T>(path: string, body: unknown, init?: RequestInit): Promise<T> {
+  return request<T>(path, { ...init, method: "PATCH", body: JSON.stringify(body) });
+}
+
+export function apiDelete(path: string, init?: RequestInit): Promise<void> {
+  return request<void>(path, { ...init, method: "DELETE" });
 }

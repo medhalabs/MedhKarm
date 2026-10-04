@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 # Import every feature's models module here so autogenerate sees its tables.
 import app.features.events.models
 import app.features.jobs.models
+import app.features.projects.models
 import app.features.runs.models  # noqa: F401
 from alembic import context
 from app.core.config import get_settings

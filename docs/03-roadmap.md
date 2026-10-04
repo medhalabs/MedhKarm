@@ -38,6 +38,31 @@ One engine runs every AI team; the teams launch one at a time. The **software te
 4. **Work is checked before you see it.** Tests for software, your review for content, approval rules for operations.
 5. **Buy, don't build, the plumbing.** Official MCP servers, Vercel, Supabase, Razorpay, Resend; our code goes into the teams, the engine and the office.
 
+## Roles: who works in a MedhKarm company
+
+A solo founder's MedhKarm is a small IT company. Not every role in a big one is needed: platforms like Vercel and Supabase replace servers and internal IT, and the founder is the CEO. Every agent is a seat in a team template, added as config (plus the workflow step it needs). Names are office names and can change.
+
+| Role in an IT company | In MedhKarm | Team | When |
+| --- | --- | --- | --- |
+| CEO | **You, the founder**: you set goals and approve what matters. Never an agent | All | ✓ |
+| CTO | Kabir: plans each item, assigns developers, reviews every change | Software | ✓ |
+| Product Manager | Mira: turns your goal into a backlog, with questions | Software | ✓ (Oct 2026) |
+| Full-stack developer | Isha, Arjun, Ravi | Software | ✓ |
+| QA engineer | Tara: re-runs the tests and refuses faked ones | Software | ✓; writes end-to-end browser tests in Phase 2 |
+| DevOps engineer | Neel: preview deploys, releases after your approval | Software | Phase 2 |
+| Frontend and backend developers | Developer seats with a specialty (UI and browser tests; APIs and database); the CTO assigns by specialty | Software | Phase 2 |
+| Security engineer (cybersecurity analyst) | Vikram: scans every release (secrets, dependencies, Semgrep, Supabase access rules) and can block it | Software | Phase 2 |
+| Database administrator | Part of the backend developer's and security engineer's work: schema design, migrations (which already need your approval), access rules | Software | Phase 2 |
+| UI/UX designer | Anaya: user journeys and screens before anything is built; you approve them | Software | Phase 3 |
+| Scrum master and project manager | Priya, the office manager: runs the standup and backlog, chases blockers, tracks timeline and budget per project | All | Phase 3 (standup and backlog work already, without a face) |
+| Technical support engineer | During the beta, us (human expert escalation); later, a support agent in the operations team answers your customers | Operations | Phase 3 (us), Phase 5 |
+| Mobile app developer | A developer specialty (React Native first) | Software | Later |
+| Data analyst | Dashboards and reports on your app's data | Data (new team) | Later |
+| Data scientist, ML engineer | Adding AI features to your app (search, recommendations, LLM features) | Data (new team) | Later |
+| Cloud architect | Not a seat now: DevOps on managed platforms covers it for solo founders | Software | Later, for larger customers |
+| Sales engineer | Not a seat: MedhKarm sells self-serve. A sales assistant may join the operations team for your business | Operations | Later |
+| CIO, system administrator | Not needed: no office IT or servers to run; managed platforms do it | None | Not planned |
+
 ## Technology stack
 
 See [04-tech-stack.md](04-tech-stack.md).
@@ -80,14 +105,17 @@ Goal: the software team delivers working, tested changes on new and existing pro
 Building in the mornings, beta recruiting in the afternoons. Early sign for the gate: at least 8 of 20 evals passing by Nov 13.
 
 - [x] Connect an existing GitHub repo; agents map the codebase before changing it (JavaScript/TypeScript and Python first). Done Oct 3, 2026: clone, map before planning, install/test detection, pull request on release ([repos.md](technical/features/repos.md)); new projects get a private repository on release (tested live Oct 2). Still to confirm live: the pull request on an existing repo
-- [ ] Backlog: the PM splits a goal into tasks; agents work through them across days
+- [ ] Backlog: the PM splits a goal into tasks; agents work through them across days. Built Oct 4, 2026: projects, Mira's backlog (edit, approve), items as runs, autopilot with a daily limit, approved work merged or waiting for your merge ([projects.md](technical/features/projects.md)). Left: an item released end to end live (the first live item failed QA on the free model)
 - [ ] Starter repo and ready-made modules for new projects (auth, payments, reminders, dashboards)
 - [ ] QA writes and runs tests; build, type-check, lint and tests must pass
 - [ ] Preview deploys; production only after the release gate
 - [ ] Choose the hosted sandbox (E2B, Fly Machines, Daytona or Modal) for customer code
 - [ ] Eval runner: all 20 tasks nightly, both developer engines, with pass rate, cost and time per task
 - [ ] Model × role tests: which models fill which seats
-- [ ] Automated scans: npm audit, Semgrep
+- [ ] Automated scans: npm audit, Semgrep, run by Vikram (security engineer), who can block a release
+- [ ] Neel (DevOps) joins the team with preview deploys
+- [ ] Developer specialties: frontend (UI, browser tests) and backend (APIs, database, migrations); the CTO assigns by specialty
+- [ ] Tara (QA) writes end-to-end browser tests for web apps
 
 **Gate 2:** at least 12 of 20 eval tasks pass without help; cost and time per task known; prices drafted from those numbers.
 
@@ -106,6 +134,8 @@ The beta starts on Dec 7 with the admin page's card layout and the standup (what
 - [ ] Razorpay billing in rupees: base subscription plus pay-as-you-go credits
 - [ ] Human expert escalation: we unblock stuck tasks ourselves during beta
 - [ ] Onboard 10–20 solo builders from Phase 0 interviews
+- [ ] Anaya (UI/UX designer): user journeys and screens before building; the founder approves them
+- [ ] Priya (office manager): the face of the standup and backlog; chases blockers, tracks timeline and budget per project
 
 **Gate 3:** at least 70% of beta tasks succeed; at least 30% of beta users convert to paid; satisfaction 8/10 or higher.
 
@@ -135,7 +165,9 @@ Goal: businesses hand routine work to an AI team, safely.
 ## Later
 
 - Curated team marketplace, then open listings
-- More stacks and mobile apps for the software team
+- More stacks and mobile apps for the software team (a mobile developer specialty)
+- A data team: dashboards and reports (data analyst), AI features in your app (data scientist, ML engineer)
+- Cloud architect for larger customers; a sales assistant in the operations team
 - Human developers and editors joining the office alongside agents
 - Richer office: detailed rooms, character customisation, possibly 3D
 

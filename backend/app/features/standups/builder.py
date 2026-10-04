@@ -21,6 +21,7 @@ FINISHED = {
     "released": ProjectStatus.RELEASED,
     "rejected": ProjectStatus.REJECTED,
     "error": ProjectStatus.ERROR,
+    "planned": ProjectStatus.PLANNED,
 }
 
 
@@ -134,6 +135,9 @@ def _replay(
                 report.done.append(item("Stopped at your request", event))
             elif status == "error":
                 report.blocked.append(item("Stopped: something went wrong", event))
+            elif status == "planned":
+                count = int(data.get("items", 0))
+                report.done.append(item(f"Mira planned the backlog: {count} items", event))
             else:
                 report.blocked.append(item("Stopped: the final checks did not pass", event))
 

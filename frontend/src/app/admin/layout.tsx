@@ -13,6 +13,9 @@ export default function AdminLayout({ children }: LayoutProps<"/admin">) {
         <Link href="/admin" className="text-zinc-600 hover:underline dark:text-zinc-400">
           Runs
         </Link>
+        <Link href="/admin/projects" className="text-zinc-600 hover:underline dark:text-zinc-400">
+          Projects
+        </Link>
         <Link href="/admin/standup" className="text-zinc-600 hover:underline dark:text-zinc-400">
           Standup
         </Link>

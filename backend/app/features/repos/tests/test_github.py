@@ -189,3 +189,40 @@ async def test_publish_without_a_token_is_skipped() -> None:
     sandbox = InMemorySandbox("sb", Git())
     delivery = await github(create_api([]), token=None).publish(sandbox, "x", "y")
     assert delivery.status == DeliveryStatus.SKIPPED and sandbox.commands == []
+
+
+async def test_pull_request_state_and_squash_merge() -> None:
+    seen: list[httpx.Request] = []
+    pr = "https://github.com/medhalabs/shop/pull/7"
+
+    def handle(request: httpx.Request) -> httpx.Response:
+        seen.append(request)
+        if request.method == "PUT":
+            return httpx.Response(200, json={"merged": True})
+        return httpx.Response(200, json={"state": "closed", "merged": True})
+
+    host = github(httpx.MockTransport(handle))
+
+    assert await host.pull_request_state(pr) == "merged"
+    assert await host.merge_pull_request(pr, "Add streaks")
+    assert seen[0].url.path == "/repos/medhalabs/shop/pulls/7"
+    assert seen[1].url.path == "/repos/medhalabs/shop/pulls/7/merge"
+    assert b'"merge_method":"squash"' in seen[1].content.replace(b" ", b"")
+
+
+async def test_open_and_closed_pull_requests_and_refused_merges() -> None:
+    def handle(request: httpx.Request) -> httpx.Response:
+        if request.method == "PUT":
+            return httpx.Response(405, json={"message": "not mergeable"})
+        number = request.url.path.rsplit("/", 1)[-1]
+        state = "open" if number == "1" else "closed"
+        return httpx.Response(200, json={"state": state, "merged": False})
+
+    host = github(httpx.MockTransport(handle))
+
+    assert await host.pull_request_state("https://github.com/a/b/pull/1") == "open"
+    assert await host.pull_request_state("https://github.com/a/b/pull/2") == "closed"
+    assert not await host.merge_pull_request("https://github.com/a/b/pull/1", "t")
+    assert not await github(httpx.MockTransport(handle), token=None).merge_pull_request(
+        "https://github.com/a/b/pull/1", "t"
+    )
