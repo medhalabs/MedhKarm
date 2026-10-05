@@ -4,7 +4,14 @@ import { redirect } from "next/navigation";
 
 import { getMe, SignOutButton } from "@/features/auth";
 import { getInboxCount } from "@/features/inbox";
-import { InboxIcon, ProjectsIcon, RunsIcon, SettingsIcon, StandupIcon } from "@/shared/ui/icons";
+import {
+  InboxIcon,
+  ModelsIcon,
+  ProjectsIcon,
+  RunsIcon,
+  SettingsIcon,
+  StandupIcon,
+} from "@/shared/ui/icons";
 import { NavLink } from "@/shared/ui/NavLink";
 
 export const metadata: Metadata = { title: "MedhKarm" };
@@ -36,6 +43,10 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
       <NavLink href="/admin/standup">
         <StandupIcon />
         Standup
+      </NavLink>
+      <NavLink href="/admin/models">
+        <ModelsIcon />
+        Models
       </NavLink>
       <NavLink href="/admin/settings">
         <SettingsIcon />

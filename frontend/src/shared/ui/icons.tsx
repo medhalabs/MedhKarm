@@ -51,6 +51,12 @@ export const SettingsIcon = (p: IconProps) => (
     <circle cx="10" cy="17" r="2" />
   </Icon>
 );
+export const ModelsIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <rect x="6" y="6" width="12" height="12" rx="2" />
+    <path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4" />
+  </Icon>
+);
 export const OfficeIcon = (p: IconProps) => (
   <Icon {...p}>
     <rect x="3" y="4" width="18" height="16" rx="2" />

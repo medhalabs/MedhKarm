@@ -23,6 +23,9 @@ Last updated: Oct 5, 2026.
 | G-35 | Local mode on Vercel keeps data in each server instance's memory: on a preview, accounts and records can vanish between requests | Founders try previews; sign-up that forgets you looks broken | Oct 5 | A free database per project for previews (Supabase/Neon), or Vercel's storage, set as `DATABASE_URL` by Neel |
 | G-14 | No readiness check (database, Redis) on `/health` | Deploys can't tell a broken backend | Oct 1 | `/health/ready` |
 | G-41 | Sign-in scopes data in the application only: Postgres row-level security isn't enforced (the app connects as the table owner); no password reset, rate limits on log-in, server-side log-out or teammates | A bug in one query could show another company's data; locked-out founders need us | Oct 5 | A non-owner database role with RLS policies on `company_id`; reset emails with the email service; log-in attempt limits |
+| G-46 | Local models reach the worker through a public tunnel URL the founder runs (cloudflared): it changes on restart and is public | BYO local models are a promise of the ₹799 plan | Oct 5 | A small MedhKarm connector on the founder's machine that dials out to us (websocket), so no public URL |
+| G-47 | Token usage isn't marked as on our keys or the founder's | Billing (next item) charges only for ours | Oct 5 | Add `own_key` to `model.used` events and the meter |
+| G-48 | The Models page wasn't opened in a browser (only the API was tried live; page types, lint and tests pass) | A broken form would block BYO | Oct 5 | Pavan opens /admin/models: save a choice, add and check a key |
 | G-43 | Standup and weekly report built but never sent for real: no Resend key or WhatsApp app yet; plain-text email only; one timezone for all; WhatsApp is one-way | The interview ask | Oct 5 | Pavan adds the keys and template (notifications.md); HTML email; read WhatsApp replies via Meta webhooks |
 
 ## Later
@@ -52,6 +55,7 @@ Last updated: Oct 5, 2026.
 | G-38 | Module services untested against the real thing: Supabase Auth, Razorpay/Stripe test-mode payments, Resend email (unit tests only); no SMS/WhatsApp reminders; Vercel's free plan runs the reminders cron once a day | Oct 5 | Try each with test keys; an SMS/WhatsApp `Notifier` (MSG91, Gupshup) |
 | G-39 | The stack and modules are picked from the request's words: now only when phrased as a choice ("using X", "deploy to Y"), and modules from a long spec's opening only. Still words, not understanding (a feature that needs sign-in without saying so) | Oct 5 | Let the CTO confirm or adjust the stack and modules in the plan |
 | G-42 | Messages: replies appear only on refresh (no live update); roles without instructions (security, devops) are answered by the first persona; the free model's replies can skip part of a question (live: Mira ignored "why did you ask about timestamps?") | Oct 5 | Live thread updates through the event stream; personas for every role; a stronger model for replies |
+| G-45 | The OpenHands engine reads its model when the worker starts, so it ignores founders' own models and keys | Oct 5 | Build the OpenHands agent per run from `ModelSettingsService.config` |
 | G-44 | Office: one run at a time (no company-wide office), the meeting room only for planning (no agent discussions yet), PM backlog events not shown, simple figures | Oct 5 | A company office across live runs; discussions as meeting events; richer characters |
 
 ## Filled

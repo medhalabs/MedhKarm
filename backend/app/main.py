@@ -14,6 +14,7 @@ from app.features.inbox.router import router as inbox_router
 from app.features.intake.router import router as intake_router
 from app.features.integrations.router import router as integrations_router
 from app.features.messages.router import router as messages_router
+from app.features.model_settings.router import router as model_settings_router
 from app.features.notifications.router import router as notifications_router
 from app.features.projects.router import router as projects_router
 from app.features.runs.router import router as runs_router
@@ -51,6 +52,7 @@ def create_app() -> FastAPI:
     app.include_router(messages_router)
     app.include_router(notifications_router)
     app.include_router(intake_router)
+    app.include_router(model_settings_router)
 
     return app
 

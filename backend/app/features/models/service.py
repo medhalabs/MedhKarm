@@ -17,5 +17,11 @@ def resolve_model_config(settings: Settings, model: str | None = None) -> ModelC
 
 
 def build_provider(settings: Settings, model: str | None = None) -> LLMProvider:
-    config = resolve_model_config(settings, model)
-    return LiteLLMProvider(config.model, api_base=config.api_base, api_key=config.api_key)
+    return provider_for(resolve_model_config(settings, model))
+
+
+def provider_for(config: ModelConfig, num_retries: int = 5) -> LLMProvider:
+    """A provider for a model and endpoint already resolved (e.g. with a founder's own key)."""
+    return LiteLLMProvider(
+        config.model, api_base=config.api_base, api_key=config.api_key, num_retries=num_retries
+    )

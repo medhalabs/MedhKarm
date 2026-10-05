@@ -49,7 +49,7 @@ Small models sometimes hand over a brief straight away. When that happens on the
 | `intake/schemas.py` | `Turn`, `Conversation`, `Brief`, `Reply` |
 | `intake/prompt.py` | `INTAKE_PROMPT`, `BRIEF_TOOL` |
 | `intake/service.py` | `IntakeService.turn`, `parse_brief` |
-| `intake/dependencies.py` | The CTO's model and name from the software template |
+| `intake/dependencies.py` | The CTO's and PM's names, and their models routed per company (`CompanyRoutedProvider`) |
 | `intake/router.py` | `POST /intake`, `POST /intake/project` |
 | `frontend/…/runs/components/IntakeChat.tsx` | The chat: bubbles, examples, thinking dots, skip, start over |
 | `frontend/…/runs/components/BriefCard.tsx` | The brief: summary, chips, Start run / Change something |
@@ -104,5 +104,6 @@ None until the run starts.
 
 | Date | Change |
 | --- | --- |
+| 2026-10-05 | Kabir and Mira use the founder's own model and key when set ([model_settings.md](model_settings.md)) |
 | 2026-10-05 | Projects by talking to Mira (`/intake/project`, `submit_project`); the shared `ChatIntake` component; the first reply always asks (`too_soon`, `FIRST_QUESTIONS`): live, Mira had jumped to a thin brief |
 | 2026-10-05 | Created: start a run by talking to the CTO, with a confirmable brief |

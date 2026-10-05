@@ -63,7 +63,7 @@ None yet.
 ## Known limitations and gotchas
 
 - No streaming yet; each call returns when complete.
-- No per-role model choice yet: one default model for every agent.
+- Per-role and per-founder models and keys: see [model_settings.md](model_settings.md).
 - LiteLLM prints a "Give Feedback / Get Help" banner on errors; harmless.
 
 ## Troubleshooting
@@ -78,6 +78,7 @@ None yet.
 
 | Date | Change |
 | --- | --- |
+| 2026-10-05 | `provider_for(config)`: a provider for a resolved model and key. Agents now get their model through `model_settings` (per company, per call) |
 | 2026-10-04 | `metering.py`: `MeteredLLMProvider` and `metering()` count calls and tokens per piece of work (eval tasks) |
 | 2026-10-01 | Default model `gpt-oss:20b` |
 | 2026-10-01 | Retries with growing waits (2–32 s) on temporary errors only |

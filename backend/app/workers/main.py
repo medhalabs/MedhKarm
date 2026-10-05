@@ -13,6 +13,7 @@ import signal
 import socket
 from contextlib import AbstractAsyncContextManager
 from datetime import timedelta
+from typing import Any
 
 from app.core.config import get_settings
 from app.core.database import session_factory
@@ -30,6 +31,7 @@ from app.features.projects.progress import BacklogProgress
 from app.features.projects.repository import SqlProjectRepository
 from app.features.projects.service import PLAN_JOB
 from app.features.repos.github import GitHubRepoHost
+from app.features.runs.exceptions import RunNotFoundError
 from app.features.runs.repository import SqlRunRepository
 from app.features.runs.service import CANCEL_JOB, RESUME_JOB, START_JOB, RunService
 from app.features.standups.delivery.log_delivery import LogDelivery
@@ -39,6 +41,7 @@ from app.workers.handlers.backlog import PlanBacklog, backlog_schedule
 from app.workers.handlers.build import CancelBuild, ResumeBuild, StartBuild
 from app.workers.handlers.evals import NIGHTLY_EVALS, NightlyEvals, nightly_evals_schedule
 from app.workers.handlers.messages import MessageReply, TeamContext
+from app.workers.handlers.scope import CompanyScoped
 from app.workers.handlers.standup import (
     SEND_STANDUP,
     SEND_WEEKLY,
@@ -87,12 +90,34 @@ async def main() -> None:
     def workflow() -> AbstractAsyncContextManager[WorkflowService]:
         return workflow_service(settings, team)
 
+    async def run_company(payload: dict[str, Any]) -> str | None:
+        try:
+            return (await runs.get(str(payload.get("run_id", "")))).company_id
+        except RunNotFoundError:
+            return None
+
+    async def project_company(payload: dict[str, Any]) -> str | None:
+        project = await projects.get_project(str(payload.get("project_id", "")))
+        return project.company_id if project else None
+
+    async def message_company(payload: dict[str, Any]) -> str | None:
+        try:
+            message = await messages.get(int(payload.get("message_id", 0)))
+        except (TypeError, ValueError):
+            return None
+        return message.company_id if message else None
+
+    # Jobs that call models run as their company: its own models and keys (model_settings).
     handlers: dict[str, JobHandler] = {
-        START_JOB: StartBuild(runs, workflow, team.sandboxes, events, progress),
-        RESUME_JOB: ResumeBuild(runs, workflow, team.sandboxes, events, progress),
+        START_JOB: CompanyScoped(
+            StartBuild(runs, workflow, team.sandboxes, events, progress), run_company
+        ),
+        RESUME_JOB: CompanyScoped(
+            ResumeBuild(runs, workflow, team.sandboxes, events, progress), run_company
+        ),
         CANCEL_JOB: CancelBuild(workflow, team.sandboxes, events, progress),
-        PLAN_JOB: PlanBacklog(planner, projects),
-        REPLY_JOB: MessageReply(replier),
+        PLAN_JOB: CompanyScoped(PlanBacklog(planner, projects), project_company),
+        REPLY_JOB: CompanyScoped(MessageReply(replier), message_company),
         NIGHTLY_EVALS: NightlyEvals(settings),
         SEND_STANDUP: SendStandup(standups, LogDelivery(), notifications, runs, settings.app_url),
         SEND_WEEKLY: SendWeekly(

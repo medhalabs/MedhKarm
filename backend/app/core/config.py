@@ -22,6 +22,9 @@ class Settings(BaseSettings):
     # Sign-in: signs session tokens. Required outside development (any long random string).
     auth_secret: SecretStr | None = None
     auth_token_days: int = 30
+    # Encrypts founders' own API keys at rest (any long random string). Default: AUTH_SECRET.
+    # Keep it fixed: changing it makes saved keys unreadable (founders then add them again).
+    secrets_key: SecretStr | None = None
 
     # Models (LiteLLM model names, e.g. "ollama_chat/gpt-oss:120b")
     # gpt-oss:20b: 0 errors in the eval suite; gpt-oss:120b hit Ollama Cloud 500s on 1 in 4 tasks.

@@ -1,16 +1,18 @@
-from app.core.config import get_settings
 from app.features.intake.service import IntakeService
-from app.features.models.service import build_provider
+from app.features.model_settings.dependencies import get_model_settings_service
+from app.features.model_settings.routed import CompanyRoutedProvider
 from app.features.teams.dependencies import get_team_service
 
 
 def get_intake_service() -> IntakeService:
-    """The CTO's own model and name, from the software team's template."""
+    """The CTO's model (the founder's own choice and key, when set) and name."""
     cto = get_team_service().get_template("software").role("cto")
-    return IntakeService(build_provider(get_settings(), cto.model), cto.display_names[0])
+    llm = CompanyRoutedProvider(get_model_settings_service(), "cto", cto.model)
+    return IntakeService(llm, cto.display_names[0])
 
 
 def get_project_intake_service() -> IntakeService:
-    """The PM's own model and name, from the software team's template."""
+    """The PM's model (the founder's own choice and key, when set) and name."""
     pm = get_team_service().get_template("software").role("pm")
-    return IntakeService(build_provider(get_settings(), pm.model), pm.display_names[0])
+    llm = CompanyRoutedProvider(get_model_settings_service(), "pm", pm.model)
+    return IntakeService(llm, pm.display_names[0])
