@@ -141,6 +141,7 @@ This feature *is* the event log. Other features call `RunRecorder.record()`.
 
 | Date | Change |
 | --- | --- |
+| 2026-10-05 | `message.posted`: the founder's messages about a run and the agents' replies ([messages.md](messages.md)) |
 | 2026-10-05 | Every `/runs/{id}/events…` route needs a signed-in founder who owns the run (404 otherwise); the browser's live stream goes through the frontend (`/api/runs/{id}/events/stream`), which adds the session token |
 | 2026-10-05 | `project.scaffolded` from `devops`: the stack and the starter set up for a new project |
 | 2026-10-04 | QA's `check.finished` lists each check (`data.checks`) and says who got the fix task; QA records `task.assigned` for it |

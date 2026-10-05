@@ -15,6 +15,9 @@ from app.features.deploys.service import DeployService
 from app.features.deploys.vercel import VercelDeployTarget
 from app.features.developer_engine.interfaces import DeveloperEngine
 from app.features.events.stores.sql_store import SqlEventStore
+from app.features.messages.replier import Persona
+from app.features.messages.repository import SqlMessageRepository
+from app.features.messages.service import MessageService
 from app.features.models.interfaces import LLMProvider
 from app.features.models.metering import MeteredLLMProvider
 from app.features.models.service import build_provider, resolve_model_config
@@ -122,6 +125,24 @@ def _browser_tester(settings: Settings, template: TeamTemplate) -> DeveloperEngi
     )
 
 
+def role_model(settings: Settings, team: TeamRuntime, role_id: str) -> LLMProvider:
+    """A role's own model (the default when the template sets none), metered."""
+    try:
+        model = team.template.role(role_id).model
+    except KeyError:
+        model = None
+    return _provider(settings, model)
+
+
+def personas(team: TeamRuntime) -> dict[str, Persona]:
+    """Who answers the founder's messages: each role that uses a model, by its first name."""
+    return {
+        r.id: Persona(role=r.id, name=r.display_names[0], title=r.title)
+        for r in team.template.roles
+        if r.instructions or r.id == "cto"
+    }
+
+
 def _provider(settings: Settings, model: str | None) -> LLMProvider:
     """Every agent's model, metered: eval runs count each task's tokens across all agents."""
     return MeteredLLMProvider(build_provider(settings, model))
@@ -157,6 +178,7 @@ async def workflow_service(
             qa_name=team.qa_name,
             deploys=team.deploys,
             starters=StarterService(),
+            notes=MessageService(SqlMessageRepository(session_factory)),
             repos=RepoService(
                 GitHubRepoHost(settings.github_token),
                 GraphifyCodeGraph() if settings.code_graph else None,

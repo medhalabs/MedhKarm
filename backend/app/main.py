@@ -10,7 +10,10 @@ from app.features.auth.dependencies import get_current_user
 from app.features.auth.router import router as auth_router
 from app.features.events.router import router as events_router
 from app.features.health.router import router as health_router
+from app.features.inbox.router import router as inbox_router
 from app.features.integrations.router import router as integrations_router
+from app.features.messages.router import router as messages_router
+from app.features.notifications.router import router as notifications_router
 from app.features.projects.router import router as projects_router
 from app.features.runs.router import router as runs_router
 from app.features.standups.router import router as standups_router
@@ -43,6 +46,9 @@ def create_app() -> FastAPI:
     app.include_router(standups_router)
     app.include_router(integrations_router, dependencies=signed_in)
     app.include_router(starters_router, dependencies=signed_in)
+    app.include_router(inbox_router)
+    app.include_router(messages_router)
+    app.include_router(notifications_router)
 
     return app
 

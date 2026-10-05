@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from app.features.projects.models import BacklogItemRow, ProjectRow
 from app.features.projects.schemas import (
     OPEN_ITEMS,
+    Answer,
     BacklogItem,
     ItemFields,
     ItemStatus,
@@ -184,6 +185,8 @@ def _project_values(values: dict[str, Any]) -> dict[str, Any]:
         out["repo"] = repo.model_dump() if isinstance(repo, RepoSource) else repo
     if out.get("company_id"):
         out["company_id"] = uuid.UUID(str(out["company_id"]))
+    if "answers" in out:
+        out["answers"] = [a.model_dump() if isinstance(a, Answer) else a for a in out["answers"]]
     if isinstance(out.get("stack"), StackChoice):
         out["stack"] = out["stack"].model_dump(mode="json")
     return out
@@ -203,6 +206,7 @@ def _to_project(row: ProjectRow) -> Project:
         autopilot=row.autopilot,
         daily_limit=row.daily_limit,
         questions=list(row.questions or []),
+        answers=[Answer.model_validate(a) for a in row.answers or []],
         error=row.error,
         created_at=row.created_at,
         updated_at=row.updated_at,

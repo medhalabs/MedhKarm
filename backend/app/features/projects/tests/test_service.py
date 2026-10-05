@@ -91,3 +91,20 @@ async def test_pause_resume_and_unknown_projects() -> None:
     assert (await svc.resume(project_id)).status == ProjectStatus.ACTIVE
     with pytest.raises(ProjectNotFoundError):
         await svc.get("nope")
+
+
+async def test_answers_are_kept_and_clear_their_questions() -> None:
+    from app.features.projects.schemas import Answer, Answers
+
+    repo = InMemoryProjectRepository()
+    queue = InMemoryJobQueue()
+    service = ProjectService(repo, queue)
+    project = await service.create(NewProject(name="Tips", goal="Split restaurant bills"))
+    await repo.update_project(project.id, {"questions": ["Two decimals?", "Quantities?"]})
+
+    answered = await service.answer(
+        project.id, Answers(answers=[Answer(question="Two decimals?", answer="Yes, paise.")])
+    )
+
+    assert answered.questions == ["Quantities?"]
+    assert [(a.question, a.answer) for a in answered.answers] == [("Two decimals?", "Yes, paise.")]

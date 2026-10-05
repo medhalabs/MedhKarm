@@ -1,7 +1,7 @@
 "use server";
 
 // Server actions for the projects pages. They run on the Next.js server and call the backend.
-// No sign-in yet: like the API itself, keep the admin page on localhost until auth lands.
+// They act as the signed-in founder (the API client adds their session token).
 
 import { refresh } from "next/cache";
 import { redirect } from "next/navigation";

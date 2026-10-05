@@ -24,7 +24,7 @@ from app.features.security.service import SecurityReview
 from app.features.starters.service import StarterService
 from app.features.workflows.checkers.quality import QualityChecker
 from app.features.workflows.checkers.test_command import TestCommandChecker
-from app.features.workflows.interfaces import WorkChecker
+from app.features.workflows.interfaces import FounderNotes, WorkChecker
 from app.features.workflows.nodes.approval import make_approval_node
 from app.features.workflows.nodes.browser_qa import after_browser_qa, make_browser_qa_node
 from app.features.workflows.nodes.connect import make_connect_node
@@ -61,6 +61,7 @@ def build_app_graph(
     qa_name: str = "QA",
     deploys: DeployService | None = None,
     starters: StarterService | None = None,
+    notes: FounderNotes | None = None,
 ) -> CompiledStateGraph[BuildState, None, BuildState, BuildState]:
     """`planner` is the CTO's model: it plans and reviews. The role settings normally come from
     the team template (see app/workers/wiring.py). `approval_policy` decides the release gate:
@@ -71,7 +72,8 @@ def build_app_graph(
     tasks to specialists, who get their specialty's instructions. `browser_tester` is QA's
     engine for end-to-end browser tests of web changes; without one, none are written.
     `deploys` is DevOps: a preview before the gate, production after approval. `starters` sets
-    up new projects from our starter and modules; without one, they start empty."""
+    up new projects from our starter and modules; without one, they start empty. `notes` are the
+    founder's messages about a run, given to the CTO's plan and every developer brief."""
     repos = repos or RepoService()
     graph = StateGraph(BuildState)
     graph.add_node("prepare", make_prepare_node(sandboxes))
@@ -85,9 +87,12 @@ def build_app_graph(
             developer_names,
             max_developers,
             specialties,
+            notes,
         ),
     )
-    graph.add_node("develop", make_develop_node(engine, sandboxes, events, specialty_instructions))
+    graph.add_node(
+        "develop", make_develop_node(engine, sandboxes, events, specialty_instructions, notes)
+    )
     graph.add_node(
         "review",
         make_review_node(planner, sandboxes, review_instructions or REVIEW_PROMPT, max_revisions),

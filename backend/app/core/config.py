@@ -61,6 +61,21 @@ class Settings(BaseSettings):
     eval_nightly_engines: list[Literal["builtin", "openhands"]] = ["builtin"]
     eval_nightly_parallel: int = 2
 
+    # Updates to founders (daily standup, weekly report). Email: Resend, or any SMTP server.
+    resend_api_key: SecretStr | None = None
+    email_from: str = "MedhKarm <onboarding@resend.dev>"
+    smtp_host: str = ""
+    smtp_port: int = 587
+    smtp_user: str = ""
+    smtp_password: SecretStr | None = None
+    # WhatsApp: Meta's WhatsApp Cloud API, with an approved template (one body variable)
+    whatsapp_token: SecretStr | None = None
+    whatsapp_phone_number_id: str = ""
+    whatsapp_template: str = "medhkarm_update"
+    whatsapp_template_language: str = "en"
+    # Links in updates point here (the admin pages)
+    app_url: str = "http://localhost:3000"
+
     # Daily standup: covers 24 hours up to this hour, in this time zone
     standup_timezone: str = "Asia/Kolkata"
     standup_hour: int = 9

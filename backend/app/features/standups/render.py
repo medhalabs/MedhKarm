@@ -1,4 +1,4 @@
-"""A standup as plain text: for the terminal now, email and WhatsApp later."""
+"""A standup as plain text (email, the terminal) and as one line (WhatsApp)."""
 
 from zoneinfo import ZoneInfo
 
@@ -44,3 +44,17 @@ def _by_run(items: list[StandupItem]) -> list[list[StandupItem]]:
     for item in items:
         grouped.setdefault(item.run_id, []).append(item)
     return list(grouped.values())
+
+
+def to_short(standup: Standup, link: str = "") -> str:
+    """One line for WhatsApp: the headline, what needs the founder, and the counts."""
+    parts = [f"Standup {standup.day:%a %d %b}: {standup.headline}"]
+    if standup.needs_you:
+        names = list(dict.fromkeys(item.project for item in standup.needs_you))
+        parts.append(f"Needs you: {', '.join(names[:3])}" + (" and more" if len(names) > 3 else ""))
+    parts.append(
+        f"Done {len(standup.done)}, planned {len(standup.planned)}, blocked {len(standup.blocked)}"
+    )
+    if link:
+        parts.append(f"Open: {link}")
+    return ". ".join(parts)

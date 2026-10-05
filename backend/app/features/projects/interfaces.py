@@ -74,3 +74,9 @@ class PullRequests(Protocol):
     async def merge_pull_request(self, url: str, title: str) -> bool:
         """Merge it; False if GitHub refused (conflicts, checks, permissions)."""
         ...
+
+
+class ProjectNotes(Protocol):
+    """The founder's messages to the PM about a project, oldest first (messages feature)."""
+
+    async def for_project(self, project_id: str) -> list[str]: ...

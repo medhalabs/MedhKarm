@@ -2,6 +2,7 @@ from datetime import datetime
 from typing import Protocol
 
 from app.features.events.schemas import Event
+from app.features.runs.schemas import Run
 from app.features.standups.schemas import Standup
 
 
@@ -18,8 +19,15 @@ class ActivityLog(Protocol):
 
 
 class StandupDelivery(Protocol):
-    """Where a finished standup goes: the log today; email and WhatsApp in Phase 2."""
+    """Where a finished standup goes. The worker logs every standup; founders get theirs
+    through the notifications feature (email, WhatsApp)."""
 
     async def send(self, standup: Standup, text: str) -> str:
         """Returns where it was sent, e.g. "log" or an email address."""
         ...
+
+
+class RunLister(Protocol):
+    """A company's runs (the runs service), for the weekly report."""
+
+    async def list(self, limit: int = 50, company_id: str | None = None) -> list[Run]: ...

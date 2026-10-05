@@ -1,3 +1,4 @@
+import { MessageThread } from "@/features/messages";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -137,6 +138,7 @@ export async function ProjectPage({ projectId }: { projectId: string }) {
         {project.status !== "planning" && <AddItemForm projectId={project.id} />}
       </section>
       <AutoRefresh active={isBusy(project)} seconds={5} />
+      <MessageThread thread="project" threadId={project.id} />
     </div>
   );
 }

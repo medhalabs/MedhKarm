@@ -258,3 +258,24 @@ async def test_new_project_gets_a_new_repo_on_release_only() -> None:
     await service.start("run-new3", "Build app", "pytest")  # no new_repo: evals, opt-out
     assert "delivery" not in (await service.resume("run-new3", approved=True)).state
     assert host.published == []
+
+
+async def test_the_founders_messages_reach_the_plan_and_every_brief() -> None:
+    class Notes:
+        async def for_run(self, run_id: str) -> list[str]:
+            return ["Use Indian rupees everywhere"] if run_id == "run-m" else []
+
+    llm = ScriptedLLMProvider(_script(write_app=True))
+    graph = build_app_graph(
+        llm,
+        ToolLoopEngine(llm),
+        InMemorySandboxProvider(_tests_pass_if_app_exists),
+        InMemorySaver(),
+        notes=Notes(),
+    )
+
+    await WorkflowService(graph).start("run-m", "Build app", "pytest")
+
+    plan_call, developer_call = str(llm.calls[0]), str(llm.calls[1])
+    assert "Use Indian rupees everywhere" in plan_call
+    assert "Use Indian rupees everywhere" in developer_call

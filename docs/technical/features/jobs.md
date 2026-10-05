@@ -133,6 +133,8 @@ Then start a run over HTTP ([runs.md](runs.md)). Watch jobs: `docker exec medhka
 
 | Date | Change |
 | --- | --- |
+| 2026-10-05 | `standup.send` is now per company (`{company_id, day}`); new kind `report.weekly` |
+| 2026-10-05 | New kind `message.reply` (MessageReply): an agent answers the founder's message |
 | 2026-10-05 | New kind `build.cancel` (CancelBuild): removes a cancelled run's sandbox, records it, tells the backlog |
 | 2026-10-04 | `evals.nightly` job (the nightly eval suite) and its schedule |
 | 2026-10-04 | `backlog.plan` job (the PM) and the backlog tick (periodic); build handlers report finished runs to a `RunListener` |

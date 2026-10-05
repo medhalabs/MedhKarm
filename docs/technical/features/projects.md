@@ -137,6 +137,7 @@ Planning: `run.started`, `model.used` (PM), `plan.created`, `run.finished` (`sta
 
 | Date | Change |
 | --- | --- |
+| 2026-10-05 | Answers to the PM's questions: `POST /projects/{id}/answers` (`answers`, optional `replan`), kept in `projects.answers` (migration 0010); Mira's planning brief includes every answer and the founder's messages to her ([inbox.md](inbox.md), [messages.md](messages.md)) |
 | 2026-10-05 | Sign-in: projects carry `company_id`; every route needs a signed-in founder, and project routes check it's theirs; item runs start in the project's company; a cancelled item's run blocks the item ("You cancelled it. Retry or skip it.") |
 | 2026-10-05 | Tested live end to end: "Tip splitter" (6 items planned by Mira with 3 questions); item 1 released into the new private repo `tip-splitter-ec7529`; item 2 cloned it, built on it, passed QA and security, opened PR #1, which merged automatically on approval |
 | 2026-10-05 | `stack` (the founder's stack choices): passed to every item's run, so the first one starts from the starter; Mira's planning brief includes it ("plan features, not set-up"); stack fields on the new-project form |

@@ -21,6 +21,10 @@ from app.features.events.stores.sql_store import SqlEventStore
 from app.features.jobs.interfaces import JobHandler
 from app.features.jobs.service import JobRunner
 from app.features.jobs.stores.sql_queue import SqlJobQueue
+from app.features.messages.replier import AgentReplier
+from app.features.messages.repository import SqlMessageRepository
+from app.features.messages.service import REPLY_JOB, MessageService
+from app.features.notifications.dependencies import get_notification_service
 from app.features.projects.planner import BacklogPlanner
 from app.features.projects.progress import BacklogProgress
 from app.features.projects.repository import SqlProjectRepository
@@ -34,8 +38,21 @@ from app.features.workflows.service import WorkflowService
 from app.workers.handlers.backlog import PlanBacklog, backlog_schedule
 from app.workers.handlers.build import CancelBuild, ResumeBuild, StartBuild
 from app.workers.handlers.evals import NIGHTLY_EVALS, NightlyEvals, nightly_evals_schedule
-from app.workers.handlers.standup import SEND_STANDUP, SendStandup, standup_schedule
-from app.workers.wiring import build_team_runtime, ensure_sandbox_image, workflow_service
+from app.workers.handlers.messages import MessageReply, TeamContext
+from app.workers.handlers.standup import (
+    SEND_STANDUP,
+    SEND_WEEKLY,
+    SendStandup,
+    SendWeekly,
+    standup_schedule,
+)
+from app.workers.wiring import (
+    build_team_runtime,
+    ensure_sandbox_image,
+    personas,
+    role_model,
+    workflow_service,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -50,11 +67,22 @@ async def main() -> None:
         ensure_sandbox_image(settings.sandbox_image)
     team = build_team_runtime(settings)
     standups = get_standup_service()
+    notifications = get_notification_service()
     projects = SqlProjectRepository(session_factory)
     progress = BacklogProgress(
         projects, runs, GitHubRepoHost(settings.github_token), settings.standup_timezone
     )
-    planner = BacklogPlanner(team.pm, projects, events, team.pm_instructions)
+    messages = SqlMessageRepository(session_factory)
+    planner = BacklogPlanner(
+        team.pm, projects, events, team.pm_instructions, MessageService(messages)
+    )
+    replier = AgentReplier(
+        messages,
+        lambda role: role_model(settings, team, role),
+        personas(team),
+        TeamContext(runs, projects, events),
+        events,
+    )
 
     def workflow() -> AbstractAsyncContextManager[WorkflowService]:
         return workflow_service(settings, team)
@@ -64,8 +92,12 @@ async def main() -> None:
         RESUME_JOB: ResumeBuild(runs, workflow, team.sandboxes, events, progress),
         CANCEL_JOB: CancelBuild(workflow, team.sandboxes, events, progress),
         PLAN_JOB: PlanBacklog(planner, projects),
+        REPLY_JOB: MessageReply(replier),
         NIGHTLY_EVALS: NightlyEvals(settings),
-        SEND_STANDUP: SendStandup(standups, LogDelivery()),
+        SEND_STANDUP: SendStandup(standups, LogDelivery(), notifications, runs, settings.app_url),
+        SEND_WEEKLY: SendWeekly(
+            notifications, runs, events, settings.standup_timezone, settings.app_url
+        ),
     }
     runner = JobRunner(
         queue,
@@ -78,7 +110,11 @@ async def main() -> None:
         periodic=[
             backlog_schedule(progress),
             nightly_evals_schedule(queue, settings),
-            *([standup_schedule(queue, standups)] if settings.standup_schedule else []),
+            *(
+                [standup_schedule(queue, standups, notifications)]
+                if settings.standup_schedule
+                else []
+            ),
         ],
     )
 

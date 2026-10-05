@@ -8,6 +8,7 @@ from app.features.events.interfaces import EventStore
 from app.features.events.schemas import Actor, EventType
 from app.features.events.service import RunRecorder
 from app.features.sandbox.interfaces import SandboxProvider
+from app.features.workflows.interfaces import FounderNotes
 from app.features.workflows.nodes.base import BuildNode
 from app.features.workflows.state import BuildState
 
@@ -17,9 +18,11 @@ def make_develop_node(
     sandboxes: SandboxProvider,
     events: EventStore | None = None,
     specialty_instructions: dict[str, str] | None = None,
+    notes: FounderNotes | None = None,
 ) -> BuildNode:
     """`specialty_instructions` (specialty -> instructions) are added for tasks of that
-    specialty, after the developer role's own instructions."""
+    specialty, after the developer role's own instructions. `notes`: the founder's messages
+    about the run, read at the start of every task (so a message reaches the next task)."""
 
     async def develop(state: BuildState) -> dict[str, Any]:
         sandbox = (
@@ -42,7 +45,8 @@ def make_develop_node(
         )
         result = await engine.run_task(
             DevTask(
-                description=_brief(state, task, index, len(tasks)),
+                description=_brief(state, task, index, len(tasks))
+                + await founder_notes(notes, state.get("run_id", "")),
                 test_command=state["test_command"],
                 existing_project=bool(state.get("codebase_map")),
                 instructions=(specialty_instructions or {}).get(task.get("specialty", ""), ""),
@@ -112,3 +116,11 @@ def _whole_request(state: BuildState) -> dict[str, Any]:
         "feedback": "",
         "files_changed": [],
     }
+
+
+async def founder_notes(notes: FounderNotes | None, run_id: str) -> str:
+    """The founder's messages about the run, as a section for a brief ("" when none)."""
+    found = await notes.for_run(run_id) if notes and run_id else []
+    if not found:
+        return ""
+    return "\n\nMessages from the founder (follow them):\n" + "\n".join(f"- {n}" for n in found)

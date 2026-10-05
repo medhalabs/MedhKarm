@@ -9,7 +9,7 @@ from app.features.events.interfaces import EventStore
 from app.features.events.schemas import Actor, EventType
 from app.features.events.service import RunRecorder
 from app.features.models.interfaces import LLMProvider
-from app.features.projects.interfaces import ProjectRepository
+from app.features.projects.interfaces import ProjectNotes, ProjectRepository
 from app.features.projects.pm import BACKLOG_TOOL, PM_PROMPT, parse_backlog
 from app.features.projects.schemas import ItemStatus, Project, ProjectStatus
 
@@ -21,7 +21,10 @@ class BacklogPlanner:
         projects: ProjectRepository,
         events: EventStore | None = None,
         instructions: str = PM_PROMPT,
+        notes: ProjectNotes | None = None,
     ) -> None:
+        """`notes`: the founder's messages to the PM about a project (messages feature)."""
+        self._notes = notes
         self._llm = llm
         self._projects = projects
         self._events = events
@@ -103,6 +106,15 @@ class BacklogPlanner:
                 "ready-made when needed), so plan features, not set-up."
                 + (f"\nTheir notes: {project.stack.notes}" if project.stack.notes else "")
             )
+        if project.answers:
+            parts.append(
+                "The founder's answers to earlier questions (follow them):\n"
+                + "\n".join(f"- {a.question} → {a.answer}" for a in project.answers)
+            )
+        if self._notes:
+            notes = await self._notes.for_project(project.id)
+            if notes:
+                parts.append("Messages from the founder:\n" + "\n".join(f"- {n}" for n in notes))
         built = [
             i.title
             for i in await self._projects.list_items(project.id)

@@ -9,6 +9,7 @@ from app.features.auth.dependencies import SignedIn
 from app.features.projects.dependencies import get_backlog_progress, get_project_service
 from app.features.projects.progress import BacklogProgress
 from app.features.projects.schemas import (
+    Answers,
     BacklogItem,
     ItemFields,
     ItemUpdate,
@@ -60,6 +61,12 @@ async def update_project(project_id: str, body: ProjectUpdate, service: Service)
 async def replan(project_id: str, service: Service) -> ProjectDetail:
     """Ask the PM again: items not started yet are replaced by a new proposal."""
     return await service.replan(project_id)
+
+
+@router.post("/{project_id}/answers", response_model=ProjectDetail)
+async def answer(project_id: str, body: Answers, service: Service) -> ProjectDetail:
+    """Answer the PM's questions (kept for every later plan); optionally replan now."""
+    return await service.answer(project_id, body)
 
 
 @router.post("/{project_id}/plan/approve", response_model=ProjectDetail)

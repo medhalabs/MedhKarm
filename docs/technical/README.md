@@ -41,5 +41,8 @@ Knowledge transfer for anyone working on the code: what each part is, how it wor
 | starters | [features/starters.md](features/starters.md) | New projects start from a tested starter with ready-made modules (sign-in, payments, reminders, admin dashboard), in the stack the founder chose |
 | auth | [features/auth.md](features/auth.md) | Email and password sign-in; every route scoped to the founder's company |
 | companies | [features/companies.md](features/companies.md) | The founder's business: everything belongs to one |
+| inbox | [features/inbox.md](features/inbox.md) | The CEO inbox: approvals, the PM's questions, blocked work, the team's replies |
+| messages | [features/messages.md](features/messages.md) | Message any agent about a run or project; replies in role; messages steer the next task |
+| notifications | [features/notifications.md](features/notifications.md) | The standup and weekly report by email (Resend/SMTP) and WhatsApp (Meta), per founder |
 | approvals | [features/approvals.md](features/approvals.md) | Approval rules at the release gate: ask, approve or reject, with reasons |
 | repos | [features/repos.md](features/repos.md) | Founders' GitHub repositories: clone, map before planning, pull request on release |

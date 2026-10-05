@@ -99,10 +99,24 @@ class Project(BaseModel):
     autopilot: bool
     daily_limit: int
     questions: list[str] = Field(default_factory=list)  # the PM's open questions/assumptions
+    answers: list["Answer"] = Field(default_factory=list)  # the founder's answers so far
     error: str = ""  # why it paused on its own, or why planning failed
     created_at: datetime
     updated_at: datetime
 
 
+class Answer(BaseModel):
+    question: str = Field(max_length=1000)
+    answer: str = Field(min_length=1, max_length=2000)
+
+
+class Answers(BaseModel):
+    answers: list[Answer] = Field(min_length=1, max_length=10)
+    replan: bool = False  # ask the PM to plan again with them now
+
+
 class ProjectDetail(Project):
     items: list[BacklogItem]
+
+
+Project.model_rebuild()

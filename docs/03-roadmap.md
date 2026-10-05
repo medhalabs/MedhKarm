@@ -132,8 +132,8 @@ The beta starts on Dec 7 with the admin page's card layout and the standup (what
 - [ ] Animated 2D office: each agent has a desk and a character; status bubbles ("Writing the expense form…"); characters move when the CTO assigns work or QA sends a bug back; a meeting room for agent discussions. Every movement is driven by real events from the log, never decoration
 - [ ] Replay timeline: agents finish tasks in seconds, so activity is paced and can be scrubbed like a time-lapse; plus the task board
 - [ ] Product demo for the customer: live preview link plus a screen recording from QA's end-to-end browser test, before the release approval
-- [ ] CEO inbox for approvals and questions; message any agent
-- [ ] Standup every morning by email or WhatsApp; weekly report
+- [x] CEO inbox for approvals and questions; message any agent. Done Oct 5, 2026 (tried live: Mira's questions in the inbox, an answer cleared one, Mira replied to a message in ~10 s): approvals with approve/reject, Mira's questions with answers that steer her plans, blocked work, messages to any agent with replies in role ([inbox.md](technical/features/inbox.md), [messages.md](technical/features/messages.md))
+- [ ] Standup every morning by email or WhatsApp; weekly report. Built Oct 5, 2026: both channels (Resend/SMTP email, Meta WhatsApp), each founder's own standup at their hour, Monday report, settings page with a test send ([notifications.md](technical/features/notifications.md)). Left: your Resend key and WhatsApp app, then a real send
 - [ ] Bring your own: own API keys and local models (Ollama via a small connector), at a lower price
 - [ ] Razorpay billing in rupees: base subscription plus pay-as-you-go credits
 - [ ] Human expert escalation: we unblock stuck tasks ourselves during beta

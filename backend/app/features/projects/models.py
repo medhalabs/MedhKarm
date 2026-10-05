@@ -26,6 +26,9 @@ class ProjectRow(Base):
     autopilot: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
     daily_limit: Mapped[int] = mapped_column(Integer, nullable=False, server_default="2")
     questions: Mapped[list[str]] = mapped_column(JSONB, nullable=False, server_default="[]")
+    answers: Mapped[list[dict[str, str]]] = mapped_column(
+        JSONB, nullable=False, server_default="[]"
+    )
     error: Mapped[str] = mapped_column(Text, nullable=False, server_default="")
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False

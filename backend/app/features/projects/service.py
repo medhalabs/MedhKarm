@@ -12,6 +12,7 @@ from app.features.projects.exceptions import (
 from app.features.projects.interfaces import ProjectRepository
 from app.features.projects.schemas import (
     OPEN_ITEMS,
+    Answers,
     BacklogItem,
     ItemFields,
     ItemStatus,
@@ -82,6 +83,22 @@ class ProjectService:
             raise BacklogConflictError("The PM is already planning this project")
         await self._projects.update_project(project_id, {"status": ProjectStatus.PLANNING})
         await self._queue_plan(project_id)
+        return await self.get(project_id)
+
+    async def answer(self, project_id: str, body: Answers) -> ProjectDetail:
+        """The founder answers the PM's questions: kept for every later plan, and the questions
+        they answered leave the inbox. With `replan`, the PM plans again now."""
+        project = await self._project(project_id)
+        answered = {a.question for a in body.answers}
+        await self._projects.update_project(
+            project_id,
+            {
+                "answers": [*project.answers, *body.answers],
+                "questions": [q for q in project.questions if q not in answered],
+            },
+        )
+        if body.replan:
+            return await self.replan(project_id)
         return await self.get(project_id)
 
     async def approve_plan(self, project_id: str) -> ProjectDetail:

@@ -17,13 +17,13 @@ Last updated: Oct 5, 2026.
 
 | Id | Gap | Why it matters | Found | Fix idea |
 | --- | --- | --- | --- | --- |
-| G-10 | Standup goes to the worker's log only, and covers every run (not per company) | "A standup every morning" was the interview ask | Oct 1 | Email or WhatsApp delivery; filter by company |
 | G-11 | Local Docker sandbox only; Daytona chosen and its provider built, but not switched on or tried against Daytona | Beta users' code can't run on this laptop | Sep 30 | At the beta: Daytona account, `SANDBOX_PROVIDER=daytona`, one eval run on it |
-| G-12 | Mira doesn't read an existing repository's code when planning, and there's no back-and-forth: she lists questions, you edit and ask again | Plans for existing projects are generic | Oct 4 | Give her the codebase map; answer her questions in the page |
+| G-12 | Mira doesn't read an existing repository's code when planning (the back-and-forth is now in the inbox: answers and messages steer her plans) | Plans for existing projects are generic | Oct 4 | Give her the codebase map |
 | G-13 | Frontend API types are written by hand, not generated from the OpenAPI spec (`shared/api/generated/` is empty) | Types can drift from the backend | Oct 1 | Add the generator to the frontend build |
 | G-35 | Local mode on Vercel keeps data in each server instance's memory: on a preview, accounts and records can vanish between requests | Founders try previews; sign-up that forgets you looks broken | Oct 5 | A free database per project for previews (Supabase/Neon), or Vercel's storage, set as `DATABASE_URL` by Neel |
 | G-14 | No readiness check (database, Redis) on `/health` | Deploys can't tell a broken backend | Oct 1 | `/health/ready` |
 | G-41 | Sign-in scopes data in the application only: Postgres row-level security isn't enforced (the app connects as the table owner); no password reset, rate limits on log-in, server-side log-out or teammates | A bug in one query could show another company's data; locked-out founders need us | Oct 5 | A non-owner database role with RLS policies on `company_id`; reset emails with the email service; log-in attempt limits |
+| G-43 | Standup and weekly report built but never sent for real: no Resend key or WhatsApp app yet; plain-text email only; one timezone for all; WhatsApp is one-way | The interview ask | Oct 5 | Pavan adds the keys and template (notifications.md); HTML email; read WhatsApp replies via Meta webhooks |
 
 ## Later
 
@@ -51,6 +51,7 @@ Last updated: Oct 5, 2026.
 | G-37 | Neel deploys to Vercel only: Docker, DigitalOcean and AWS projects get Dockerfile and compose files but no automatic deploy | Oct 5 | New `DeployTarget` classes (DigitalOcean App Platform, AWS) |
 | G-38 | Module services untested against the real thing: Supabase Auth, Razorpay/Stripe test-mode payments, Resend email (unit tests only); no SMS/WhatsApp reminders; Vercel's free plan runs the reminders cron once a day | Oct 5 | Try each with test keys; an SMS/WhatsApp `Notifier` (MSG91, Gupshup) |
 | G-39 | The stack and modules are picked from the request's words, not understood ("spring" in a sentence; a feature that needs sign-in without saying so) | Oct 5 | Let the CTO confirm or adjust the stack and modules in the plan |
+| G-42 | Messages: replies appear only on refresh (no live update); roles without instructions (security, devops) are answered by the first persona; the free model's replies can skip part of a question (live: Mira ignored "why did you ask about timestamps?") | Oct 5 | Live thread updates through the event stream; personas for every role; a stronger model for replies |
 
 ## Filled
 
@@ -62,6 +63,7 @@ Last updated: Oct 5, 2026.
 | — | No security checks on releases | Oct 4, 2026 | Vikram ([security.md](technical/features/security.md)) |
 | — | Listing the project read all of `node_modules` (22,229 files, about 324k tokens) and broke the first live run on the starter | Oct 5, 2026 | Listing and change detection skip dependency folders; listing capped at 400 ([sandbox.md](technical/features/sandbox.md)) |
 | G-02 | Eval results were stale (measured before the CTO, security, specialties, browser tests) | Oct 5, 2026 | Fresh baseline with the whole team: 18 of 20 ([12-gate-2-report.md](12-gate-2-report.md)) |
+| G-10 | The standup went to the worker's log only, covering every run | Oct 5, 2026 | Per-company standup and weekly report by email and WhatsApp ([notifications.md](technical/features/notifications.md)); a real send still to do (G-43) |
 | G-08 | No sign-in, no companies: API and admin open to anyone | Oct 5, 2026 | Email + password accounts, companies, every route scoped by company ([auth.md](technical/features/auth.md)); RLS still to do (G-41) |
 | G-09 | Runs couldn't be cancelled | Oct 5, 2026 | `POST /runs/{id}/cancel` and a Cancel button; running workers stop, sandboxes removed ([runs.md](technical/features/runs.md)) |
 | G-34 | The starter had never run live end to end | Oct 5, 2026 | Second live run (cafe feedback wall, gpt-oss:20b) reached the gate: starter + modules, API to Isha, pages to Arjun, QA caught lint/build errors and the fix round solved them, Tara's browser test passed, Vikram clean, Neel's preview ready ([starters.md](technical/features/starters.md)) |

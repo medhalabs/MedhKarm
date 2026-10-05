@@ -4,7 +4,9 @@ from typing import Any
 
 from app.features.models.interfaces import LLMProvider
 from app.features.workflows.cto import PLAN_TOOL, assign, parse_plan
+from app.features.workflows.interfaces import FounderNotes
 from app.features.workflows.nodes.base import BuildNode
+from app.features.workflows.nodes.develop import founder_notes
 from app.features.workflows.state import BuildState
 
 PLANNER_PROMPT = """You are the CTO of a small software team. Split the request into 1 to 5
@@ -18,6 +20,7 @@ def make_plan_node(
     developer_names: list[str] | None = None,
     max_developers: int = 1,
     specialties: dict[str, str] | None = None,
+    notes: FounderNotes | None = None,
 ) -> BuildNode:
     """`instructions`, `developer_names` and `max_developers` normally come from the team
     template (CTO and developer roles)."""
@@ -43,6 +46,7 @@ def make_plan_node(
             )
         if state.get("stack_brief"):
             team = f"{state['stack_brief']}\n\n{team}"
+        team += await founder_notes(notes, state.get("run_id", ""))
         response = await llm.complete(
             [
                 {"role": "system", "content": instructions.strip()},

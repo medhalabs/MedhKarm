@@ -14,3 +14,10 @@ class WorkChecker(Protocol):
     """
 
     async def check(self, state: BuildState, sandbox: Sandbox) -> CheckResult: ...
+
+
+class FounderNotes(Protocol):
+    """The founder's messages to the team about a run, oldest first (messages feature). The
+    CTO's plan and every developer brief include them."""
+
+    async def for_run(self, run_id: str) -> list[str]: ...

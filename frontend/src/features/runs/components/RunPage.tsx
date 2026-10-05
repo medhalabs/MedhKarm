@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { ActivityFeed, listEvents } from "@/features/events";
+import { MessageThread } from "@/features/messages";
 import { AutoRefresh } from "@/shared/ui/AutoRefresh";
 
 import { getRun } from "../api/getRun";
@@ -24,6 +25,7 @@ export async function RunPage({ runId }: { runId: string }) {
         <ApprovalPanel runId={run.id} gate={run.gate} />
       )}
       <ActivityFeed key={run.id} runId={run.id} initialEvents={events} />
+      <MessageThread thread="run" threadId={run.id} />
       {/* Status changes are also caught from the feed; this covers queued → running. */}
       <AutoRefresh active={describeStatus(run.status).active} seconds={10} />
     </div>

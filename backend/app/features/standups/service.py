@@ -29,6 +29,9 @@ class StandupService:
         self._stall_after = stall_after
         self._clock = clock
 
+    def now(self) -> datetime:
+        return self._clock()
+
     def today(self) -> date:
         return self._clock().astimezone(self._zone).date()
 
@@ -37,19 +40,23 @@ class StandupService:
         now = self._clock().astimezone(self._zone)
         return now.date() if now.hour >= self._hour else None
 
-    def window(self, day: date) -> tuple[datetime, datetime]:
-        """The 24 hours up to `hour` on `day`, local time; cut off at now for today."""
-        end = datetime.combine(day, time(self._hour), self._zone)
+    def window(self, day: date, hour: int | None = None) -> tuple[datetime, datetime]:
+        """The 24 hours up to `hour` (the company's, else STANDUP_HOUR) on `day`, local time;
+        cut off at now for today."""
+        end = datetime.combine(day, time(self._hour if hour is None else hour), self._zone)
         since = end - timedelta(days=1)
         now = self._clock()
         if since >= now:
             raise StandupDayInFutureError(f"No standup for {day} yet")
         return since, min(end, now)
 
-    async def for_day(self, day: date | None = None, only: set[str] | None = None) -> Standup:
-        """`only`: the runs this standup may cover (a company's); None covers every run."""
+    async def for_day(
+        self, day: date | None = None, only: set[str] | None = None, hour: int | None = None
+    ) -> Standup:
+        """`only`: the runs this standup may cover (a company's); None covers every run.
+        `hour`: the company's standup hour (the window ends then)."""
         day = day or self.today()
-        since, until = self.window(day)
+        since, until = self.window(day, hour)
         histories = {
             run_id: await self._history(run_id, until)
             for run_id in await self._runs(since, until)
