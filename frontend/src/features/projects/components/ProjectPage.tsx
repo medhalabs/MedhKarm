@@ -98,7 +98,7 @@ export async function ProjectPage({ projectId }: { projectId: string }) {
       )}
 
       {planned && (
-        <section className="flex flex-wrap items-center gap-x-6 gap-y-3 rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
+        <section className="flex flex-wrap items-center gap-x-6 gap-y-3 card p-5">
           <AutopilotForm
             projectId={project.id}
             autopilot={project.autopilot}

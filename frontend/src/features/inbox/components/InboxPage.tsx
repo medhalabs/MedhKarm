@@ -2,14 +2,15 @@ import Link from "next/link";
 
 import { MessageList } from "@/features/messages";
 import { timeAgo } from "@/shared/lib/format";
+import { titleFrom } from "@/shared/lib/title";
+import { PageHeader } from "@/shared/ui/PageHeader";
 
 import { decideAction, itemAction } from "../api/actions";
 import { getInbox } from "../api/getInbox";
 import { AnswerForm } from "./AnswerForm";
 
-const card = "flex flex-col gap-3 rounded-lg border border-zinc-200 p-4 dark:border-zinc-800";
-const button =
-  "rounded-md px-3 py-1.5 text-sm font-medium border border-zinc-300 hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-900";
+const card = "card flex flex-col gap-3 p-5";
+const button = "btn-secondary";
 
 /** Everything waiting for the founder: releases, Mira's questions, blocked work, replies. */
 export async function InboxPage() {
@@ -18,15 +19,19 @@ export async function InboxPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <h1 className="text-xl font-semibold">Inbox</h1>
-      {empty && <p className="text-zinc-500">Nothing needs you right now.</p>}
+      <PageHeader title="Inbox" description="Everything your team needs from you, in one place." />
+      {empty && (
+        <p className="card p-8 text-center text-sm text-zinc-500">
+          Nothing needs you right now. The team will let you know.
+        </p>
+      )}
 
       {inbox.approvals.length > 0 && (
         <section className="flex flex-col gap-3">
-          <h2 className="font-semibold">Waiting for your approval</h2>
+          <h2 className="text-sm font-semibold text-zinc-500">Waiting for your approval</h2>
           {inbox.approvals.map((a) => (
             <article key={a.run_id} className={card}>
-              <p className="font-medium">{a.request.split("\n")[0]}</p>
+              <p className="font-medium">{titleFrom(a.request)}</p>
               {a.summary && <p className="text-sm text-zinc-600 dark:text-zinc-400">{a.summary}</p>}
               {a.reasons.length > 0 && (
                 <ul className="list-disc pl-5 text-sm text-amber-800 dark:text-amber-300">
@@ -51,7 +56,7 @@ export async function InboxPage() {
                 </Link>
                 <span className="text-zinc-500">waiting {timeAgo(a.waiting_since)}</span>
                 <form action={decideAction.bind(null, a.run_id, true)} className="ml-auto">
-                  <button type="submit" className={`${button} bg-emerald-50 dark:bg-emerald-950`}>
+                  <button type="submit" className="btn-primary bg-emerald-600 hover:bg-emerald-500">
                     Approve
                   </button>
                 </form>
@@ -68,7 +73,7 @@ export async function InboxPage() {
 
       {inbox.questions.length > 0 && (
         <section className="flex flex-col gap-3">
-          <h2 className="font-semibold">Mira&apos;s questions</h2>
+          <h2 className="text-sm font-semibold text-zinc-500">Mira&apos;s questions</h2>
           {inbox.questions.map((q) => (
             <article key={q.project_id} className={card}>
               <Link href={`/admin/projects/${q.project_id}`} className="font-medium underline">
@@ -82,7 +87,7 @@ export async function InboxPage() {
 
       {inbox.blocked.length > 0 && (
         <section className="flex flex-col gap-3">
-          <h2 className="font-semibold">Blocked work</h2>
+          <h2 className="text-sm font-semibold text-zinc-500">Blocked work</h2>
           {inbox.blocked.map((b) => (
             <article key={b.item_id} className={card}>
               <p>
@@ -114,7 +119,7 @@ export async function InboxPage() {
 
       {inbox.replies.length > 0 && (
         <section className="flex flex-col gap-3">
-          <h2 className="font-semibold">Latest replies from the team</h2>
+          <h2 className="text-sm font-semibold text-zinc-500">Latest replies from the team</h2>
           <MessageList messages={inbox.replies} />
         </section>
       )}

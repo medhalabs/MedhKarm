@@ -22,7 +22,7 @@ export function MessageForm({ thread, threadId }: { thread: "run" | "project"; t
           id={`to-${threadId}`}
           name="to"
           defaultValue={thread === "run" ? "cto" : "pm"}
-          className="rounded-md border border-zinc-300 bg-transparent px-2 py-1 dark:border-zinc-700"
+          className="field"
         >
           {AGENTS.map((a) => (
             <option key={a.role} value={a.role}>
@@ -34,7 +34,7 @@ export function MessageForm({ thread, threadId }: { thread: "run" | "project"; t
       <textarea
         name="body"
         rows={2}
-        maxLength={4000}
+        maxLength={10000}
         required
         aria-label="Message"
         placeholder={
@@ -45,11 +45,7 @@ export function MessageForm({ thread, threadId }: { thread: "run" | "project"; t
         className="rounded-md border border-zinc-300 bg-transparent px-3 py-2 text-sm dark:border-zinc-700"
       />
       <div className="flex items-center gap-3">
-        <button
-          type="submit"
-          disabled={pending}
-          className="rounded-md bg-zinc-900 px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900"
-        >
+        <button type="submit" disabled={pending} className="btn-primary">
           {pending ? "Sending…" : "Send"}
         </button>
         {state.error && (

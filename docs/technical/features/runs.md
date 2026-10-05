@@ -125,6 +125,10 @@ None of its own. The workflow records the run's events ([workflows.md](workflows
 
 | Date | Change |
 | --- | --- |
+| 2026-10-05 | The "New run" form is replaced by a conversation with the CTO that ends in a brief the founder confirms ([intake.md](intake.md)); repo, stack and test command come from the conversation |
+| 2026-10-05 | The run's activity scrolls in its own box and messages in theirs (newest in view), so messages are reachable without scrolling past every event |
+| 2026-10-05 | UI redesign: sidebar app shell; run page with a title from the request's first line, the request as formatted Markdown in a folding card, activity and messages in cards, a side panel (office, the run's facts, Cancel); Runs page with counts, a "New run" card (options folded), run titles without Markdown marks |
+| 2026-10-05 | Requests can be up to 50,000 characters (was 5,000), for pasted specs. A long request goes into every prompt the team makes (plan, each task, each review), so it costs more tokens |
 | 2026-10-05 | **Cancel:** `POST /runs/{id}/cancel` (status `cancelled`, 409 `run_already_finished` when over); a running worker stops within ~3 s (it watches the status), a queued run never starts, and a `build.cancel` job removes the sandbox and records "Cancelled by you"; Cancel button on the run page. **Sign-in:** runs carry `company_id`; every route needs a signed-in founder and only shows their company's runs ([auth.md](auth.md)) |
 | 2026-10-04 | `deployment` (where the released app is live, migration 0007); the admin page shows the preview link at the gate and the live link |
 | 2026-10-05 | `stack` on start and on runs (migration `0008`); new projects no longer default to `pytest -q` (detected from the starter); admin form: "Stack for a new project" |

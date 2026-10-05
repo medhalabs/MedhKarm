@@ -7,8 +7,7 @@ import { logInAction, signUpAction } from "../api/actions";
 import type { FormState } from "../types";
 
 const initial: FormState = { error: null };
-const field =
-  "rounded-md border border-zinc-300 bg-transparent px-3 py-2 font-normal dark:border-zinc-700";
+const field = "field";
 
 /** Log in, or create an account (and the founder's company). */
 export function AuthForm({ mode }: { mode: "login" | "signup" }) {
@@ -16,10 +15,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
   const [state, formAction, pending] = useActionState(signup ? signUpAction : logInAction, initial);
 
   return (
-    <form
-      action={formAction}
-      className="flex w-full max-w-sm flex-col gap-3 rounded-lg border border-zinc-200 p-6 dark:border-zinc-800"
-    >
+    <form action={formAction} className="flex w-full max-w-sm flex-col gap-3 card p-6">
       <h1 className="text-xl font-semibold">{signup ? "Create your account" : "Log in"}</h1>
       {signup && (
         <>
@@ -53,11 +49,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
           {state.error}
         </p>
       )}
-      <button
-        type="submit"
-        disabled={pending}
-        className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900"
-      >
+      <button type="submit" disabled={pending} className="btn-primary">
         {pending ? "Please wait…" : signup ? "Create account" : "Log in"}
       </button>
       <p className="text-sm text-zinc-500">

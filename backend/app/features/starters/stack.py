@@ -126,8 +126,38 @@ def mentions(text: str, words: list[str]) -> bool:
     return any(re.search(rf"(?<![\w.]){re.escape(w)}(?![\w])", text) for w in words)
 
 
+# A technology counts as the founder's choice only when it's asked for as one ("using Python",
+# "with a Python API", "on AWS", "paid with Stripe"). Specs often list technologies as page
+# content ("Backend: Python, FastAPI"): those mustn't pick the stack (live, Oct 5, 2026).
+CHOICE_LEAD = (
+    r"(?<![\w])(?:using|use|with|in|on|via|through|built (?:with|on|in)|written in|"
+    r"made with|deploy(?:ed)?(?: it| this| the app)? (?:to|on)|"
+    r"host(?:ed)?(?: it| this)? (?:on|at)|paid (?:with|via|through)|pay (?:with|via)|"
+    r"stack is|stack:)\s+(?:an? |the |our |my )?"
+)
+
+
+LONG_SPEC = 700  # characters: beyond this, modules come from the opening request only
+
+
+def opening(text: str) -> str:
+    """What the founder asks for, without the page copy a long spec carries: a short request
+    whole; a long one up to its first heading or blank line."""
+    if len(text) <= LONG_SPEC:
+        return text
+    first = re.split(r"\n\s*\n|\n#{1,6}\s", text.strip(), maxsplit=1)[0]
+    return first
+
+
+def chosen(text: str, words: list[str]) -> bool:
+    """Is one of `words` asked for as the stack (not just mentioned)?"""
+    return any(re.search(rf"{CHOICE_LEAD}{re.escape(w)}(?![\w])", text) for w in words)
+
+
 def detect(text: str, table: dict[str, list[str]]) -> str | None:
-    return next((name for name, words in table.items() if mentions(text, words)), None)
+    if table is FRONTENDS and mentions(text, FRONTENDS["none"]):  # "API only", "no frontend"
+        return "none"
+    return next((name for name, words in table.items() if chosen(text, words)), None)
 
 
 def canonical(value: str | None, table: dict[str, list[str]]) -> str | None:
@@ -231,7 +261,8 @@ def _modules(
     if choice.modules is not None:
         wanted = [m for m in choice.modules if m in known]
     else:
-        wanted = [m.name for m in known.values() if mentions(text, m.keywords)]
+        ask = opening(text)
+        wanted = [m.name for m in known.values() if mentions(ask, m.keywords)]
         if choice.payments and choice.payments != "none" and "payments" in known:
             wanted.append("payments")
     if picked["payments"] == "none" or picked["payments"] not in OUR_PAYMENTS:

@@ -1,7 +1,6 @@
 import { MODULES } from "../types";
 
-const field =
-  "rounded-md border border-zinc-300 bg-transparent px-3 py-2 font-normal dark:border-zinc-700";
+const field = "field";
 
 const SUGGESTIONS: Record<string, { label: string; options: string[]; hint: string }> = {
   frontend: { label: "Frontend", options: ["nextjs", "none", "vue", "angular"], hint: "nextjs" },

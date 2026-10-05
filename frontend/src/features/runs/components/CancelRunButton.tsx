@@ -6,7 +6,7 @@ export function CancelRunButton({ runId }: { runId: string }) {
     <form action={cancelRunAction.bind(null, runId)}>
       <button
         type="submit"
-        className="rounded-md border border-zinc-300 px-3 py-1 text-xs font-medium text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-900"
+        className="btn-secondary w-full text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/40"
       >
         Cancel run
       </button>

@@ -22,7 +22,7 @@ export function AnswerForm({ project }: { project: Questions }) {
             name={`answer_${i}`}
             maxLength={2000}
             placeholder="Your answer (leave empty to answer later)"
-            className="rounded-md border border-zinc-300 bg-transparent px-3 py-2 dark:border-zinc-700"
+            className="field"
           />
         </label>
       ))}
@@ -31,11 +31,7 @@ export function AnswerForm({ project }: { project: Questions }) {
           <input type="checkbox" name="replan" />
           Ask Mira to plan again with these
         </label>
-        <button
-          type="submit"
-          disabled={pending}
-          className="rounded-md bg-zinc-900 px-3 py-1.5 font-medium text-white disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900"
-        >
+        <button type="submit" disabled={pending} className="btn-primary">
           {pending ? "Saving…" : "Save answers"}
         </button>
         {state.error && (

@@ -17,7 +17,7 @@ class NewMessage(BaseModel):
     run_id: str | None = None
     project_id: str | None = None
     to: str = Field(default="cto", pattern=r"^[a-z][a-z_]*$")  # role id: pm, cto, qa, …
-    body: str = Field(min_length=1, max_length=4000)
+    body: str = Field(min_length=1, max_length=10_000)
 
     @model_validator(mode="after")
     def _one_thread(self) -> "NewMessage":

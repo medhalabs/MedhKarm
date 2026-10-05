@@ -26,7 +26,7 @@ class StackOptions(BaseModel):
 
 
 class StackPreview(BaseModel):
-    request: str = Field(min_length=3, max_length=5000)
+    request: str = Field(min_length=3, max_length=50_000)
     stack: StackChoice = Field(default_factory=StackChoice)
 
 

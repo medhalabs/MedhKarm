@@ -12,7 +12,7 @@ const field =
 export function AddItemForm({ projectId }: { projectId: string }) {
   const [state, formAction, pending] = useActionState(addItemAction.bind(null, projectId), initial);
   return (
-    <details className="rounded-lg border border-zinc-200 p-3 dark:border-zinc-800">
+    <details className="card p-4">
       <summary className="cursor-pointer text-sm font-medium">Add an item</summary>
       <form action={formAction} className="mt-3 flex flex-col gap-2">
         <input
@@ -36,11 +36,7 @@ export function AddItemForm({ projectId }: { projectId: string }) {
           className={field}
         />
         <div className="flex items-center gap-3">
-          <button
-            type="submit"
-            disabled={pending}
-            className="rounded-md bg-zinc-900 px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900"
-          >
+          <button type="submit" disabled={pending} className="btn-primary">
             {pending ? "Adding…" : "Add to the end"}
           </button>
           {state.error && (

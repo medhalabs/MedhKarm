@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 import { formatNumber } from "@/shared/lib/format";
+import { ScrollArea } from "@/shared/ui/ScrollArea";
 
 import { eventStreamUrl } from "../api/streamUrl";
 import { isFinished, mergeEvents, STATUS_CHANGING, totalTokens } from "../describeEvent";
@@ -96,11 +97,16 @@ export function ActivityFeed({
           Nothing yet. The team starts once a worker picks the run up.
         </p>
       ) : (
-        <ol className="divide-y divide-zinc-100 dark:divide-zinc-900">
-          {[...shown].reverse().map((event) => (
-            <EventRow key={event.id} event={event} />
-          ))}
-        </ol>
+        <ScrollArea className="max-h-[28rem] pr-1">
+          <ol
+            className="divide-y divide-zinc-100 dark:divide-zinc-800"
+            aria-label="Activity, newest first"
+          >
+            {[...shown].reverse().map((event) => (
+              <EventRow key={event.id} event={event} />
+            ))}
+          </ol>
+        </ScrollArea>
       )}
     </section>
   );

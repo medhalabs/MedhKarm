@@ -89,3 +89,35 @@ def test_modules_come_from_the_request_with_what_they_need() -> None:
 def test_notes_reach_the_brief() -> None:
     stack = resolve("A shop website", payments="cashfree", notes="Docs: https://docs.cashfree.com")
     assert "https://docs.cashfree.com" in stack.brief()
+
+
+def test_technologies_listed_as_page_content_dont_pick_the_stack() -> None:
+    """A landing page that lists the company's own tech (live spec, Oct 5, 2026)."""
+    spec = (
+        "Create a premium landing page for an AI Technology Office.\n"
+        "### Tech we use\n**Backend:** Python, FastAPI, Node.js\n"
+        "**Frontend:** Next.js, React\n**Data:** PostgreSQL\n**Infrastructure:** Docker, AWS"
+    )
+    stack = resolve(spec)
+
+    assert (stack.api, stack.database, stack.hosting) == ("nextjs", "supabase", "vercel")
+    assert (stack.starter, stack.layout) == ("nextjs", "single")
+    assert set(stack.sources.values()) == {"team"}
+
+
+def test_asked_for_technologies_still_count() -> None:
+    assert resolve("Build it using Python and deploy it to AWS").api == "python"
+    assert resolve("Build it using Python and deploy it to AWS").hosting == "aws"
+    assert resolve("A shop built with Next.js, stored in Postgres").database == "postgres"
+    assert resolve("An inventory API only, written in Java").frontend == "none"
+    assert resolve("A page that sits within python docs").api == "nextjs"  # "within" isn't "in"
+
+
+def test_a_long_specs_copy_doesnt_add_modules() -> None:
+    spec = (
+        "Create a premium landing page for an AI office.\n\n### Services\n"
+        + "We build analytics dashboards, admin portals and member accounts for users. " * 20
+    )
+    assert resolve(spec).modules == []
+    short = "A gym website where members log in and see an admin dashboard"
+    assert resolve(short).modules == ["auth", "dashboards"]

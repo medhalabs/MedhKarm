@@ -15,7 +15,7 @@ export function ApprovalPanel({ runId, gate }: { runId: string; gate: Gate }) {
   const byRule = gate.rules.length > 0;
 
   return (
-    <section className="flex flex-col gap-4 rounded-lg border border-amber-300 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950/40">
+    <section className="flex flex-col gap-4 rounded-2xl border border-amber-300 bg-amber-50 p-5 shadow-sm dark:border-amber-800 dark:bg-amber-950/40">
       <div>
         <h2 className="text-lg font-semibold">{gate.question}</h2>
         <ul className="mt-1 list-disc pl-5 text-sm">

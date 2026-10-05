@@ -6,8 +6,7 @@ import { saveSettingsAction, sendTestAction } from "../api/actions";
 import type { FormState, SettingsView } from "../types";
 
 const initial: FormState = { error: null };
-const field =
-  "rounded-md border border-zinc-300 bg-transparent px-3 py-2 font-normal dark:border-zinc-700";
+const field = "field";
 
 /** Where the daily standup and the Monday report go, and when. */
 export function SettingsForm({
@@ -24,10 +23,7 @@ export function SettingsForm({
 
   return (
     <div className="flex flex-col gap-4">
-      <form
-        action={save}
-        className="flex max-w-lg flex-col gap-3 rounded-lg border border-zinc-200 p-4 dark:border-zinc-800"
-      >
+      <form action={save} className="flex max-w-lg flex-col gap-3 card p-5">
         <label className="flex flex-col gap-1 text-sm font-medium">
           Email
           <input
@@ -70,11 +66,7 @@ export function SettingsForm({
           </p>
         )}
         <div className="flex items-center gap-3">
-          <button
-            type="submit"
-            disabled={saving}
-            className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900"
-          >
+          <button type="submit" disabled={saving} className="btn-primary">
             {saving ? "Saving…" : "Save"}
           </button>
           {saved.saved && (

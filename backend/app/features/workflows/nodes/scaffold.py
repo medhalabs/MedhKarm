@@ -20,9 +20,10 @@ def make_scaffold_node(sandboxes: SandboxProvider, starters: StarterService | No
     async def scaffold(state: BuildState) -> dict[str, Any]:
         if starters is None or state.get("repo") or "stack_choice" not in state:
             return {}
-        stack = starters.resolve(
-            state["request"], StackChoice.model_validate(state["stack_choice"])
-        )
+        choice = StackChoice.model_validate(state["stack_choice"])
+        if choice.starter is False and choice.empty:  # starter off, nothing chosen: not our call
+            return {}
+        stack = starters.resolve(state["request"], choice)
         update: dict[str, Any] = {
             "stack": stack.model_dump(mode="json"),
             "stack_brief": stack.brief(),

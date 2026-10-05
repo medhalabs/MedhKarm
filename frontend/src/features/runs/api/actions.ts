@@ -9,7 +9,7 @@ import { redirect } from "next/navigation";
 import { ApiError, apiPost } from "@/shared/api/client";
 
 import { parseDecision, parseStartRun } from "../parseForms";
-import type { FormState, Run } from "../types";
+import type { Brief, FormState, IntakeReply, Run, Turn } from "../types";
 
 export async function startRunAction(_previous: FormState, form: FormData): Promise<FormState> {
   const input = parseStartRun(form);
@@ -17,6 +17,38 @@ export async function startRunAction(_previous: FormState, form: FormData): Prom
   let run: Run;
   try {
     run = await apiPost<Run>("/runs", input);
+  } catch (error) {
+    return { error: describeError(error) };
+  }
+  redirect(`/admin/runs/${run.id}`);
+}
+
+/** One turn of the conversation with the CTO (the conversation itself lives in the browser). */
+export async function intakeAction(
+  turns: Turn[],
+): Promise<{ reply: IntakeReply } | { error: string }> {
+  try {
+    return { reply: await apiPost<IntakeReply>("/intake", { turns }) };
+  } catch (error) {
+    return { error: describeError(error) };
+  }
+}
+
+/** Start the run the conversation agreed on. */
+export async function startFromBriefAction(brief: Brief): Promise<{ error: string }> {
+  let run: Run;
+  try {
+    run = await apiPost<Run>("/runs", {
+      request: brief.request,
+      ...(brief.test_command ? { test_command: brief.test_command } : {}),
+      ...(brief.repo_url
+        ? { repo: { url: brief.repo_url, branch: brief.branch } }
+        : {
+            create_repo: brief.create_repo,
+            ...(brief.new_repo_name ? { new_repo_name: brief.new_repo_name } : {}),
+            stack: brief.stack,
+          }),
+    });
   } catch (error) {
     return { error: describeError(error) };
   }

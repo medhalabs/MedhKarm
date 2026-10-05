@@ -103,4 +103,5 @@ sequenceDiagram
 
 | Date | Change |
 | --- | --- |
+| 2026-10-05 | Messages can be up to 10,000 characters (was 4,000) |
 | 2026-10-05 | Created: threads on runs and projects, agent replies in role, founder's messages in the team's briefs and the PM's plan |

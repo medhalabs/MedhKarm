@@ -119,3 +119,16 @@ def test_page_work_goes_to_frontend_whatever_the_plan_says() -> None:
     api = _normalise_task({"title": "Add API route for posting messages", "specialty": "backend"})
     assert ui is not None and ui.specialty == "frontend"
     assert api is not None and api.specialty == "backend"
+
+
+def test_landing_page_sections_are_frontend_work() -> None:
+    from app.features.workflows.cto import _normalise_task
+
+    for title in (
+        "Create Hero Section",
+        "Add Services Cards and Process Steps",
+        "Update Global Styles and Metadata",
+        "Add Final CTA Section",
+    ):
+        task = _normalise_task({"title": title, "specialty": "backend"})
+        assert task is not None and task.specialty == "frontend", title

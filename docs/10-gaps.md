@@ -50,8 +50,9 @@ Last updated: Oct 5, 2026.
 | G-36 | Starters: modules exist only for the Next.js API; a split project (Python API + Next.js in `api/` and `web/`) gets none, and QA's checks and Neel's preview only look at the project root; no starter for Java, Go, Django, Vue… (the team sets those up) | Oct 5 | Python modules; checks and previews per folder; more starters as founders ask |
 | G-37 | Neel deploys to Vercel only: Docker, DigitalOcean and AWS projects get Dockerfile and compose files but no automatic deploy | Oct 5 | New `DeployTarget` classes (DigitalOcean App Platform, AWS) |
 | G-38 | Module services untested against the real thing: Supabase Auth, Razorpay/Stripe test-mode payments, Resend email (unit tests only); no SMS/WhatsApp reminders; Vercel's free plan runs the reminders cron once a day | Oct 5 | Try each with test keys; an SMS/WhatsApp `Notifier` (MSG91, Gupshup) |
-| G-39 | The stack and modules are picked from the request's words, not understood ("spring" in a sentence; a feature that needs sign-in without saying so) | Oct 5 | Let the CTO confirm or adjust the stack and modules in the plan |
+| G-39 | The stack and modules are picked from the request's words: now only when phrased as a choice ("using X", "deploy to Y"), and modules from a long spec's opening only. Still words, not understanding (a feature that needs sign-in without saying so) | Oct 5 | Let the CTO confirm or adjust the stack and modules in the plan |
 | G-42 | Messages: replies appear only on refresh (no live update); roles without instructions (security, devops) are answered by the first persona; the free model's replies can skip part of a question (live: Mira ignored "why did you ask about timestamps?") | Oct 5 | Live thread updates through the event stream; personas for every role; a stronger model for replies |
+| G-44 | Office: one run at a time (no company-wide office), the meeting room only for planning (no agent discussions yet), PM backlog events not shown, simple figures | Oct 5 | A company office across live runs; discussions as meeting events; richer characters |
 
 ## Filled
 

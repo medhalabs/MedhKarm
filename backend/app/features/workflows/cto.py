@@ -207,7 +207,12 @@ def _validate_plan(data: Any) -> CtoPlan | None:
 TITLE_KEYS = ("title", "name", "task", "summary")
 SPECIALTY_KEYS = ("specialty", "speciality", "area", "role", "skill")
 # A task titled like page work is frontend work, whatever the plan says
-UI_WORDS = re.compile(r"\b(ui|page|pages|form|screen|component|layout|styling|frontend)\b", re.I)
+UI_WORDS = re.compile(
+    r"\b(ui|page|pages|form|screen|component|components|layout|styling|styles?|frontend|"
+    r"section|hero|landing|cta|navbar|header|footer|cards?|mockups?|theme|css|animations?|"
+    r"responsive|homepage)\b",
+    re.I,
+)
 API_WORDS = re.compile(r"\b(api|route|endpoint|database|migration|schema|server)\b", re.I)
 SKIP_KEYS = {*TITLE_KEYS, *SPECIALTY_KEYS, "description", "developer", "owner", "assignee", "id"}
 

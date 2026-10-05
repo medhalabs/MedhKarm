@@ -69,7 +69,7 @@ class ItemUpdate(BaseModel):
 
 class NewProject(BaseModel):
     name: str = Field(min_length=2, max_length=80)
-    goal: str = Field(min_length=10, max_length=5000)  # what the founder wants, in their words
+    goal: str = Field(min_length=10, max_length=50_000)  # what the founder wants, in their words
     repo: RepoSource | None = None  # an existing repository; None = a new project
     test_command: str | None = Field(default=None, min_length=1, max_length=500)
     # A new project's stack and ready-made modules (empty choices: the team decides)
@@ -80,7 +80,7 @@ class NewProject(BaseModel):
 
 class ProjectUpdate(BaseModel):
     name: str | None = Field(default=None, min_length=2, max_length=80)
-    goal: str | None = Field(default=None, min_length=10, max_length=5000)
+    goal: str | None = Field(default=None, min_length=10, max_length=50_000)
     test_command: str | None = Field(default=None, max_length=500)
     autopilot: bool | None = None
     daily_limit: int | None = Field(default=None, ge=1, le=10)

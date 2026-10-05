@@ -16,7 +16,7 @@ export async function sendMessageAction(
   const body = String(form.get("body") ?? "").trim();
   const to = String(form.get("to") ?? (thread === "run" ? "cto" : "pm"));
   if (!body) return { error: "Write something first." };
-  if (body.length > 4000) return { error: "Keep it under 4,000 characters." };
+  if (body.length > 10000) return { error: "Keep it under 10,000 characters." };
   try {
     await apiPost("/messages", {
       [thread === "run" ? "run_id" : "project_id"]: threadId,

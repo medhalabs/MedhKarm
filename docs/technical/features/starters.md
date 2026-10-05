@@ -177,5 +177,6 @@ FastAPI with `app/store.py`: the same collections idea on SQLite (`DATABASE_PATH
 
 | Date | Change |
 | --- | --- |
+| 2026-10-05 | A technology in the request counts only when asked for as the stack ("using Python", "with a Python API", "deploy it to AWS", "paid with Stripe"): a live landing-page spec listing the company's own tech ("Backend: Python, FastAPI… Docker") had picked the Python starter. Long specs (700+ characters) pick modules from the opening request only, not from the page copy |
 | 2026-10-05 | After the first live run (cafe feedback wall, failed QA): the starter's rules go into every developer brief (`starter.toml` `rules`: use `getStore()` from `@/lib/db`, `@/` imports, no other database client); the developers' test command is `npm run typecheck && npm test` |
 | 2026-10-05 | Created: stack choice (founder → request → defaults), Next.js and Python starters, modules auth/payments/reminders/dashboards, Docker hosting files, the `scaffold` step, `project.scaffolded`, `runs.stack`/`projects.stack`, sandbox image `medhkarm-sandbox:4` (Node 22, npm cache) |

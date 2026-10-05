@@ -1,0 +1,64 @@
+import { Chip } from "@/shared/ui/Chip";
+
+import type { Brief } from "../types";
+
+const DEFAULTS = "Team picks: Next.js · Supabase · Vercel · Razorpay";
+const MODULE_NAMES: Record<string, string> = {
+  auth: "Sign-in",
+  payments: "Payments",
+  reminders: "Reminders",
+  dashboards: "Admin dashboard",
+};
+
+/** The brief the CTO is ready to start: what, where, which stack. */
+export function BriefCard({
+  brief,
+  pending,
+  onStart,
+  onKeepTalking,
+}: {
+  brief: Brief;
+  pending: boolean;
+  onStart: () => void;
+  onKeepTalking: () => void;
+}) {
+  const chosen = (["frontend", "api", "database", "hosting", "payments"] as const)
+    .map((field) => brief.stack[field] && `${field}: ${brief.stack[field]}`)
+    .filter(Boolean);
+  return (
+    <div className="rounded-2xl border border-indigo-200 bg-indigo-50/70 p-5 dark:border-indigo-900 dark:bg-indigo-950/30">
+      <p className="text-xs font-semibold tracking-wide text-indigo-700 uppercase dark:text-indigo-300">
+        Ready to start
+      </p>
+      <p className="mt-2 text-sm leading-relaxed whitespace-pre-line text-zinc-800 dark:text-zinc-200">
+        {brief.summary || brief.request.slice(0, 400)}
+      </p>
+      <div className="mt-3 flex flex-wrap gap-2">
+        <Chip>
+          {brief.repo_url
+            ? `Changes ${brief.repo_url.replace("https://github.com/", "")}`
+            : brief.create_repo
+              ? "New project · private repo when released"
+              : "New project · no repo"}
+        </Chip>
+        {chosen.length ? (
+          chosen.map((c) => <Chip key={String(c)}>{c}</Chip>)
+        ) : (
+          <Chip>{DEFAULTS}</Chip>
+        )}
+        {brief.stack.modules?.map((m) => (
+          <Chip key={m}>{MODULE_NAMES[m] ?? m}</Chip>
+        ))}
+        {brief.stack.starter === false && <Chip>No starter</Chip>}
+      </div>
+      <div className="mt-4 flex flex-wrap gap-2">
+        <button type="button" onClick={onStart} disabled={pending} className="btn-primary">
+          {pending ? "Starting…" : "Start run"}
+        </button>
+        <button type="button" onClick={onKeepTalking} disabled={pending} className="btn-secondary">
+          Change something
+        </button>
+      </div>
+    </div>
+  );
+}

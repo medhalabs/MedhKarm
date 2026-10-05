@@ -18,6 +18,8 @@ export const EVENT_TYPES = [
   "approval.requested",
   "approval.decided",
   "changes.delivered",
+  "project.scaffolded",
+  "message.posted",
 ] as const;
 
 export type EventType = (typeof EVENT_TYPES)[number];

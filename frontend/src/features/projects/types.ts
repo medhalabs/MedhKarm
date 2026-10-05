@@ -44,3 +44,16 @@ export type Project = {
 export type ProjectDetail = Project & { items: BacklogItem[] };
 
 export type FormState = { error: string | null };
+
+/** A project agreed with Mira (backend: intake/schemas.py ProjectBrief). */
+export type ProjectBrief = {
+  name: string;
+  goal: string;
+  summary: string;
+  repo_url: string | null;
+  stack: StackChoiceInput & { modules?: string[] | null; starter?: boolean | null };
+  autopilot: boolean;
+  daily_limit: number;
+};
+
+export type ProjectIntakeReply = { agent: string; text: string; brief: ProjectBrief | null };

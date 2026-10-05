@@ -34,7 +34,9 @@ FINAL_STATUSES = frozenset(
 
 
 class StartRun(BaseModel):
-    request: str = Field(min_length=3, max_length=5000)  # what the founder wants built
+    # what the founder wants built: anything up to a long pasted spec (~12k tokens, which goes
+    # into every prompt the team makes, so longer requests cost more)
+    request: str = Field(min_length=3, max_length=50_000)
     # None: detected from the repository, or from the starter a new project begins with
     test_command: str | None = Field(default=None, min_length=1, max_length=500)
     repo: RepoSource | None = None  # an existing GitHub repository to change

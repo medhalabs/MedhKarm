@@ -9,7 +9,7 @@ import { redirect } from "next/navigation";
 import { ApiError, apiDelete, apiPatch, apiPost } from "@/shared/api/client";
 
 import { parseNewItem, parseNewProject } from "../parseForms";
-import type { FormState, ProjectDetail } from "../types";
+import type { FormState, ProjectBrief, ProjectDetail, ProjectIntakeReply } from "../types";
 
 export async function createProjectAction(
   _previous: FormState,
@@ -20,6 +20,36 @@ export async function createProjectAction(
   let project: ProjectDetail;
   try {
     project = await apiPost<ProjectDetail>("/projects", input);
+  } catch (error) {
+    return { error: describeError(error) };
+  }
+  redirect(`/admin/projects/${project.id}`);
+}
+
+/** One turn of the conversation with Mira about a new project. */
+export async function projectIntakeAction(
+  turns: { role: "founder" | "agent"; text: string }[],
+): Promise<{ text: string; brief: ProjectBrief | null } | { error: string }> {
+  try {
+    const reply = await apiPost<ProjectIntakeReply>("/intake/project", { turns });
+    return { text: reply.text, brief: reply.brief };
+  } catch (error) {
+    return { error: describeError(error) };
+  }
+}
+
+/** Create the project the conversation agreed on; Mira starts planning its backlog. */
+export async function createFromBriefAction(brief: ProjectBrief): Promise<{ error: string }> {
+  let project: ProjectDetail;
+  try {
+    project = await apiPost<ProjectDetail>("/projects", {
+      name: brief.name,
+      goal: brief.goal,
+      repo: brief.repo_url ? { url: brief.repo_url } : null,
+      autopilot: brief.autopilot,
+      daily_limit: brief.daily_limit,
+      ...(brief.repo_url ? {} : { stack: brief.stack }),
+    });
   } catch (error) {
     return { error: describeError(error) };
   }

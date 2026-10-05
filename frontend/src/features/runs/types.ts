@@ -68,3 +68,19 @@ export type Run = {
 
 /** Result of a form's server action, shown under the form. */
 export type FormState = { error: string | null };
+
+/** Starting a run by talking (backend: intake/schemas.py). */
+export type Turn = { role: "founder" | "agent"; text: string };
+
+export type Brief = {
+  request: string;
+  summary: string;
+  repo_url: string | null;
+  branch: string | null;
+  create_repo: boolean;
+  new_repo_name: string | null;
+  stack: StackChoiceInput & { modules?: string[] | null; starter?: boolean | null };
+  test_command: string | null;
+};
+
+export type IntakeReply = { agent: string; text: string; brief: Brief | null };

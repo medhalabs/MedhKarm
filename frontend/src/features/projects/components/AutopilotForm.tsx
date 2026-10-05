@@ -34,7 +34,7 @@ export function AutopilotForm({
           min={1}
           max={10}
           defaultValue={dailyLimit}
-          className="w-14 rounded-md border border-zinc-300 bg-transparent px-2 py-1 dark:border-zinc-700"
+          className="w-14 field"
         />
         items a day
       </label>

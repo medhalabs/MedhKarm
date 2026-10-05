@@ -148,7 +148,8 @@ The example from the brief, `frontend > login > login.tsx` / `backend > login > 
 Rules:
 
 - Route files in `app/` stay under about 30 lines: fetch nothing themselves, just render a feature component.
-- Other code imports a feature only from its `index.ts`, never from deep inside it.
+- Other code imports a feature only from its `index.ts`, never from deep inside it. The one other public entry is `client.ts`: browser-safe exports (helpers, types) for client components, because `index.ts` may export server-only code (the API client reads the session cookie). ESLint enforces both.
+- **Look and feel:** shared building blocks in `frontend/src/app/globals.css` (`card`, `card-header`, `card-title`, `btn-primary`, `btn-secondary`, `field`) and `frontend/src/shared/ui/` (`PageHeader`, `Stat`, `NavLink`, `Markdown`, `Collapsible`, icons). New pages use them instead of one-off styles. Indigo is the brand colour; the Geist font is used throughout.
 - `shared/` never imports from `features/`.
 - One component per file; the file is named after the component (`LoginForm.tsx`).
 

@@ -22,7 +22,8 @@ export function parseStartRun(form: FormData): StartRunInput | { error: string }
   const branch = String(form.get("repo_branch") ?? "").trim() || null;
   const testCommand = String(form.get("test_command") ?? "").trim();
   if (request.length < 3) return { error: "Say what the team should build." };
-  if (request.length > 5000) return { error: "Keep the request under 5,000 characters." };
+  if (request.length > 50000)
+    return { error: "Keep the request under 50,000 characters (about 25 pages)." };
   if (testCommand.length > 500) return { error: "Keep the test command under 500 characters." };
   if (repoUrl && !GITHUB_URL.test(repoUrl))
     return { error: "Use the repository's GitHub address: https://github.com/owner/name" };

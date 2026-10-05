@@ -6,9 +6,12 @@ import prettier from "eslint-config-prettier/flat";
 // Feature boundaries (see docs/05-architecture-and-conventions.md):
 // - other code imports a feature only through its index.ts ("@/features/<name>")
 // - shared/ never imports from features/
+// A feature's other public entry is "client": browser-safe exports for client components
+// (index.ts may export server-only code that reads the session cookie).
 const noDeepFeatureImports = {
-  group: ["@/features/*/*"],
-  message: 'Import a feature only through its public index: "@/features/<name>".',
+  group: ["@/features/*/*", "!@/features/*/client"],
+  message:
+    'Import a feature only through its public index ("@/features/<name>"), or its browser-safe "@/features/<name>/client".',
 };
 
 const eslintConfig = defineConfig([

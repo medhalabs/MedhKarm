@@ -44,5 +44,7 @@ Knowledge transfer for anyone working on the code: what each part is, how it wor
 | inbox | [features/inbox.md](features/inbox.md) | The CEO inbox: approvals, the PM's questions, blocked work, the team's replies |
 | messages | [features/messages.md](features/messages.md) | Message any agent about a run or project; replies in role; messages steer the next task |
 | notifications | [features/notifications.md](features/notifications.md) | The standup and weekly report by email (Resend/SMTP) and WhatsApp (Meta), per founder |
+| office | [features/office.md](features/office.md) | The animated office per run: characters moved by real events, paced replay, task board |
+| intake | [features/intake.md](features/intake.md) | Start a run by talking to the CTO: he asks what's unclear, you confirm the brief |
 | approvals | [features/approvals.md](features/approvals.md) | Approval rules at the release gate: ask, approve or reject, with reasons |
 | repos | [features/repos.md](features/repos.md) | Founders' GitHub repositories: clone, map before planning, pull request on release |
