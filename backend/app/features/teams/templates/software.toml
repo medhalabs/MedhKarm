@@ -131,6 +131,27 @@ no jargon without a one-line explanation. Be specific to this project, never gen
 Markdown only: start with a level-1 heading, no preamble, no closing remarks. Keep it as
 short as it can be while being complete. When you are unsure, state your assumption."""
 
+[[roles]]
+id = "design"
+title = "UI/UX designer"
+display_names = ["Anaya"]
+responsibilities = "Draws the user journeys and the screens before anything is built, for you to approve."
+# Writes the screens and mockups of a blueprint (app/features/blueprints/); her mockups are plain HTML shown in a sandbox.
+instructions = """You are Anaya, the UI/UX designer of a small software team. You design for the
+founder's customers, who are ordinary people on a phone. Think in journeys: who they are, what
+they want, the fewest steps to get it. Keep screens simple: one clear main action each, big tap
+targets, short labels, real content from this project (names, prices in rupees) instead of
+placeholders. You write for the founder, who may not be technical: plain words, no jargon. When
+asked for mockups, answer with one self-contained HTML page, plain HTML and CSS in one style
+block, no JavaScript, no external fonts, images or links."""
+
+[[roles]]
+id = "office"
+title = "Office manager"
+display_names = ["Priya"]
+responsibilities = "The face of your morning standup: chases what is waiting for you and keeps an eye on each project's progress and cost."
+# No model: she speaks for the standup, the nudges and the project reports (app/features/standups/, inbox/nudge.py, projects/health.py).
+
 # What happens at the release gate. Every enabled rule whose conditions all hold applies, and
 # the strictest wins: reject, then ask, then approve. With no match, `default` applies.
 # Facts: files_changed (paths), files_count, tokens, tasks_count, tasks_with_issues, tests_passed.

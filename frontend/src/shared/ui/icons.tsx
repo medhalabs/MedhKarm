@@ -57,6 +57,12 @@ export const ModelsIcon = (p: IconProps) => (
     <path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4" />
   </Icon>
 );
+export const AutonomyIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <circle cx="12" cy="12" r="8" />
+    <path d="M12 12l4-3M12 4v2M20 12h-2M4 12h2" />
+  </Icon>
+);
 export const OfficeIcon = (p: IconProps) => (
   <Icon {...p}>
     <rect x="3" y="4" width="18" height="16" rx="2" />

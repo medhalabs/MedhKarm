@@ -25,6 +25,7 @@ describe("parseSettings", () => {
       standup_on: true,
       standup_hour: 8,
       weekly_on: false,
+      nudge_on: false,
     });
   });
 

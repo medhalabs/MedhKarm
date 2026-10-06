@@ -23,6 +23,7 @@ from app.features.blueprints.repository import SqlBlueprintRepository
 from app.features.blueprints.service import REVISE_JOB, WRITE_JOB
 from app.features.blueprints.writer import BlueprintWriter
 from app.features.events.stores.sql_store import SqlEventStore
+from app.features.inbox.dependencies import get_inbox_service
 from app.features.jobs.interfaces import JobHandler
 from app.features.jobs.service import JobRunner
 from app.features.jobs.stores.sql_queue import SqlJobQueue
@@ -48,6 +49,7 @@ from app.workers.handlers.blueprint import ReviseBlueprint, WriteBlueprint
 from app.workers.handlers.build import CancelBuild, ResumeBuild, StartBuild
 from app.workers.handlers.evals import NIGHTLY_EVALS, NightlyEvals, nightly_evals_schedule
 from app.workers.handlers.messages import MessageReply, TeamContext
+from app.workers.handlers.nudge import NUDGE, SendNudge, nudge_schedule
 from app.workers.handlers.scope import CompanyScoped
 from app.workers.handlers.standup import (
     SEND_STANDUP,
@@ -116,12 +118,15 @@ async def main() -> None:
 
     blueprints = SqlBlueprintRepository(session_factory)
     lekha = team.template.role("docs")
+    anaya = team.template.role("design")
+    stack_text = StackText(StarterService())
     author = BlueprintAuthor(
         blueprints,
-        BlueprintWriter(
-            role_model(settings, team, "docs"), lekha.instructions, StackText(StarterService())
-        ),
+        BlueprintWriter(role_model(settings, team, "docs"), lekha.instructions, stack_text),
         lekha.display_names[0],
+        designer=BlueprintWriter(
+            role_model(settings, team, "design"), anaya.instructions, stack_text
+        ),
     )
 
     async def blueprint_company(payload: dict[str, Any]) -> str | None:
@@ -141,8 +146,21 @@ async def main() -> None:
         REPLY_JOB: CompanyScoped(MessageReply(replier), message_company),
         WRITE_JOB: CompanyScoped(WriteBlueprint(author), blueprint_company),
         REVISE_JOB: CompanyScoped(ReviseBlueprint(author), blueprint_company),
+        NUDGE: SendNudge(
+            get_inbox_service().for_company,
+            notifications,
+            settings.app_url,
+            team.template.role("office").display_names[0],
+        ),
         NIGHTLY_EVALS: NightlyEvals(settings),
-        SEND_STANDUP: SendStandup(standups, LogDelivery(), notifications, runs, settings.app_url),
+        SEND_STANDUP: SendStandup(
+            standups,
+            LogDelivery(),
+            notifications,
+            runs,
+            settings.app_url,
+            team.template.role("office").display_names[0],
+        ),
         SEND_WEEKLY: SendWeekly(
             notifications, runs, events, settings.standup_timezone, settings.app_url
         ),
@@ -159,7 +177,10 @@ async def main() -> None:
             backlog_schedule(progress),
             nightly_evals_schedule(queue, settings),
             *(
-                [standup_schedule(queue, standups, notifications)]
+                [
+                    standup_schedule(queue, standups, notifications),
+                    nudge_schedule(queue, standups, notifications),
+                ]
                 if settings.standup_schedule
                 else []
             ),

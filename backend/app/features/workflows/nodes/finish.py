@@ -47,7 +47,8 @@ def make_finish_node(
             )
             update["delivery"] = delivery.model_dump(mode="json")
         previewed = (state.get("preview") or {}).get("kind", "none") != "none"
-        if status == "released" and deploys and previewed and state.get("sandbox_id"):
+        go_live = state.get("go_live", True)  # the founder's autonomy setting
+        if status == "released" and deploys and previewed and go_live and state.get("sandbox_id"):
             # Production only after the founder's approval, from the same workspace.
             deployment = await deploys.deploy(
                 await sandboxes.attach(state["sandbox_id"]), deploy_name(state), production=True

@@ -6,6 +6,7 @@ export type SettingsInput = {
   standup_on: boolean;
   standup_hour: number;
   weekly_on: boolean;
+  nudge_on: boolean;
 };
 
 const EMAIL = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
@@ -27,5 +28,6 @@ export function parseSettings(form: FormData): SettingsInput | { error: string }
     standup_on: form.get("standup_on") === "on",
     standup_hour: hour,
     weekly_on: form.get("weekly_on") === "on",
+    nudge_on: form.get("nudge_on") === "on",
   };
 }

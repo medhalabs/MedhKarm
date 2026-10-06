@@ -29,6 +29,7 @@ class NotificationSettings(BaseModel):
     standup_on: bool = True  # the daily standup
     standup_hour: int = Field(default=9, ge=0, le=23)  # local hour (STANDUP_TIMEZONE)
     weekly_on: bool = True  # the Monday report
+    nudge_on: bool = True  # Priya's reminder when something has waited a day for you
 
     @field_validator("email")
     @classmethod

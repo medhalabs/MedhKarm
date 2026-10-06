@@ -12,6 +12,10 @@ Every morning, each founder gets **their own standup**: what was done, what's pl
 - **Each founder chooses** the address, the number, the hour, and whether to get each update.
 - **Nothing is sent until they save an address** (opt-in).
 
+## Priya, the voice of the updates
+
+Priya, the office manager, is the face of these messages. The standup starts "Good morning, it's Priya. Here is your standup." and ends with her name; the WhatsApp line starts "Priya:". She also sends **nudges** when something has waited for you for a day (see [inbox.md](inbox.md)); each founder can switch nudges off with **Let Priya remind me when something waits a day**.
+
 ## How it works
 
 1. **Settings** (`/admin/settings` → `PUT /settings/notifications`):
@@ -125,4 +129,5 @@ None. Jobs: `standup.send` (now per company) and `report.weekly` (new).
 
 | Date | Change |
 | --- | --- |
+| 2026-10-07 | Priya's nudges: a `nudge_on` setting (migration `0018`), `due_nudges`, and the `priya.nudge` job ([inbox.md](inbox.md)) |
 | 2026-10-05 | Created: settings, Resend/SMTP email, Meta WhatsApp, per-company standup and weekly report, test send |

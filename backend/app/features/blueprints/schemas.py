@@ -2,6 +2,7 @@
 
 from datetime import datetime
 from enum import StrEnum
+from typing import Literal
 
 from pydantic import BaseModel, Field
 
@@ -19,8 +20,9 @@ class BlueprintStatus(StrEnum):
 class Doc(BaseModel):
     id: str
     title: str
-    path: str  # where it goes in the project's repository, e.g. docs/03-architecture.md
+    path: str  # where it goes in the project's repository, e.g. docs/05-architecture.md
     content: str
+    format: Literal["markdown", "html"] = "markdown"  # html: screen mockups, shown in a sandbox
 
 
 class Comment(BaseModel):

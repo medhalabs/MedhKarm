@@ -25,13 +25,19 @@ export function OfficeView({
   runId,
   team,
   initialEvents,
+  live = true,
+  backHref = `/admin/runs/${runId}`,
 }: {
   runId: string;
   team: Member[];
   initialEvents: ActivityEvent[];
+  /** False for a public share: only a replay of what's known, no live stream. */
+  live?: boolean;
+  /** Where "back" goes; null hides the link (a public share has no admin page to go back to). */
+  backHref?: string | null;
 }) {
   const [events, setEvents] = useState(initialEvents);
-  const finished = events.some((e) => e.type === "run.finished");
+  const finished = !live || events.some((e) => e.type === "run.finished");
   const [mode, setMode] = useState<"live" | "replay">(finished ? "replay" : "live");
   const steps = useMemo(() => events.filter((e) => !QUIET.has(e.type)), [events]);
   const [step, setStep] = useState(finished ? 0 : steps.length);
@@ -67,11 +73,13 @@ export function OfficeView({
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center gap-3 text-sm">
-        <Link href={`/admin/runs/${runId}`} className="text-zinc-500 hover:underline">
-          ← Back to the run
-        </Link>
+        {backHref && (
+          <Link href={backHref} className="text-zinc-500 hover:underline">
+            ← Back to the run
+          </Link>
+        )}
         <div
-          className="ml-auto flex rounded-md border border-zinc-300 dark:border-zinc-700"
+          className={`ml-auto flex rounded-md border border-zinc-300 dark:border-zinc-700 ${live ? "" : "hidden"}`}
           role="group"
           aria-label="View"
         >

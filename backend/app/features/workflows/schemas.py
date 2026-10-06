@@ -2,6 +2,8 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
+from app.features.approvals.schemas import ApprovalPolicy
+
 
 class QualityCheck(BaseModel):
     """One of QA's checks: a name the founder reads ("build", "lint") and its shell command."""
@@ -45,6 +47,13 @@ class RunOutcome(BaseModel):
     gate: dict[str, Any] | None = None  # what the founder is asked, when waiting
     next_nodes: list[str] = Field(default_factory=list)  # left to run (stopped mid-way if any)
     state: dict[str, Any] = Field(default_factory=dict)
+
+
+class RunAutonomy(BaseModel):
+    """What the founder's autonomy settings mean for one run's release."""
+
+    policy: ApprovalPolicy
+    go_live: bool = True  # publish to the internet after release
 
 
 class PlanDocs(BaseModel):

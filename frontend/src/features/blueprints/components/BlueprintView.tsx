@@ -55,7 +55,11 @@ export function BlueprintView({
         <article className="card min-h-48 p-6">
           {open ? (
             <>
-              <Markdown>{open.content}</Markdown>
+              {open.format === "html" ? (
+                <Mockups title={open.title} html={open.content} />
+              ) : (
+                <Markdown>{open.content}</Markdown>
+              )}
               <p className="mt-4 text-xs text-zinc-500">
                 Goes into your project as <code>{open.path}</code>
               </p>
@@ -142,5 +146,20 @@ export function BlueprintView({
         )}
       </div>
     </div>
+  );
+}
+
+/** Anaya's screens. The page is model-written HTML, so it lives in a frame with every
+ * permission off (no scripts, no forms, no navigation, its own empty origin). */
+function Mockups({ title, html }: { title: string; html: string }) {
+  return (
+    <iframe
+      title={title}
+      sandbox=""
+      srcDoc={html}
+      referrerPolicy="no-referrer"
+      loading="lazy"
+      className="h-[40rem] w-full rounded-lg border border-zinc-200 bg-white dark:border-zinc-700"
+    />
   );
 }

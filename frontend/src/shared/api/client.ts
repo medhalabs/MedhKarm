@@ -34,12 +34,22 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     throw new ApiError(
       response.status,
       body?.error?.code ?? "unknown_error",
-      body?.error?.message ?? response.statusText,
+      body?.error?.message ?? validationMessage(body) ?? response.statusText,
     );
   }
 
   if (response.status === 204) return undefined as T;
   return (await response.json()) as T;
+}
+
+/** The first validation problem FastAPI reports ({"detail": [{"msg": "Value error, …"}]}), in
+ * plain words, or undefined when the body isn't one. */
+export function validationMessage(body: unknown): string | undefined {
+  const detail = (body as { detail?: unknown } | null)?.detail;
+  if (!Array.isArray(detail)) return undefined;
+  const first = detail[0] as { msg?: unknown; loc?: unknown } | undefined;
+  if (typeof first?.msg !== "string") return undefined;
+  return first.msg.replace(/^Value error, /, "");
 }
 
 /** Full URL of a backend path, for things that can't go through `request` (e.g. streaming). */

@@ -9,6 +9,7 @@ const ROWS: Record<string, number> = {
   pm: 0,
   cto: 0,
   docs: 0,
+  design: 0,
   developer: 1,
   qa: 2,
   security: 2,
@@ -17,16 +18,21 @@ const ROWS: Record<string, number> = {
 const ROW_Y = [120, 290, 460];
 const FIRST_X = 110;
 const STEP_X = 200;
+const LAST_X = 580; // the furthest a desk goes: the meeting room starts at x = 690
 
 export type Point = { x: number; y: number };
 
 /** Each member's desk: leadership on top, developers in the middle, specialists below. */
 export function desks(team: Member[]): Record<string, Point> {
+  const size = [0, 0, 0];
+  for (const member of team) size[ROWS[member.role] ?? 2] += 1;
   const used = [0, 0, 0];
   const out: Record<string, Point> = {};
   for (const member of team) {
     const row = ROWS[member.role] ?? 2;
-    out[member.name] = { x: FIRST_X + STEP_X * used[row], y: ROW_Y[row] };
+    // A crowded row moves its desks closer, so it never runs into the meeting room
+    const step = size[row] > 1 ? Math.min(STEP_X, (LAST_X - FIRST_X) / (size[row] - 1)) : STEP_X;
+    out[member.name] = { x: FIRST_X + step * used[row], y: ROW_Y[row] };
     used[row] += 1;
   }
   return out;

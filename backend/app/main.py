@@ -9,6 +9,7 @@ from app.core.logging import configure_logging
 from app.features.artifacts.router import router as artifacts_router
 from app.features.auth.dependencies import get_current_user
 from app.features.auth.router import router as auth_router
+from app.features.autonomy.router import router as autonomy_router
 from app.features.blueprints.router import router as blueprints_router
 from app.features.events.router import router as events_router
 from app.features.health.router import router as health_router
@@ -20,10 +21,13 @@ from app.features.model_settings.router import router as model_settings_router
 from app.features.notifications.router import router as notifications_router
 from app.features.projects.router import router as projects_router
 from app.features.runs.router import router as runs_router
+from app.features.shares.router import owner as share_owner_router
+from app.features.shares.router import public as share_public_router
 from app.features.signoffs.router import router as signoffs_router
 from app.features.standups.router import router as standups_router
 from app.features.starters.router import router as starters_router
 from app.features.teams.router import router as teams_router
+from app.features.waitlist.router import router as waitlist_router
 
 
 def create_app() -> FastAPI:
@@ -57,7 +61,11 @@ def create_app() -> FastAPI:
     app.include_router(intake_router)
     app.include_router(blueprints_router)
     app.include_router(artifacts_router)
+    app.include_router(autonomy_router)
     app.include_router(signoffs_router)
+    app.include_router(share_owner_router)
+    app.include_router(waitlist_router)  # public too (rate limited, emails never served)
+    app.include_router(share_public_router)  # no sign-in: that's the point (rate limited)
     app.include_router(model_settings_router)
 
     return app

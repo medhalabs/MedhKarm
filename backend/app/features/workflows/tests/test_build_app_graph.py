@@ -100,6 +100,7 @@ async def test_reports_each_step() -> None:
         "security",
         "changelog",
         "preview",
+        "autonomy",
     ]
 
 

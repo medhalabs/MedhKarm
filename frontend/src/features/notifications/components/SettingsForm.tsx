@@ -58,6 +58,10 @@ export function SettingsForm({
             <input type="checkbox" name="weekly_on" defaultChecked={s.weekly_on} />
             Weekly report on Mondays
           </label>
+          <label className="flex items-center gap-2">
+            <input type="checkbox" name="nudge_on" defaultChecked={s.nudge_on} />
+            Let Priya remind me when something waits a day
+          </label>
         </div>
         {missing.length > 0 && (
           <p className="text-xs text-amber-700 dark:text-amber-400">

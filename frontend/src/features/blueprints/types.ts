@@ -2,7 +2,13 @@
 
 export type BlueprintStatus = "writing" | "ready" | "revising" | "approved" | "failed";
 
-export type Doc = { id: string; title: string; path: string; content: string };
+export type Doc = {
+  id: string;
+  title: string;
+  path: string;
+  content: string;
+  format?: "markdown" | "html"; // html: screen mockups, shown in a locked-down frame
+};
 
 export type Comment = { author: "founder" | "lekha"; text: string; at: string };
 

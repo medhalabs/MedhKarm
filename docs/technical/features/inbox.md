@@ -25,6 +25,15 @@ The nav shows **Inbox** with a count of what needs the founder.
 3. **Acting on an item** uses the usual endpoints: `/runs/{id}/approval`, `/projects/{id}/answers`, `/projects/{id}/items/{item}/retry|skip`.
 4. **Answers** (`POST /projects/{id}/answers`) are added to `projects.answers`, and the questions they answer leave the list. Mira's planning brief includes every answer ("follow them"). With `replan: true` she plans again at once.
 
+## Priya's nudge
+
+Priya, the office manager, reminds the founder when a release is waiting for approval or a plan is waiting to be read, **once it has waited 24 hours**.
+- **Quiet and kind:** at most one message a day, in the founder's waking hours (from their standup hour until 8 in the evening), and **only for the first four days** a thing waits: after that the inbox and the standup still show it, and she stops.
+- **What it says:** "Hi, it's Priya. 3 things are waiting for you:" then each one with how long, plus how many of Mira's questions and blocked items there are, and the inbox link. WhatsApp gets one line.
+- **Only things with a time** start a nudge (approvals and plans). Questions and blocked work alone don't: the standup carries them.
+- **Opt-out:** `nudge_on` in the notification settings.
+- **How:** the worker queues `priya.nudge` for each company that wants it, once a day (unique key); the job reads the inbox and writes only if something qualifies. Tried on real data with a capturing sender and the clock moved forward a day: it listed three waiting plans and "5 questions from Mira".
+
 ## Code map
 
 | File | Responsibility |
@@ -33,6 +42,7 @@ The nav shows **Inbox** with a count of what needs the founder.
 | `inbox/interfaces.py` | `RunsReader`, `ProjectsReader`, `MessagesReader` |
 | `inbox/service.py` | `InboxService.for_company` |
 | `inbox/router.py` | `/inbox`, `/inbox/count` |
+| `inbox/nudge.py` · `workers/handlers/nudge.py` | Priya's nudge: the message (pure) and the job and schedule |
 | `projects/service.py` · `router.py` | `answer()`, `POST /projects/{id}/answers` |
 | `frontend/…/inbox/` | `InboxPage`, `AnswerForm`, server actions, `getInboxCount` (nav badge) |
 
@@ -80,6 +90,7 @@ None of its own.
 
 | Date | Change |
 | --- | --- |
+| 2026-10-07 | Priya's nudge (`nudge.py`): a reminder once a release or a plan has waited a day, at most once a day, for four days |
 | 2026-10-06 | "Plans to read and approve": blueprints that are ready, counted in the badge |
 | 2026-10-05 | Restyled with the shared shell, page header and cards |
 | 2026-10-05 | Created: approvals, PM questions with answers, blocked items, team replies, nav count |

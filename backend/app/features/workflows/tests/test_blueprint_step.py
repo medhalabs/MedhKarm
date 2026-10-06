@@ -101,3 +101,19 @@ def test_the_most_useful_documents_come_first_and_the_brief_is_cut_to_a_limit() 
     )
     cut = plan_brief(long)
     assert len(cut) <= BRIEF_LIMIT and "Architecture" in cut and "Roadmap" not in cut
+
+
+def test_the_build_is_told_to_follow_the_approved_mockups_without_quoting_them() -> None:
+    plan = PlanDocs(
+        files={
+            "docs/03-screens.md": "# Screens\nMenu, cart",
+            "docs/04-mockups.html": "<html>" + "x" * 20000 + "</html>",
+        },
+        titles={"docs/03-screens.md": "Screens", "docs/04-mockups.html": "Mockups"},
+    )
+
+    text = plan_brief(plan)
+
+    assert "approved screen mockups" in text and "docs/04-mockups.html" in text
+    assert "Menu, cart" in text  # the screens document is quoted
+    assert "xxxx" not in text  # the 20,000 characters of HTML are not

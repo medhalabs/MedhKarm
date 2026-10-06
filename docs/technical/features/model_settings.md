@@ -119,5 +119,6 @@ None new. `model.used` now names the model the company actually used.
 
 | Date | Change |
 | --- | --- |
+| 2026-10-07 | Anaya's role (`design`) can have its own model in Settings → Models |
 | 2026-10-06 | Lekha's role (`docs`) can have its own model in Settings → Models |
 | 2026-10-05 | Created: managed / own keys, team and per-agent models, local models via a connector URL, encrypted keys with a check call, per-call routing by company |

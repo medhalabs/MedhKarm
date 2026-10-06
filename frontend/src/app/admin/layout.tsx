@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { getMe, SignOutButton } from "@/features/auth";
 import { getInboxCount } from "@/features/inbox";
 import {
+  AutonomyIcon,
   InboxIcon,
   ModelsIcon,
   ProjectsIcon,
@@ -43,6 +44,10 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
       <NavLink href="/admin/standup">
         <StandupIcon />
         Standup
+      </NavLink>
+      <NavLink href="/admin/autonomy">
+        <AutonomyIcon />
+        Autonomy
       </NavLink>
       <NavLink href="/admin/models">
         <ModelsIcon />

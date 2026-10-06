@@ -13,7 +13,7 @@ from app.features.models.schemas import LLMResponse, ToolCall
 from app.features.sandbox.providers.memory_provider import InMemorySandboxProvider
 from app.features.sandbox.schemas import CommandResult
 from app.features.standups.exceptions import StandupDayInFutureError
-from app.features.standups.render import to_text
+from app.features.standups.render import to_short, to_text
 from app.features.standups.schemas import ProjectStatus
 from app.features.standups.service import StandupService
 from app.features.workflows.graphs.build_app import build_app_graph
@@ -152,3 +152,15 @@ async def test_text_lists_every_section() -> None:
         assert heading in text
     assert "30 Sep 09:00 to 01 Oct 09:00 (Asia/Kolkata)" in text
     assert "The CTO sent 1 task back for changes." in text
+
+
+async def test_priya_greets_and_signs_the_standup_and_is_the_voice_of_the_short_one() -> None:
+    standup = await standups(InMemoryEventStore(), AFTER_STANDUP).for_day(OCT_1)
+
+    text = to_text(standup, "Priya")
+    short = to_short(standup, "https://app.in/admin/inbox", "Priya")
+
+    assert text.startswith("Good morning, it's Priya. Here is your standup.")
+    assert text.rstrip().endswith("Priya")
+    assert short.startswith("Priya: Standup ")
+    assert "Priya" not in to_text(standup)  # without a speaker, as before

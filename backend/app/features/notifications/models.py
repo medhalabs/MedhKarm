@@ -21,6 +21,7 @@ class NotificationSettingsRow(Base):
     standup_on: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="true")
     standup_hour: Mapped[int] = mapped_column(Integer, nullable=False, server_default="9")
     weekly_on: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="true")
+    nudge_on: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="true")
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )

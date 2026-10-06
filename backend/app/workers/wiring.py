@@ -13,6 +13,7 @@ from app.core.database import session_factory
 from app.features.approvals.schemas import ApprovalPolicy
 from app.features.artifacts.repository import SqlArtifactRepository
 from app.features.artifacts.service import ArtifactService
+from app.features.autonomy.dependencies import get_autonomy_service
 from app.features.blueprints.dependencies import get_blueprint_service
 from app.features.deploys.service import DeployService
 from app.features.deploys.vercel import VercelDeployTarget
@@ -41,6 +42,7 @@ from app.features.workflows.checkpointer import postgres_checkpointer
 from app.features.workflows.graphs.build_app import build_app_graph
 from app.features.workflows.service import WorkflowService
 from app.workers.approved_plans import ApprovedPlans
+from app.workers.run_autonomies import RunAutonomies
 
 logger = logging.getLogger(__name__)
 
@@ -201,6 +203,7 @@ async def workflow_service(
             plans=ApprovedPlans(get_blueprint_service()),
             docs=team.docs,
             artifacts=ArtifactService(SqlArtifactRepository(session_factory)),
+            autonomies=RunAutonomies(get_autonomy_service()),
             docs_name=team.docs_name,
             repos=RepoService(
                 GitHubRepoHost(settings.github_token),

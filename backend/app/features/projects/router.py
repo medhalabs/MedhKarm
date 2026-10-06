@@ -1,12 +1,16 @@
 """HTTP endpoints for projects and their backlog. Planning and building happen in workers;
 each call here returns at once."""
 
+from datetime import UTC, datetime
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query, Request, Response, status
 
 from app.features.auth.dependencies import SignedIn
+from app.features.events.dependencies import get_event_service
+from app.features.events.service import EventService
 from app.features.projects.dependencies import get_backlog_progress, get_project_service
+from app.features.projects.health import ProjectHealth, project_health
 from app.features.projects.progress import BacklogProgress
 from app.features.projects.schemas import (
     Answers,
@@ -32,6 +36,7 @@ async def _guard(request: Request, who: SignedIn, service: Service) -> None:
 
 router = APIRouter(prefix="/projects", tags=["projects"], dependencies=[Depends(_guard)])
 Progress = Annotated[BacklogProgress, Depends(get_backlog_progress)]
+Events = Annotated[EventService, Depends(get_event_service)]
 
 
 @router.post("", response_model=ProjectDetail, status_code=status.HTTP_202_ACCEPTED)
@@ -116,3 +121,17 @@ async def skip_item(project_id: str, item_id: str, service: Service) -> BacklogI
 @router.post("/{project_id}/items/{item_id}/retry", response_model=BacklogItem)
 async def retry_item(project_id: str, item_id: str, service: Service) -> BacklogItem:
     return await service.retry_item(project_id, item_id)
+
+
+@router.get("/{project_id}/health", response_model=ProjectHealth)
+async def health(project_id: str, service: Service, events: Events) -> ProjectHealth:
+    """Priya's report: progress, cost in model tokens, and whether it is moving."""
+    detail = await service.get(project_id)
+    tokens: dict[str, int] = {}
+    last: datetime | None = None
+    for run_id in {i.run_id for i in detail.items if i.run_id}:
+        tokens[run_id] = (await events.totals_for_run(run_id)).tokens
+        found = await events.list_for_run(run_id, 0, 1000)
+        if found:
+            last = max(last, found[-1].occurred_at) if last else found[-1].occurred_at
+    return project_health(detail, detail.items, tokens, last, datetime.now(UTC))

@@ -21,6 +21,7 @@ TEST = Update(
     short="This is a test from MedhKarm. Your daily standup and weekly report will arrive here.",
 )
 MONDAY = 0
+NUDGE_UNTIL_HOUR = 20  # Priya doesn't write at night
 
 
 class NotificationService:
@@ -83,6 +84,18 @@ class NotificationService:
             (s.company_id, local.date())
             for s in await self._settings.all()
             if s.standup_on and (s.email or s.whatsapp) and local.hour >= s.standup_hour
+        ]
+
+    async def due_nudges(self, now: datetime) -> list[tuple[str, date]]:
+        """(company, day) for companies that want Priya's nudges, in the founder's waking hours:
+        from their standup hour until 8 in the evening, local time."""
+        local = now.astimezone(self._zone)
+        return [
+            (s.company_id, local.date())
+            for s in await self._settings.all()
+            if s.nudge_on
+            and (s.email or s.whatsapp)
+            and s.standup_hour <= local.hour < NUDGE_UNTIL_HOUR
         ]
 
     async def due_weekly(self, now: datetime) -> list[tuple[str, date]]:

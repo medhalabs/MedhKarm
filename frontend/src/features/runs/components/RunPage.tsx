@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { DemoCard } from "@/features/artifacts";
 import { ActivityFeed, listEvents } from "@/features/events";
 import { MessageThread } from "@/features/messages";
+import { ShareCard } from "@/features/shares";
 import { SignoffCard } from "@/features/signoffs";
 import { AutoRefresh } from "@/shared/ui/AutoRefresh";
 
@@ -44,7 +45,7 @@ export async function RunPage({ runId }: { runId: string }) {
           </div>
           <MessageThread thread="run" threadId={run.id} />
         </div>
-        <RunSidebar run={run} />
+        <RunSidebar run={run} share={<ShareCard runId={run.id} />} />
       </div>
       {/* Status changes are also caught from the feed; this covers queued → running. */}
       <AutoRefresh active={describeStatus(run.status).active} seconds={10} />

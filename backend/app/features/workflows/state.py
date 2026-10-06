@@ -41,6 +41,8 @@ class BuildState(TypedDict, total=False):
     docs_tokens: int  # tokens that entry used
     preview: dict[str, Any]  # DevOps' preview before the gate (Deployment-shaped)
     deployment: dict[str, Any]  # the production deployment after approval (Deployment-shaped)
+    verdict: dict[str, Any]  # what the release gate will do (Verdict-shaped), decided before it
+    go_live: bool  # publish to the internet after release (the founder's autonomy setting)
     approved: bool  # the founder's decision at the release gate
     feedback: str  # the founder's note at the gate, if any
     approval: dict[str, Any]  # the approval rules' verdict at the gate (Verdict-shaped)

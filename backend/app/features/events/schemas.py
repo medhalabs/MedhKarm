@@ -42,6 +42,8 @@ class Actor(StrEnum):
     SECURITY = "security"
     DEVOPS = "devops"
     DOCS = "docs"
+    DESIGN = "design"
+    OFFICE = "office"
     SYSTEM = "system"
 
 

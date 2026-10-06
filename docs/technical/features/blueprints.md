@@ -8,14 +8,16 @@
 
 The founder talks to Kabir (the CTO), who asks what he needs and suggests the technology with rough costs in ₹. When they agree, Kabir offers the next step: **Lekha, the documentation lead, writes the plan.** Nothing is built yet.
 
-- **Seven documents,** in plain words, specific to the project:
+- **Nine documents,** in plain words, specific to the project. Lekha writes seven; **Anaya, the UI/UX designer, writes the two about screens:**
   1. product brief
   2. roadmap (milestone 1 is what gets built first; later milestones come later, as changes)
-  3. architecture (with a diagram and why each choice)
-  4. data and API
-  5. file structure
-  6. test plan
-  7. costs (in ₹) and risks
+  3. **screens and journeys** (Anaya): who does what, step by step, and every screen the first version needs
+  4. **screen mockups** (Anaya): the key screens drawn as phone-sized wireframes with the project's real names and prices
+  5. architecture (with a diagram and why each choice)
+  6. data and API
+  7. file structure
+  8. test plan
+  9. costs (in ₹) and risks
 - **The founder reads them** in the app, asks for changes in a comment, and **approves**. Approving starts the build.
 - **Skip is always possible:** "Skip the plan, build now" starts a run straight away, as before.
 - **The documents are delivered with the project:** the build puts them in the repository's `docs/` folder (with an index), and the CTO and the developers follow them.
@@ -55,6 +57,15 @@ sequenceDiagram
    - It gives the CTO the plan, up to 14,000 characters, most useful documents first. Developers get the first 6,000. The instruction is to **build milestone 1 only**.
 6. **The inbox** shows "Plans to read and approve" for `ready` blueprints, and they count in the nav badge.
 
+## Anaya's screens
+
+- **Journeys first:** `03-screens.md` lists the two to four journeys and every screen of milestone 1, with what is on it and where it leads.
+- **Then the mockups** (`04-mockups.html`): one HTML page with the key screens side by side in phone-sized frames. The founder sees them on the plan page, in a frame with every permission off (`sandbox=""`: no scripts, no forms, no navigation, no network), and can comment ("make the order button bigger") like on any document.
+- **The HTML is made inert before anyone sees it** (`mockup.py`): scripts, frames, objects, form tags, event handlers, links and anything that loads from outside are removed; text with no markup becomes a page that says the mockups couldn't be drawn. Fields and buttons of a form stay, so a checkout screen still looks like one.
+- **In the build:** the mockups go into the project's `docs/` with the rest, the CTO and developers are told to build the screens to match them, and the screens document is part of the plan they read. The HTML itself is too long to quote in a prompt.
+- A **change** to a live project gets no mockups (three short documents only).
+- **Live (Oct 7, 2026):** nine documents in under 3 minutes; the mockup showed a Menu screen (Masala Chai ₹40, Ginger Tea ₹35) plus Loading and Error screens, in the sandboxed frame on the plan page. It had no script, link or handler.
+
 ## Changes to a live project
 
 A founder who wants something new on a released project talks to Kabir again, **about that project** (run page → "Request a change"). A change to an existing repository gets a lighter plan:
@@ -68,7 +79,8 @@ A founder who wants something new on a released project talks to Kabir again, **
 | File | Responsibility |
 | --- | --- |
 | `schemas.py` | `BlueprintStatus`, `Doc`, `Comment`, `Blueprint`, `BlueprintSummary`, `NewBlueprint`, `NewComment`, `ApprovedPlan` |
-| `catalog.py` | `DOCS`: each document's id, title, path and what it must contain; `COST_FACTS` |
+| `catalog.py` | `DOCS` (each document's id, title, path, author, format and what it must contain), `CHANGE_DOCS`, `COST_FACTS` |
+| `mockup.py` | `sanitize_mockup`: Anaya's HTML made inert |
 | `service.py` | `BlueprintService`: create, owned, list, comment, approve, retry, `for_run` |
 | `writer.py` | `BlueprintWriter`: one document per model call, `affected()` for comments; `describe()` |
 | `author.py` | `BlueprintAuthor`: write, revise, give_up (the worker's side) |
@@ -143,5 +155,6 @@ None on the run's log yet: the plan is written before a run exists. The run itse
 
 | Date | Change |
 | --- | --- |
+| 2026-10-07 | Anaya: two more documents (screens and journeys, screen mockups) written by the designer, mockups shown in a sandboxed frame and made inert first; documents renumbered (architecture is now `05`) |
 | 2026-10-06 | Changes to a live project: three-document change plans under `docs/changes/`, no invented file names, no overwrite of the project's docs index |
 | 2026-10-06 | Created: Lekha (the `docs` role), seven documents, comments, approval that starts the build, docs delivered in `docs/`, the inbox shows plans, the CTO suggests technology with ₹ costs |

@@ -3,6 +3,7 @@
 import re
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Literal
 
 
 @dataclass(frozen=True)
@@ -11,6 +12,8 @@ class DocSpec:
     title: str
     path: str
     asks: str  # what this document must contain
+    author: str = "docs"  # who writes it: Lekha ("docs") or Anaya ("design")
+    format: Literal["markdown", "html"] = "markdown"  # html: the screen mockups
 
 
 # Typical 2026 prices the costs document may use. They change: the document says "about" and
@@ -23,6 +26,15 @@ COST_FACTS = (
     "year. Razorpay has no monthly fee and takes about 2% of each payment: show it as 'about "
     "2% of each payment', never as a monthly cost, and never add it to the monthly total. "
     "Give the monthly total for the fixed costs only, as a range."
+)
+
+MOCKUP_ASKS = (
+    "One self-contained HTML page that draws the first version's key screens (three or four, "
+    "from the screens document) side by side as simple wireframes, each in a phone-sized frame "
+    "with the screen's name above it. Use real content for this project (actual item names, "
+    "prices in rupees, button labels), never lorem ipsum. Plain HTML and CSS in one <style> "
+    "block: NO JavaScript, no external fonts, images, links or scripts. Soft colours, readable "
+    "text, rounded buttons, a clear main action on each screen. Start with <!doctype html>."
 )
 
 DOCS: tuple[DocSpec, ...] = (
@@ -44,9 +56,27 @@ DOCS: tuple[DocSpec, ...] = (
         "be able to do, and 'done when' checks.",
     ),
     DocSpec(
+        "screens",
+        "Screens and journeys",
+        "docs/03-screens.md",
+        "The two to four journeys people take (who they are, what they want, the steps), then "
+        "every screen the first version needs: its name, what is on it, what the person can do "
+        "there and where it leads. Mobile first; say where a desktop differs. Only what "
+        "milestone 1 needs.",
+        author="design",
+    ),
+    DocSpec(
+        "mockups",
+        "Screen mockups",
+        "docs/04-mockups.html",
+        MOCKUP_ASKS,
+        author="design",
+        format="html",
+    ),
+    DocSpec(
         "architecture",
         "Architecture",
-        "docs/03-architecture.md",
+        "docs/05-architecture.md",
         "The stack, and why each choice fits this project in one sentence; how the parts fit "
         "together, with one mermaid diagram (```mermaid); where the app runs; how sign-in and "
         "payments work if the project has them.",
@@ -54,28 +84,28 @@ DOCS: tuple[DocSpec, ...] = (
     DocSpec(
         "data",
         "Data and API",
-        "docs/04-data-and-api.md",
+        "docs/06-data-and-api.md",
         "The tables (name, columns, what each is for) and the endpoints or pages (method, path, "
         "what it does). Only what milestone 1 needs, plus a short 'later' list.",
     ),
     DocSpec(
         "structure",
         "File structure",
-        "docs/05-structure.md",
+        "docs/07-structure.md",
         "The project's folder and file tree in a code block, with one line on what each folder "
         "is for and where new features go.",
     ),
     DocSpec(
         "tests",
         "Test plan",
-        "docs/06-test-plan.md",
+        "docs/08-test-plan.md",
         "What will be tested for milestone 1: the checks that must pass, the main user "
         "journeys tested in a browser, and what is checked by hand at the demo.",
     ),
     DocSpec(
         "costs",
         "Costs and risks",
-        "docs/07-costs-and-risks.md",
+        "docs/09-costs-and-risks.md",
         "Monthly running costs in Indian rupees (₹) for the stack's hosting, database, email "
         "and domain, for a small business, saying which are free at the start; the one-time "
         "costs; the top five risks with what to do about each. " + COST_FACTS,

@@ -13,11 +13,19 @@ from app.features.blueprints.writer import BlueprintWriter
 
 class BlueprintAuthor:
     def __init__(
-        self, blueprints: BlueprintRepository, writer: BlueprintWriter, name: str = "Lekha"
+        self,
+        blueprints: BlueprintRepository,
+        writer: BlueprintWriter,
+        name: str = "Lekha",
+        designer: BlueprintWriter | None = None,
     ) -> None:
         self._blueprints = blueprints
         self._writer = writer
+        self._designer = designer or writer  # Anaya writes the screens; Lekha the rest
         self._name = name
+
+    def _who(self, author: str) -> BlueprintWriter:
+        return self._designer if author == "design" else self._writer
 
     async def write(self, blueprint_id: str) -> None:
         blueprint = await self._get(blueprint_id)
@@ -33,9 +41,11 @@ class BlueprintAuthor:
                 blueprint_id,
                 progress=f"Writing the {spec.title.lower()} ({number} of {len(specs)})",
             )
-            content = await self._writer.write(blueprint.brief, spec, docs)
+            content = await self._who(spec.author).write(blueprint.brief, spec, docs)
             path = spec.path.format(folder=folder)
-            docs.append(Doc(id=spec.id, title=spec.title, path=path, content=content))
+            docs.append(
+                Doc(id=spec.id, title=spec.title, path=path, content=content, format=spec.format)
+            )
             await self._blueprints.update(blueprint_id, docs=docs)
         unanswered = blueprint.comments and blueprint.comments[-1].author == "founder"
         if unanswered:  # a comment came in before a failed rewrite: apply it now
@@ -59,7 +69,7 @@ class BlueprintAuthor:
                 blueprint_id, progress=f"Rewriting the {spec.title.lower()} ({done} of {len(ids)})"
             )
             index = next(i for i, d in enumerate(docs) if d.id == doc_id)
-            content = await self._writer.write(
+            content = await self._who(spec.author).write(
                 blueprint.brief, spec, docs[:index], comment.text, docs[index]
             )
             docs[index] = docs[index].model_copy(update={"content": content})

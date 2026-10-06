@@ -19,7 +19,7 @@ from app.features.teams.dependencies import get_team_service
 
 router = APIRouter(prefix="/settings/models", tags=["model_settings"])
 Service = Annotated[ModelSettingsService, Depends(get_model_settings_service)]
-MODEL_ROLES = ("pm", "cto", "docs", "developer", "qa")  # the roles that call a model
+MODEL_ROLES = ("pm", "cto", "docs", "design", "developer", "qa")  # the roles that call a model
 
 
 def _view(service: ModelSettingsService, settings: CompanyModels) -> ModelsView:

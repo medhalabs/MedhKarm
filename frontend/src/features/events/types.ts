@@ -27,7 +27,17 @@ export const EVENT_TYPES = [
 export type EventType = (typeof EVENT_TYPES)[number];
 
 export type Actor =
-  "founder" | "pm" | "cto" | "developer" | "qa" | "security" | "devops" | "docs" | "system";
+  | "founder"
+  | "pm"
+  | "cto"
+  | "developer"
+  | "qa"
+  | "security"
+  | "devops"
+  | "docs"
+  | "design"
+  | "office"
+  | "system";
 
 export type ActivityEvent = {
   id: number;

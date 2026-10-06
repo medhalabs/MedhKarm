@@ -113,6 +113,7 @@ Reads every run event type. The frontend's `EVENT_TYPES` now includes `project.s
 
 | Date | Change |
 | --- | --- |
+| 2026-10-07 | Anaya and Priya have desks; a crowded row moves its desks closer so none runs into the meeting room. `OfficeView` has a replay-only mode for public shares ([shares.md](shares.md)) |
 | 2026-10-06 | `demo.recorded` shows Tara's bubble "Recorded a demo of the app" |
 | 2026-10-06 | Lekha has a desk (top row) and her own colour; `docs.updated` shows her bubble |
 | 2026-10-05 | Created: the office per run (live and replay), task board, `@/features/events/client` |

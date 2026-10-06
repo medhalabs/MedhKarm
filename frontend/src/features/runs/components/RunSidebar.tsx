@@ -31,7 +31,7 @@ function ExternalLink({ href }: { href: string }) {
 }
 
 /** The office link, the run's facts and where its work went, and Cancel. */
-export function RunSidebar({ run }: { run: Run }) {
+export function RunSidebar({ run, share }: { run: Run; share?: React.ReactNode }) {
   return (
     <aside className="flex flex-col gap-4 lg:sticky lg:top-6 lg:self-start">
       <Link
@@ -49,6 +49,8 @@ export function RunSidebar({ run }: { run: Run }) {
           Open the office →
         </span>
       </Link>
+
+      {share}
 
       {liveRepoUrl(run) && (
         <Link

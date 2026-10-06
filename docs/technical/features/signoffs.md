@@ -86,5 +86,6 @@ Reads `work.finished`, `review.finished`, `check.finished`, `security.finished`,
 
 | Date | Change |
 | --- | --- |
+| 2026-10-07 | "Approved by your rules" now reflects the founder's own autonomy settings ([autonomy.md](autonomy.md)) |
 | 2026-10-06 | Tara's line links to the demo video when one was recorded (`video_id`, from `demo.recorded`) |
 | 2026-10-06 | Created: the release sign-off card on the run page and in the inbox |

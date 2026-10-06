@@ -141,6 +141,7 @@ This feature *is* the event log. Other features call `RunRecorder.record()`.
 
 | Date | Change |
 | --- | --- |
+| 2026-10-07 | New actors `design` and `office` (matching the new team roles) |
 | 2026-10-06 | New event `demo.recorded` (QA's demo video) |
 | 2026-10-06 | New event `docs.updated` and actor `docs` (Lekha's changelog entry) |
 | 2026-10-05 | `message.posted`: the founder's messages about a run and the agents' replies ([messages.md](messages.md)) |

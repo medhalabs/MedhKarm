@@ -1,7 +1,7 @@
 from typing import Protocol
 
 from app.features.sandbox.interfaces import Sandbox
-from app.features.workflows.schemas import CheckResult, PlanDocs
+from app.features.workflows.schemas import CheckResult, PlanDocs, RunAutonomy
 from app.features.workflows.state import BuildState
 
 
@@ -42,3 +42,10 @@ class ArtifactSink(Protocol):
     async def save(
         self, run_id: str, kind: str, name: str, content_type: str, data: bytes
     ) -> SavedFile: ...
+
+
+class RunAutonomies(Protocol):
+    """The founder's autonomy settings for a run's release (the autonomy feature, through an
+    adapter in app/workers). None: they set nothing, so the team template's rules apply."""
+
+    async def for_run(self, run_id: str) -> RunAutonomy | None: ...

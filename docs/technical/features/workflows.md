@@ -171,6 +171,7 @@ LangGraph creates and owns its tables in our Postgres (`checkpoints`, `checkpoin
 
 | Date | Change |
 | --- | --- |
+| 2026-10-07 | New `autonomy` step between `preview` and `approval`: the founder's autonomy settings become the release verdict (saved in the state, so it can't change while waiting) and a `go_live` flag the finish step obeys ([autonomy.md](autonomy.md)) |
 | 2026-10-06 | The browser test step runs with video on and keeps the passing test's recording through `ArtifactSink` (`artifacts=`); event `demo.recorded` ([artifacts.md](artifacts.md)); the recording run uses `--slowmo 300` |
 | 2026-10-06 | New `changelog` step between `security` and `preview`: Lekha adds a plain-language entry to `docs/CHANGELOG.md` in projects that keep a `docs/` folder (one entry per run, safe to repeat); event `docs.updated` |
 | 2026-10-06 | New `blueprint` step between `connect` and `plan`: an approved plan's documents go in `docs/` and the CTO and developers follow it ([blueprints.md](blueprints.md)) |

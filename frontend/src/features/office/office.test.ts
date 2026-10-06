@@ -150,3 +150,19 @@ describe("Lekha in the office", () => {
     expect(state.agents.Lekha.doing).toBe("working");
   });
 });
+
+describe("the floor plan", () => {
+  it("keeps every desk clear of the meeting room, even with four on the top row", async () => {
+    const { desks, MEETING } = await import("./layout");
+    const team: Member[] = [
+      { role: "pm", title: "PM", name: "Mira" },
+      { role: "cto", title: "CTO", name: "Kabir" },
+      { role: "docs", title: "Documentation", name: "Lekha" },
+      { role: "design", title: "Designer", name: "Anaya" },
+    ];
+    const places = desks(team);
+    const xs = Object.values(places).map((p) => p.x);
+    expect(new Set(xs).size).toBe(4); // no two on the same spot
+    expect(Math.max(...xs)).toBeLessThan(MEETING.x - 60);
+  });
+});

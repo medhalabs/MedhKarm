@@ -50,6 +50,14 @@ Items: `proposed` → `todo` (approved) → `in_progress` (its run works or wait
 - **When a run ends**, the worker's build handlers call `on_run_finished` (`RunListener`): released → done (or waiting for merge); rejected, failed, error → blocked with a note. Released work that wasn't saved anywhere (no `GITHUB_TOKEN`) blocks the item and **pauses the project**, because the next item couldn't build on it.
 - **The tick** (worker, once a minute, autopilot projects only): follows open pull requests, catches up items whose run finished but whose report was missed, then starts the next item if none is busy and fewer than `daily_limit` items started today (India time, `STANDUP_TIMEZONE`). When everything is done or skipped, the project is `done`.
 
+## Priya's project report
+
+`GET /projects/{id}/health` and the **Priya's update** card on the project page answer "how is it going?": items done out of total (skipped ones left out), in progress, blocked, the model tokens its runs used, and how long since anything happened.
+- **State:** `moving`, `needs_you` (something blocked, paused, or Mira has open questions), `stalled` (nothing running, work waiting, and quiet for 3+ days), `not_started`, `done`.
+- **Her sentence** is plain: "Moving: 1 of 3 items done, 1 in progress; 150,000 model tokens used so far."
+- **"Budget" is model tokens for now:** there are no prices during the free beta (billing is deferred).
+- Pure function in `health.py`; the endpoint adds the tokens and last activity from the runs' events.
+
 ## Code map
 
 | File | Responsibility |
@@ -137,6 +145,7 @@ Planning: `run.started`, `model.used` (PM), `plan.created`, `run.finished` (`sta
 
 | Date | Change |
 | --- | --- |
+| 2026-10-07 | Priya's project report: `GET /projects/{id}/health` (progress, model tokens, state) and the "Priya's update" card on the project page |
 | 2026-10-05 | The "New project" form is replaced by a conversation with Mira that ends in a project she plans ([intake.md](intake.md)) |
 | 2026-10-05 | Goals can be up to 50,000 characters (was 5,000) |
 | 2026-10-05 | Answers to the PM's questions: `POST /projects/{id}/answers` (`answers`, optional `replan`), kept in `projects.answers` (migration 0010); Mira's planning brief includes every answer and the founder's messages to her ([inbox.md](inbox.md), [messages.md](messages.md)) |

@@ -80,6 +80,8 @@ def test_shipped_templates_load() -> None:
         "security",
         "devops",
         "docs",
+        "design",
+        "office",
     ]
     assert [r.id for r in software.roles if not r.active] == []
     assert software.role("developer").max_count == 3

@@ -9,7 +9,7 @@ from typing import Any
 
 from langgraph.types import interrupt
 
-from app.features.approvals.schemas import Action, ApprovalPolicy
+from app.features.approvals.schemas import Action, ApprovalPolicy, Verdict
 from app.features.approvals.service import evaluate
 from app.features.workflows.nodes.base import BuildNode
 from app.features.workflows.state import BuildState
@@ -37,7 +37,12 @@ def make_approval_node(policy: ApprovalPolicy | None = None) -> BuildNode:
 
     async def approval(state: BuildState) -> dict[str, Any]:
         facts = approval_facts(state)
-        verdict = evaluate(rules, facts)
+        # Decided by the autonomy step before the gate, so it can't change while waiting
+        verdict = (
+            Verdict.model_validate(state["verdict"])
+            if state.get("verdict")
+            else evaluate(rules, facts)
+        )
         if verdict.action != Action.ASK:
             return {
                 "approved": verdict.action == Action.APPROVE,

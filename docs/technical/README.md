@@ -46,7 +46,10 @@ Knowledge transfer for anyone working on the code: what each part is, how it wor
 | notifications | [features/notifications.md](features/notifications.md) | The standup and weekly report by email (Resend/SMTP) and WhatsApp (Meta), per founder |
 | office | [features/office.md](features/office.md) | The animated office per run: characters moved by real events, paced replay, task board |
 | intake | [features/intake.md](features/intake.md) | Start a run by talking to the CTO: he asks what's unclear, you confirm the brief |
+| autonomy | [features/autonomy.md](features/autonomy.md) | The autonomy dial: what the team does alone, what it asks first, files it must never change; per company and project |
 | artifacts | [features/artifacts.md](features/artifacts.md) | Files a run produces for the founder: QA's demo video of the browser test, kept and played in the app |
+| shares | [features/shares.md](features/shares.md) | A public link to a finished build: the office time-lapse and the demo video, no sign-in; the founder turns it on and off |
+| waitlist | [features/waitlist.md](features/waitlist.md) | The public landing page and the waitlist (emails read with a command, never over HTTP) |
 | signoffs | [features/signoffs.md](features/signoffs.md) | The release sign-off card: who signed off and what they say, from the activity log |
 | blueprints | [features/blueprints.md](features/blueprints.md) | The plan before the build: Lekha writes seven documents, the founder comments and approves, the build follows them |
 | model_settings | [features/model_settings.md](features/model_settings.md) | Bring your own keys and models: managed or own keys, a model per agent, local models; routed per call by company |

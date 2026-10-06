@@ -15,7 +15,11 @@ BUILD_FIRST = (
     "The founder approved this plan. Follow it: its stack, data model, structure and test plan. "
     "Build only milestone 1 of the roadmap now; the later milestones come later, as changes."
 )
-READ_ORDER = ("architecture", "data", "structure", "roadmap", "tests", "brief")
+READ_ORDER = ("architecture", "data", "structure", "roadmap", "screens", "tests", "brief")
+MOCKUPS_NOTE = (
+    "\n\nThe founder also approved screen mockups (plain HTML) in {path}. Build the screens to "
+    "look and work like them: same layout, labels and content."
+)
 
 
 def make_blueprint_node(sandboxes: SandboxProvider, plans: ApprovedPlans | None) -> BuildNode:
@@ -42,7 +46,10 @@ def plan_brief(plan: PlanDocs) -> str:
         ),
     )
     text = BUILD_FIRST
-    for path in ranked:
+    mockups = [p for p in plan.titles if p.endswith(".html")]
+    if mockups:
+        text += MOCKUPS_NOTE.format(path=mockups[0])
+    for path in (p for p in ranked if not p.endswith(".html")):  # the mockups are too long to quote
         section = f"\n\n--- {plan.titles[path]} ({path}) ---\n{plan.files[path]}"
         if len(text) + len(section) > BRIEF_LIMIT:
             break

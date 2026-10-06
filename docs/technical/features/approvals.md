@@ -128,6 +128,7 @@ None. Rules live in the team template file; the verdict is saved in the run's ch
 
 | Date | Change |
 | --- | --- |
+| 2026-10-07 | The founder's autonomy settings are compiled into this policy per company or project ([autonomy.md](autonomy.md)); the engine itself is unchanged |
 | 2026-10-04 | `preview_failed` fact and rule |
 | 2026-10-04 | `security_warnings` fact and the software team's rule; the gate lists the warnings (`gate.security`) |
 | 2026-10-01 | Created: approval policies (ask / approve / reject, strictest wins), facts at the release gate, software team rules, reasons in the gate, activity log and standup |

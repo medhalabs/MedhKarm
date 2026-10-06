@@ -57,3 +57,19 @@ export type ProjectBrief = {
 };
 
 export type ProjectIntakeReply = { agent: string; text: string; brief: ProjectBrief | null };
+
+/** Priya's report on a project (backend: projects/health.py). */
+export type ProjectHealth = {
+  project_id: string;
+  name: string;
+  items_total: number;
+  done: number;
+  in_progress: number;
+  blocked: number;
+  waiting: number;
+  runs: number;
+  tokens: number;
+  days_since_activity: number | null;
+  state: "not_started" | "moving" | "needs_you" | "stalled" | "done";
+  summary: string;
+};

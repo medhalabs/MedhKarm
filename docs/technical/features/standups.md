@@ -144,6 +144,7 @@ Consumes: `run.started` (project name), `task.assigned`, `work.started`, `work.f
 
 | Date | Change |
 | --- | --- |
+| 2026-10-07 | Priya speaks the standup: `to_text(standup, by)` greets and signs off, `to_short(…, by)` starts with her name; the job passes the office manager's name from the team template |
 | 2026-10-05 | Per company: each founder's standup covers only their runs, ends at their hour, and goes to their email and WhatsApp (one line, `to_short`); the weekly report (`weekly.py`) on Mondays ([notifications.md](notifications.md)) |
 | 2026-10-05 | `GET /standups/…` needs sign-in and covers only the founder's company's runs (`for_day(day, only=…)`); the worker's morning standup still covers every run |
 | 2026-10-04 | Planning runs (`run.finished` status `planned`) listed under Done: "Mira planned the backlog: N items" |

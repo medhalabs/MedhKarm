@@ -38,8 +38,10 @@ class SendStandup:
         notifications: NotificationService | None = None,
         runs: CompanyRuns | None = None,
         app_url: str = "",
+        manager: str = "",
     ) -> None:
         self._standups = standups
+        self._manager = manager  # who speaks: Priya, the office manager
         self._delivery = delivery
         self._notifications = notifications
         self._runs = runs
@@ -56,13 +58,13 @@ class SendStandup:
         standup = await self._standups.for_day(
             day, await self._runs.run_ids(company), settings.standup_hour
         )
-        text = to_text(standup)
+        text = to_text(standup, self._manager)
         results = await self._notifications.deliver(
             company,
             Update(
                 subject=f"Standup {day:%d %b}: {standup.headline}",
                 text=text + (f"\n\nOpen your inbox: {self._link}" if self._link else ""),
-                short=to_short(standup, self._link),
+                short=to_short(standup, self._link, self._manager),
             ),
         )
         await self._delivery.send(standup, text)

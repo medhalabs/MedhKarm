@@ -204,8 +204,8 @@ async def test_the_build_gets_the_documents_and_an_index() -> None:
     plan = await ApprovedPlans(service).for_run("run-1")
 
     assert plan is not None
-    assert plan.files["docs/03-architecture.md"] == "# Architecture\nbody"
-    assert "[Architecture](03-architecture.md)" in plan.files["docs/README.md"]
+    assert plan.files["docs/05-architecture.md"] == "# Architecture\nbody"
+    assert "[Architecture](05-architecture.md)" in plan.files["docs/README.md"]
     assert "docs/README.md" not in plan.titles  # the index isn't a plan document
     assert await ApprovedPlans(service).for_run("no-run") is None
 
@@ -305,3 +305,26 @@ async def test_a_comment_on_a_change_rewrites_only_its_own_documents() -> None:
     done = await service.get(blueprint.id)
     assert {d.id: d.content for d in done.docs}["impact"].endswith("counter only")
     assert {d.id: d.content for d in done.docs}["change"] == "# Change brief\nbody"
+
+
+async def test_anaya_writes_the_screens_and_lekha_everything_else() -> None:
+    service, repo, _, _ = make()
+    blueprint = await service.create(COMPANY, NewBlueprint(brief=BRIEF))
+    lekha_llm = ScriptedLLMProvider([LLMResponse(content=f"# {d.title}\nlekha") for d in DOCS])
+    anaya_llm = ScriptedLLMProvider(
+        [
+            LLMResponse(content="# Screens and journeys\nanaya"),
+            LLMResponse(content="<div><h1>Menu</h1><script>alert(1)</script></div>"),
+        ]
+    )
+    author = BlueprintAuthor(repo, BlueprintWriter(lekha_llm), designer=BlueprintWriter(anaya_llm))
+
+    await author.write(blueprint.id)
+
+    docs = {d.id: d for d in (await service.get(blueprint.id)).docs}
+    assert docs["screens"].content.endswith("anaya") and docs["brief"].content.endswith("lekha")
+    assert len(anaya_llm.calls) == 2  # just her two documents
+    assert docs["mockups"].format == "html" and docs["mockups"].path == "docs/04-mockups.html"
+    assert "<script" not in docs["mockups"].content  # made inert before anyone sees it
+    assert docs["brief"].format == "markdown"
+    assert [d.id for d in DOCS][:4] == ["brief", "roadmap", "screens", "mockups"]

@@ -3,6 +3,7 @@
 from collections.abc import Callable
 
 from app.features.blueprints.catalog import ALL_DOCS, BY_ID, DocSpec
+from app.features.blueprints.mockup import sanitize_mockup
 from app.features.blueprints.schemas import Doc
 from app.features.models.interfaces import LLMProvider
 from app.features.runs.schemas import StartRun
@@ -93,7 +94,8 @@ class BlueprintWriter:
                 {"role": "user", "content": "\n\n".join(parts)},
             ]
         )
-        return _clean(response.content or "", spec.title)
+        text = response.content or ""
+        return sanitize_mockup(text) if spec.format == "html" else _clean(text, spec.title)
 
     async def affected(self, docs: list[Doc], comment: str) -> list[str]:
         """Which documents the founder's comment changes (ids, in writing order)."""

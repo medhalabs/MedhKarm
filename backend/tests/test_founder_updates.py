@@ -1,7 +1,7 @@
 """The morning standup and the Monday report reach each founder: their own runs only, on
 their channels, once a day."""
 
-from datetime import datetime, time, timedelta
+from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
 from app.features.events.schemas import Actor, EventType
@@ -41,9 +41,9 @@ class Log:
 
 async def test_each_founder_gets_their_own_standup_and_weekly_report() -> None:
     events, queue = InMemoryEventStore(), InMemoryJobQueue()
-    # Noon today: inside the window that ends at 23:00, whatever time the test runs
-    today = datetime.now(ZoneInfo("Asia/Kolkata")).date()
-    events.now = datetime.combine(today, time(12), ZoneInfo("Asia/Kolkata"))
+    # A fixed clock (noon, Asia/Kolkata): the test gives the same answer at any time of day
+    noon = datetime(2026, 10, 7, 12, 0, tzinfo=ZoneInfo("Asia/Kolkata"))
+    events.now = noon - timedelta(hours=2)
     runs = RunService(InMemoryRunRepository(), queue)
     mine = await runs.start(StartRun(request="Build the chai stall orders library"), "c1")
     theirs = await runs.start(StartRun(request="Someone else's secret project"), "c2")
@@ -60,7 +60,7 @@ async def test_each_founder_gets_their_own_standup_and_weekly_report() -> None:
         "c1", NotificationSettings(email="me@x.in", whatsapp="+919876543210", standup_hour=0)
     )
     notifications = NotificationService(settings, [email, whatsapp])
-    standups = StandupService(events, hour=0)
+    standups = StandupService(events, hour=0, clock=lambda: noon)
     worker = JobRunner(
         queue,
         {SEND_STANDUP: SendStandup(standups, Log(), notifications, runs, "https://app.in")},

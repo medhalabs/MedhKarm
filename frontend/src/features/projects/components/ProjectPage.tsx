@@ -4,17 +4,19 @@ import { notFound } from "next/navigation";
 
 import { AutoRefresh } from "@/shared/ui/AutoRefresh";
 
+import { getProjectHealth } from "../api/getHealth";
 import { getProject } from "../api/getProjects";
 import { describeProject, isBusy, progress } from "../describe";
 import { ActionButton } from "./ActionButton";
 import { AddItemForm } from "./AddItemForm";
 import { AutopilotForm } from "./AutopilotForm";
 import { BacklogItemRow } from "./BacklogItemRow";
+import { PriyaUpdate } from "./PriyaUpdate";
 import { StatusBadge } from "./StatusBadge";
 
 /** One project: Mira's plan and questions, the controls, and the backlog with each item's run. */
 export async function ProjectPage({ projectId }: { projectId: string }) {
-  const project = await getProject(projectId);
+  const [project, health] = await Promise.all([getProject(projectId), getProjectHealth(projectId)]);
   if (!project) notFound();
   const look = describeProject(project.status);
   const { done, total } = progress(project.items);
@@ -60,6 +62,10 @@ export async function ProjectPage({ projectId }: { projectId: string }) {
           </p>
         )}
       </header>
+
+      {health && project.status !== "planning" && project.status !== "plan_ready" && (
+        <PriyaUpdate health={health} />
+      )}
 
       {project.status === "planning" && (
         <p className="rounded-lg border border-sky-200 bg-sky-50 p-4 text-sm dark:border-sky-900 dark:bg-sky-950/40">

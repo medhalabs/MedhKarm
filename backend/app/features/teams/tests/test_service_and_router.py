@@ -25,6 +25,8 @@ def test_list_shows_active_roles_only() -> None:
         "Security engineer",
         "DevOps",
         "Documentation",
+        "UI/UX designer",
+        "Office manager",
     ]
 
 
@@ -44,6 +46,8 @@ def test_assemble_default_team() -> None:
         ("security", "Vikram"),
         ("devops", "Neel"),
         ("docs", "Lekha"),
+        ("design", "Anaya"),
+        ("office", "Priya"),
     ]
 
 
@@ -66,7 +70,7 @@ def test_api_lists_and_fetches_templates() -> None:
     assert [t["id"] for t in c.get("/teams/templates").json()] == ["software"]
     template = c.get("/teams/templates/software").json()
     assert template["workflow"] == "build_app"
-    assert len(template["roles"]) == 7
+    assert len(template["roles"]) == 9
     members = c.get("/teams/templates/software/team").json()["members"]
     assert [m["name"] for m in members] == [
         "Mira",
@@ -76,6 +80,8 @@ def test_api_lists_and_fetches_templates() -> None:
         "Vikram",
         "Neel",
         "Lekha",
+        "Anaya",
+        "Priya",
     ]
 
 

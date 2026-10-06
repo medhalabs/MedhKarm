@@ -45,5 +45,6 @@ def _to_settings(row: NotificationSettingsRow) -> CompanySettings:
         standup_on=row.standup_on,
         standup_hour=row.standup_hour,
         weekly_on=row.weekly_on,
+        nudge_on=row.nudge_on,
         updated_at=row.updated_at,
     )
