@@ -22,7 +22,10 @@ export type Blocked = {
   note: string;
 };
 
+export type Plan = { blueprint_id: string; title: string; waiting_since: string };
+
 export type Inbox = {
+  plans: Plan[];
   approvals: Approval[];
   questions: Questions[];
   blocked: Blocked[];

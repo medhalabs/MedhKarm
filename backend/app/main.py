@@ -8,6 +8,7 @@ from app.core.errors import register_error_handlers
 from app.core.logging import configure_logging
 from app.features.auth.dependencies import get_current_user
 from app.features.auth.router import router as auth_router
+from app.features.blueprints.router import router as blueprints_router
 from app.features.events.router import router as events_router
 from app.features.health.router import router as health_router
 from app.features.inbox.router import router as inbox_router
@@ -52,6 +53,7 @@ def create_app() -> FastAPI:
     app.include_router(messages_router)
     app.include_router(notifications_router)
     app.include_router(intake_router)
+    app.include_router(blueprints_router)
     app.include_router(model_settings_router)
 
     return app

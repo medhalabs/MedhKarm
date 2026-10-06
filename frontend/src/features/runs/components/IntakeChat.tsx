@@ -1,8 +1,10 @@
 "use client";
 
+import { askForPlanAction } from "@/features/blueprints/client";
 import { ChatIntake } from "@/shared/ui/ChatIntake";
 
 import { intakeAction, startFromBriefAction } from "../api/actions";
+import { briefBody } from "../briefBody";
 import type { Brief } from "../types";
 import { BriefCard } from "./BriefCard";
 
@@ -27,7 +29,7 @@ export function IntakeChat() {
         const result = await intakeAction(turns);
         return "error" in result ? result : { text: result.reply.text, brief: result.reply.brief };
       }}
-      start={startFromBriefAction}
+      start={(brief) => askForPlanAction(briefBody(brief))}
       skip={(request) =>
         startFromBriefAction({
           request,
@@ -44,7 +46,8 @@ export function IntakeChat() {
         <BriefCard
           brief={brief}
           pending={c.pending}
-          onStart={c.start}
+          onPlan={c.start}
+          onBuildNow={() => void startFromBriefAction(brief)}
           onKeepTalking={c.keepTalking}
         />
       )}

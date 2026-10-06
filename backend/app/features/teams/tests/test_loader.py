@@ -72,7 +72,15 @@ def test_shipped_templates_load() -> None:
     templates = load_templates()
 
     software = templates["software"]
-    assert [r.id for r in software.roles] == ["pm", "cto", "developer", "qa", "security", "devops"]
+    assert [r.id for r in software.roles] == [
+        "pm",
+        "cto",
+        "developer",
+        "qa",
+        "security",
+        "devops",
+        "docs",
+    ]
     assert [r.id for r in software.roles if not r.active] == []
     assert software.role("developer").max_count == 3
 

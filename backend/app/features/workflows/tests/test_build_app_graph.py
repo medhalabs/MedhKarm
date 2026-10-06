@@ -91,6 +91,7 @@ async def test_reports_each_step() -> None:
         "prepare",
         "scaffold",
         "connect",
+        "blueprint",
         "plan",
         "develop",
         "review",

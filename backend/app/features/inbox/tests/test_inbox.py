@@ -104,3 +104,25 @@ async def test_the_inbox_has_what_needs_the_founder() -> None:
     ]
     assert [m.body for m in inbox.replies] == ["On it."]  # the team's, not the founder's own
     assert inbox.count == 3
+
+
+async def test_a_plan_waiting_for_approval_is_in_the_inbox_and_counted() -> None:
+    from app.features.blueprints.schemas import BlueprintStatus, BlueprintSummary
+
+    def plan(blueprint_id: str, status: BlueprintStatus) -> BlueprintSummary:
+        return BlueprintSummary(
+            id=blueprint_id, title="Coffee shop app", status=status, created_at=NOW, updated_at=NOW
+        )
+
+    class Plans:
+        async def list(self, company_id: str) -> list[BlueprintSummary]:
+            return [
+                plan("b1", BlueprintStatus.READY),
+                plan("b2", BlueprintStatus.WRITING),  # not ready yet
+                plan("b3", BlueprintStatus.APPROVED),  # already building
+            ]
+
+    inbox = await InboxService(Runs(), Projects(), Messages(), Plans()).for_company("c1")
+
+    assert [(p.blueprint_id, p.title) for p in inbox.plans] == [("b1", "Coffee shop app")]
+    assert inbox.count == 4

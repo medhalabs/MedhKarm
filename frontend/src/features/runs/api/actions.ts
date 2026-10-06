@@ -8,6 +8,7 @@ import { redirect } from "next/navigation";
 
 import { ApiError, apiPost } from "@/shared/api/client";
 
+import { briefBody } from "../briefBody";
 import { parseDecision, parseStartRun } from "../parseForms";
 import type { Brief, FormState, IntakeReply, Run, Turn } from "../types";
 
@@ -38,17 +39,7 @@ export async function intakeAction(
 export async function startFromBriefAction(brief: Brief): Promise<{ error: string }> {
   let run: Run;
   try {
-    run = await apiPost<Run>("/runs", {
-      request: brief.request,
-      ...(brief.test_command ? { test_command: brief.test_command } : {}),
-      ...(brief.repo_url
-        ? { repo: { url: brief.repo_url, branch: brief.branch } }
-        : {
-            create_repo: brief.create_repo,
-            ...(brief.new_repo_name ? { new_repo_name: brief.new_repo_name } : {}),
-            stack: brief.stack,
-          }),
-    });
+    run = await apiPost<Run>("/runs", briefBody(brief));
   } catch (error) {
     return { error: describeError(error) };
   }

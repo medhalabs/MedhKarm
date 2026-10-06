@@ -1,7 +1,7 @@
 from typing import Protocol
 
 from app.features.sandbox.interfaces import Sandbox
-from app.features.workflows.schemas import CheckResult
+from app.features.workflows.schemas import CheckResult, PlanDocs
 from app.features.workflows.state import BuildState
 
 
@@ -21,3 +21,10 @@ class FounderNotes(Protocol):
     CTO's plan and every developer brief include them."""
 
     async def for_run(self, run_id: str) -> list[str]: ...
+
+
+class ApprovedPlans(Protocol):
+    """The plan a run builds from, when the founder approved a blueprint first (the blueprints
+    feature, through a small adapter in app/workers). None: the run didn't start from one."""
+
+    async def for_run(self, run_id: str) -> "PlanDocs | None": ...

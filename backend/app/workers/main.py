@@ -18,6 +18,10 @@ from typing import Any
 from app.core.config import get_settings
 from app.core.database import session_factory
 from app.core.logging import configure_logging
+from app.features.blueprints.author import BlueprintAuthor
+from app.features.blueprints.repository import SqlBlueprintRepository
+from app.features.blueprints.service import REVISE_JOB, WRITE_JOB
+from app.features.blueprints.writer import BlueprintWriter
 from app.features.events.stores.sql_store import SqlEventStore
 from app.features.jobs.interfaces import JobHandler
 from app.features.jobs.service import JobRunner
@@ -36,8 +40,11 @@ from app.features.runs.repository import SqlRunRepository
 from app.features.runs.service import CANCEL_JOB, RESUME_JOB, START_JOB, RunService
 from app.features.standups.delivery.log_delivery import LogDelivery
 from app.features.standups.dependencies import get_standup_service
+from app.features.starters.service import StarterService
 from app.features.workflows.service import WorkflowService
+from app.workers.approved_plans import StackText
 from app.workers.handlers.backlog import PlanBacklog, backlog_schedule
+from app.workers.handlers.blueprint import ReviseBlueprint, WriteBlueprint
 from app.workers.handlers.build import CancelBuild, ResumeBuild, StartBuild
 from app.workers.handlers.evals import NIGHTLY_EVALS, NightlyEvals, nightly_evals_schedule
 from app.workers.handlers.messages import MessageReply, TeamContext
@@ -107,6 +114,20 @@ async def main() -> None:
             return None
         return message.company_id if message else None
 
+    blueprints = SqlBlueprintRepository(session_factory)
+    lekha = team.template.role("docs")
+    author = BlueprintAuthor(
+        blueprints,
+        BlueprintWriter(
+            role_model(settings, team, "docs"), lekha.instructions, StackText(StarterService())
+        ),
+        lekha.display_names[0],
+    )
+
+    async def blueprint_company(payload: dict[str, Any]) -> str | None:
+        found = await blueprints.get(str(payload.get("blueprint_id", "")))
+        return found.company_id if found else None
+
     # Jobs that call models run as their company: its own models and keys (model_settings).
     handlers: dict[str, JobHandler] = {
         START_JOB: CompanyScoped(
@@ -118,6 +139,8 @@ async def main() -> None:
         CANCEL_JOB: CancelBuild(workflow, team.sandboxes, events, progress),
         PLAN_JOB: CompanyScoped(PlanBacklog(planner, projects), project_company),
         REPLY_JOB: CompanyScoped(MessageReply(replier), message_company),
+        WRITE_JOB: CompanyScoped(WriteBlueprint(author), blueprint_company),
+        REVISE_JOB: CompanyScoped(ReviseBlueprint(author), blueprint_company),
         NIGHTLY_EVALS: NightlyEvals(settings),
         SEND_STANDUP: SendStandup(standups, LogDelivery(), notifications, runs, settings.app_url),
         SEND_WEEKLY: SendWeekly(

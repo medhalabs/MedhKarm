@@ -14,6 +14,8 @@ class BuildState(TypedDict, total=False):
     stack_brief: str  # the stack, as text for the CTO and the developers
     scaffold: dict[str, Any]  # the starter and modules put in the workspace (ScaffoldResult)
     repo_commit: str  # the commit the team started from
+    blueprint_brief: str  # the approved plan, as text for the CTO and the developers
+    blueprint_files: list[str]  # the plan's documents put in the repository
     codebase_map: str  # what the team learned about the project before changing it
     setup_ok: bool  # installing the project's dependencies worked
     plan: str  # the CTO's plan, as text for people

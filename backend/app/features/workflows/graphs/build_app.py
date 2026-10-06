@@ -24,8 +24,9 @@ from app.features.security.service import SecurityReview
 from app.features.starters.service import StarterService
 from app.features.workflows.checkers.quality import QualityChecker
 from app.features.workflows.checkers.test_command import TestCommandChecker
-from app.features.workflows.interfaces import FounderNotes, WorkChecker
+from app.features.workflows.interfaces import ApprovedPlans, FounderNotes, WorkChecker
 from app.features.workflows.nodes.approval import make_approval_node
+from app.features.workflows.nodes.blueprint import make_blueprint_node
 from app.features.workflows.nodes.browser_qa import after_browser_qa, make_browser_qa_node
 from app.features.workflows.nodes.connect import make_connect_node
 from app.features.workflows.nodes.develop import make_develop_node
@@ -62,6 +63,7 @@ def build_app_graph(
     deploys: DeployService | None = None,
     starters: StarterService | None = None,
     notes: FounderNotes | None = None,
+    plans: ApprovedPlans | None = None,
 ) -> CompiledStateGraph[BuildState, None, BuildState, BuildState]:
     """`planner` is the CTO's model: it plans and reviews. The role settings normally come from
     the team template (see app/workers/wiring.py). `approval_policy` decides the release gate:
@@ -73,12 +75,15 @@ def build_app_graph(
     engine for end-to-end browser tests of web changes; without one, none are written.
     `deploys` is DevOps: a preview before the gate, production after approval. `starters` sets
     up new projects from our starter and modules; without one, they start empty. `notes` are the
-    founder's messages about a run, given to the CTO's plan and every developer brief."""
+    founder's messages about a run, given to the CTO's plan and every developer brief. `plans`
+    gives a run the plan the founder approved first (Lekha's blueprint): its documents go in the
+    project's docs/ folder and the team follows it."""
     repos = repos or RepoService()
     graph = StateGraph(BuildState)
     graph.add_node("prepare", make_prepare_node(sandboxes))
     graph.add_node("scaffold", make_scaffold_node(sandboxes, starters))
     graph.add_node("connect", make_connect_node(sandboxes, repos))
+    graph.add_node("blueprint", make_blueprint_node(sandboxes, plans))
     graph.add_node(
         "plan",
         make_plan_node(
@@ -119,7 +124,8 @@ def build_app_graph(
     graph.add_edge(START, "prepare")
     graph.add_edge("prepare", "scaffold")
     graph.add_edge("scaffold", "connect")
-    graph.add_edge("connect", "plan")
+    graph.add_edge("connect", "blueprint")
+    graph.add_edge("blueprint", "plan")
     graph.add_edge("plan", "develop")
     graph.add_edge("develop", "review")
     graph.add_conditional_edges("review", after_review, ["develop", "verify"])

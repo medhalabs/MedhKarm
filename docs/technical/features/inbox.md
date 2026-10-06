@@ -80,5 +80,6 @@ None of its own.
 
 | Date | Change |
 | --- | --- |
+| 2026-10-06 | "Plans to read and approve": blueprints that are ready, counted in the badge |
 | 2026-10-05 | Restyled with the shared shell, page header and cards |
 | 2026-10-05 | Created: approvals, PM questions with answers, blocked items, team replies, nav count |

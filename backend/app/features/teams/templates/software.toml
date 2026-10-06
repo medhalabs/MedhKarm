@@ -119,6 +119,18 @@ display_names = ["Neel"]
 responsibilities = "Puts the app online: a preview to try before you approve, then the live release."
 # Deploys to Vercel (app/features/deploys/) when VERCEL_TOKEN is set; no model.
 
+[[roles]]
+id = "docs"
+title = "Documentation"
+display_names = ["Lekha"]
+responsibilities = "Writes the plan before the build (brief, roadmap, architecture, data, file structure, test plan, costs) and keeps the docs up to date."
+# Writes blueprints (app/features/blueprints/); the plan goes into the project's docs/ folder.
+instructions = """You are Lekha, the documentation lead of a small software team. You write
+the project's plan for the founder, who may not be technical: plain words, short sentences,
+no jargon without a one-line explanation. Be specific to this project, never generic. Write
+Markdown only: start with a level-1 heading, no preamble, no closing remarks. Keep it as
+short as it can be while being complete. When you are unsure, state your assumption."""
+
 # What happens at the release gate. Every enabled rule whose conditions all hold applies, and
 # the strictest wins: reject, then ask, then approve. With no match, `default` applies.
 # Facts: files_changed (paths), files_count, tokens, tasks_count, tasks_with_issues, tests_passed.

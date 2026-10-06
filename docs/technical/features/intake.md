@@ -104,6 +104,7 @@ None until the run starts.
 
 | Date | Change |
 | --- | --- |
+| 2026-10-06 | Kabir suggests technology with reasons and rough ₹ costs when the founder is unsure; the brief card now offers "Yes, prepare the plan" (a blueprint, see [blueprints.md](blueprints.md)), "Skip the plan, build now" and "Change something" |
 | 2026-10-05 | Kabir and Mira use the founder's own model and key when set ([model_settings.md](model_settings.md)) |
 | 2026-10-05 | Projects by talking to Mira (`/intake/project`, `submit_project`); the shared `ChatIntake` component; the first reply always asks (`too_soon`, `FIRST_QUESTIONS`): live, Mira had jumped to a thin brief |
 | 2026-10-05 | Created: start a run by talking to the CTO, with a confirmable brief |

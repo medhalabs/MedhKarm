@@ -72,6 +72,9 @@ def make_develop_node(
     return develop
 
 
+PLAN_IN_BRIEF = 6000  # characters of the approved plan in each developer's brief
+
+
 def _brief(state: BuildState, task: dict[str, Any], index: int, count: int) -> str:
     project = (
         f"About the project (mapped before work started):\n{state['codebase_map']}\n\n"
@@ -80,6 +83,8 @@ def _brief(state: BuildState, task: dict[str, Any], index: int, count: int) -> s
     )
     if state.get("stack_brief"):
         project = f"{state['stack_brief']}\n\n{project}"
+    if state.get("blueprint_brief"):  # the start of the plan: its rules and main documents
+        project = f"{state['blueprint_brief'][:PLAN_IN_BRIEF]}\n\n{project}"
     brief = (
         f"{state['request']}\n\n{project}The CTO's plan:\n{state.get('plan', '')}\n\n"
         f"Your task ({index + 1} of {count}): {task['title']}\n{task.get('description', '')}\n"

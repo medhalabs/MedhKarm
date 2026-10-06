@@ -11,6 +11,7 @@ from pathlib import Path
 from app.core.config import Settings, get_settings
 from app.core.database import session_factory
 from app.features.approvals.schemas import ApprovalPolicy
+from app.features.blueprints.dependencies import get_blueprint_service
 from app.features.deploys.service import DeployService
 from app.features.deploys.vercel import VercelDeployTarget
 from app.features.developer_engine.interfaces import DeveloperEngine
@@ -37,6 +38,7 @@ from app.features.teams.service import TeamService
 from app.features.workflows.checkpointer import postgres_checkpointer
 from app.features.workflows.graphs.build_app import build_app_graph
 from app.features.workflows.service import WorkflowService
+from app.workers.approved_plans import ApprovedPlans
 
 logger = logging.getLogger(__name__)
 
@@ -190,6 +192,7 @@ async def workflow_service(
             deploys=team.deploys,
             starters=StarterService(),
             notes=MessageService(SqlMessageRepository(session_factory)),
+            plans=ApprovedPlans(get_blueprint_service()),
             repos=RepoService(
                 GitHubRepoHost(settings.github_token),
                 GraphifyCodeGraph() if settings.code_graph else None,

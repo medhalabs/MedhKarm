@@ -39,6 +39,7 @@ class Actor(StrEnum):
     QA = "qa"
     SECURITY = "security"
     DEVOPS = "devops"
+    DOCS = "docs"
     SYSTEM = "system"
 
 

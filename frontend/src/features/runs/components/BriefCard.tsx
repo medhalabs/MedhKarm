@@ -14,12 +14,14 @@ const MODULE_NAMES: Record<string, string> = {
 export function BriefCard({
   brief,
   pending,
-  onStart,
+  onPlan,
+  onBuildNow,
   onKeepTalking,
 }: {
   brief: Brief;
   pending: boolean;
-  onStart: () => void;
+  onPlan: () => void;
+  onBuildNow: () => void;
   onKeepTalking: () => void;
 }) {
   const chosen = (["frontend", "api", "database", "hosting", "payments"] as const)
@@ -28,7 +30,7 @@ export function BriefCard({
   return (
     <div className="rounded-2xl border border-indigo-200 bg-indigo-50/70 p-5 dark:border-indigo-900 dark:bg-indigo-950/30">
       <p className="text-xs font-semibold tracking-wide text-indigo-700 uppercase dark:text-indigo-300">
-        Ready to start
+        Ready for the plan
       </p>
       <p className="mt-2 text-sm leading-relaxed whitespace-pre-line text-zinc-800 dark:text-zinc-200">
         {brief.summary || brief.request.slice(0, 400)}
@@ -52,13 +54,20 @@ export function BriefCard({
         {brief.stack.starter === false && <Chip>No starter</Chip>}
       </div>
       <div className="mt-4 flex flex-wrap gap-2">
-        <button type="button" onClick={onStart} disabled={pending} className="btn-primary">
-          {pending ? "Starting…" : "Start run"}
+        <button type="button" onClick={onPlan} disabled={pending} className="btn-primary">
+          {pending ? "One moment…" : "Yes, prepare the plan"}
         </button>
         <button type="button" onClick={onKeepTalking} disabled={pending} className="btn-secondary">
           Change something
         </button>
+        <button type="button" onClick={onBuildNow} disabled={pending} className="btn-secondary">
+          Skip the plan, build now
+        </button>
       </div>
+      <p className="mt-3 text-xs text-zinc-500">
+        Lekha, our documentation lead, writes the roadmap, architecture and costs for you to read
+        and approve before any code is written.
+      </p>
     </div>
   );
 }

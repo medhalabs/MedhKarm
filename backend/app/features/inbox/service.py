@@ -1,8 +1,14 @@
 """Builds the founder's inbox from what's already stored: runs at the gate, the PM's open
 questions, blocked backlog items, and the team's latest replies. Nothing new is stored here."""
 
-from app.features.inbox.interfaces import MessagesReader, ProjectsReader, RunsReader
-from app.features.inbox.schemas import Approval, Blocked, Inbox, Questions
+from app.features.blueprints.schemas import BlueprintStatus
+from app.features.inbox.interfaces import (
+    BlueprintsReader,
+    MessagesReader,
+    ProjectsReader,
+    RunsReader,
+)
+from app.features.inbox.schemas import Approval, Blocked, Inbox, Plan, Questions
 from app.features.messages.service import FOUNDER
 from app.features.projects.schemas import ItemStatus, ProjectStatus
 from app.features.runs.schemas import RunStatus
@@ -14,11 +20,16 @@ REPLIES = 5
 
 class InboxService:
     def __init__(
-        self, runs: RunsReader, projects: ProjectsReader, messages: MessagesReader
+        self,
+        runs: RunsReader,
+        projects: ProjectsReader,
+        messages: MessagesReader,
+        blueprints: BlueprintsReader | None = None,
     ) -> None:
         self._runs = runs
         self._projects = projects
         self._messages = messages
+        self._blueprints = blueprints
 
     async def for_company(self, company_id: str) -> Inbox:
         runs = await self._runs.list(RECENT_RUNS, company_id)
@@ -61,6 +72,15 @@ class InboxService:
                 if item.status == ItemStatus.BLOCKED
             ]
         replies = [m for m in await self._messages.recent(company_id) if m.author != FOUNDER]
+        plans = [
+            Plan(blueprint_id=b.id, title=b.title, waiting_since=b.updated_at)
+            for b in (await self._blueprints.list(company_id) if self._blueprints else [])
+            if b.status == BlueprintStatus.READY
+        ]
         return Inbox(
-            approvals=approvals, questions=questions, blocked=blocked, replies=replies[:REPLIES]
+            plans=plans,
+            approvals=approvals,
+            questions=questions,
+            blocked=blocked,
+            replies=replies[:REPLIES],
         )

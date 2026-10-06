@@ -15,7 +15,11 @@ const button = "btn-secondary";
 /** Everything waiting for the founder: releases, Mira's questions, blocked work, replies. */
 export async function InboxPage() {
   const inbox = await getInbox();
-  const empty = !inbox.approvals.length && !inbox.questions.length && !inbox.blocked.length;
+  const empty =
+    !inbox.plans.length &&
+    !inbox.approvals.length &&
+    !inbox.questions.length &&
+    !inbox.blocked.length;
 
   return (
     <div className="flex flex-col gap-8">
@@ -24,6 +28,23 @@ export async function InboxPage() {
         <p className="card p-8 text-center text-sm text-zinc-500">
           Nothing needs you right now. The team will let you know.
         </p>
+      )}
+
+      {inbox.plans.length > 0 && (
+        <section className="flex flex-col gap-3">
+          <h2 className="text-sm font-semibold text-zinc-500">Plans to read and approve</h2>
+          {inbox.plans.map((p) => (
+            <article key={p.blueprint_id} className={card}>
+              <p className="font-medium">{p.title}</p>
+              <div className="flex flex-wrap items-center gap-3 text-sm">
+                <span className="text-zinc-500">Lekha finished {timeAgo(p.waiting_since)}</span>
+                <Link href={`/admin/blueprints/${p.blueprint_id}`} className="btn-primary ml-auto">
+                  Read the plan
+                </Link>
+              </div>
+            </article>
+          ))}
+        </section>
       )}
 
       {inbox.approvals.length > 0 && (

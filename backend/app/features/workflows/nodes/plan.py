@@ -46,6 +46,8 @@ def make_plan_node(
             )
         if state.get("stack_brief"):
             team = f"{state['stack_brief']}\n\n{team}"
+        if state.get("blueprint_brief"):
+            team = f"{state['blueprint_brief']}\n\n{team}"
         team += await founder_notes(notes, state.get("run_id", ""))
         response = await llm.complete(
             [

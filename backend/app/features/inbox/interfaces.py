@@ -2,6 +2,7 @@
 
 from typing import Protocol
 
+from app.features.blueprints.schemas import BlueprintSummary
 from app.features.messages.schemas import Message
 from app.features.projects.schemas import Project, ProjectDetail
 from app.features.runs.schemas import Run
@@ -19,3 +20,7 @@ class ProjectsReader(Protocol):
 
 class MessagesReader(Protocol):
     async def recent(self, company_id: str, limit: int = 20) -> list[Message]: ...
+
+
+class BlueprintsReader(Protocol):
+    async def list(self, company_id: str) -> list[BlueprintSummary]: ...

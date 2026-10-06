@@ -45,3 +45,10 @@ class RunOutcome(BaseModel):
     gate: dict[str, Any] | None = None  # what the founder is asked, when waiting
     next_nodes: list[str] = Field(default_factory=list)  # left to run (stopped mid-way if any)
     state: dict[str, Any] = Field(default_factory=dict)
+
+
+class PlanDocs(BaseModel):
+    """The approved plan's documents: path -> content, to put in the repository."""
+
+    files: dict[str, str]
+    titles: dict[str, str]  # path -> title, in reading order

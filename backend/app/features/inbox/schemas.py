@@ -37,7 +37,16 @@ class Blocked(BaseModel):
     note: str
 
 
+class Plan(BaseModel):
+    """A plan Lekha wrote that is waiting for the founder to read and approve."""
+
+    blueprint_id: str
+    title: str
+    waiting_since: datetime
+
+
 class Inbox(BaseModel):
+    plans: list[Plan] = Field(default_factory=list)
     approvals: list[Approval] = Field(default_factory=list)
     questions: list[Questions] = Field(default_factory=list)
     blocked: list[Blocked] = Field(default_factory=list)
@@ -47,7 +56,10 @@ class Inbox(BaseModel):
     def count(self) -> int:
         """Things that need the founder (replies are for reading, not counted)."""
         return (
-            len(self.approvals) + sum(len(q.questions) for q in self.questions) + len(self.blocked)
+            len(self.plans)
+            + len(self.approvals)
+            + sum(len(q.questions) for q in self.questions)
+            + len(self.blocked)
         )
 
 
