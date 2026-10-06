@@ -109,19 +109,26 @@ class ModelSettingsService:
     # Every model call
 
     async def config(self, company_id: str | None, role: str, fallback: str | None) -> ModelConfig:
+        config, _ = await self.config_with_ownership(company_id, role, fallback)
+        return config
+
+    async def config_with_ownership(
+        self, company_id: str | None, role: str, fallback: str | None
+    ) -> tuple[ModelConfig, bool]:
+        """Resolve a call and report whether it uses the founder's own key or local model."""
         stored = await self._stored(company_id) if company_id else None
         if stored is None:
-            return self._server(fallback)
+            return self._server(fallback), False
         model = stored.role_models.get(role) or stored.default_model or fallback
         if model is None:
             model = self._server(None).model
         provider = provider_of(model)
         if provider is None:  # a template's own model name (e.g. bare "gpt-oss:20b")
-            return self._managed(stored, model)
+            return self._managed(stored, model), False
         own = self._own_config(stored, model, provider)
         if own is not None:
-            return own
-        return self._managed(stored, model, provider)
+            return own, True
+        return self._managed(stored, model, provider), False
 
     def _own_config(
         self, stored: StoredModels | None, model: str, provider: Provider

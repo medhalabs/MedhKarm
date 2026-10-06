@@ -23,18 +23,26 @@ class CompanyRoutedProvider:
         self._providers = providers
         self._built: dict[tuple[str, str | None, str | None], LLMProvider] = {}
         self._last: dict[str | None, str] = {}  # company -> the model it last used
+        self._own_key: dict[str | None, bool] = {}
 
     @property
     def model_name(self) -> str:
         """The model this company's last call used (for the activity log and metering)."""
         return self._last.get(current_company.get()) or self._fallback or "default"
 
+    @property
+    def own_key(self) -> bool:
+        return self._own_key.get(current_company.get(), False)
+
     async def complete(
         self, messages: list[Message], tools: list[ToolSpec] | None = None
     ) -> LLMResponse:
         company = current_company.get()
-        config = await self._resolver.config(company, self._role, self._fallback)
+        config, own_key = await self._resolver.config_with_ownership(
+            company, self._role, self._fallback
+        )
         self._last[company] = config.model
+        self._own_key[company] = own_key
         return await self._provider(config).complete(messages, tools)
 
     def _provider(self, config: ModelConfig) -> LLMProvider:

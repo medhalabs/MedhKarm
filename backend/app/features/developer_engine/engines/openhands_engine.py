@@ -15,11 +15,13 @@ from openhands.sdk.conversation.response_utils import get_agent_final_response
 from openhands.sdk.workspace import RemoteWorkspace
 from openhands.tools.preset.default import get_default_tools
 
+from app.core.tenant import current_company
 from app.features.developer_engine.engines.workspace_snapshot import changed_files, snapshot
 from app.features.developer_engine.exceptions import IncompatibleSandboxError
 from app.features.developer_engine.schemas import DevResult, DevTask
 from app.features.events.schemas import Actor, EventType
 from app.features.events.service import RunRecorder
+from app.features.model_settings.interfaces import ModelResolver
 from app.features.models.schemas import ModelConfig
 from app.features.sandbox.interfaces import AgentServerSandbox, Sandbox
 
@@ -35,8 +37,16 @@ When the tests pass, finish with a one-line summary of what you did."""
 
 
 class OpenHandsEngine:
-    def __init__(self, model: ModelConfig, max_iterations: int = 50) -> None:
-        self._model = model
+    def __init__(
+        self,
+        model: ModelConfig | ModelResolver,
+        fallback_model: str | None = None,
+        max_iterations: int = 50,
+    ) -> None:
+        # Model settings are resolved for each task because one worker serves many companies.
+        self._resolver = model if hasattr(model, "config") else None
+        self._model = model if isinstance(model, ModelConfig) else None
+        self._fallback_model = fallback_model
         self._max_iterations = max_iterations  # bounds the run; the SDK also stops at 1 hour
 
     async def run_task(
@@ -48,15 +58,28 @@ class OpenHandsEngine:
                 "(OpenHandsSandboxProvider)."
             )
 
+        own_key = False
+        if self._resolver is not None:
+            config, own_key = await self._resolver.config_with_ownership(
+                current_company.get(), "developer", self._fallback_model
+            )
+        else:
+            config = self._model
+        assert config is not None
         before = await snapshot(sandbox)
-        summary, tokens, steps = await asyncio.to_thread(self._run_agent, task, sandbox)
+        summary, tokens, steps = await asyncio.to_thread(self._run_agent, task, sandbox, config)
         if recorder:
             # The OpenHands agent runs inside its own server; we record its totals.
             await recorder.record(
                 Actor.DEVELOPER,
                 EventType.MODEL_USED,
                 f"OpenHands worked through {steps} actions ({tokens:,} tokens)",
-                {"model": self._model.model, "engine": "openhands", "actions": steps},
+                {
+                    "model": config.model,
+                    "engine": "openhands",
+                    "actions": steps,
+                    "own_key": own_key,
+                },
                 tokens=tokens,
             )
         test = await sandbox.run(task.test_command)
@@ -71,12 +94,14 @@ class OpenHandsEngine:
             total_tokens=tokens,
         )
 
-    def _run_agent(self, task: DevTask, sandbox: AgentServerSandbox) -> tuple[str, int, int]:
+    def _run_agent(
+        self, task: DevTask, sandbox: AgentServerSandbox, model: ModelConfig
+    ) -> tuple[str, int, int]:
         """Blocking: runs one OpenHands conversation to completion. Called in a thread."""
         llm = LLM(
-            model=self._model.model,
-            base_url=self._model.api_base,
-            api_key=self._model.api_key,
+            model=model.model,
+            base_url=model.api_base,
+            api_key=model.api_key,
             usage_id="developer",
         )
         agent = Agent(llm=llm, tools=get_default_tools(enable_browser=False))

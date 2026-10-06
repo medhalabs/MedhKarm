@@ -33,3 +33,13 @@ async def test_parallel_meters_stay_separate() -> None:
         return meter.total.prompt_tokens
 
     assert list(await asyncio.gather(task(1), task(2))) == [1, 2]
+
+
+async def test_meter_records_whether_the_founder_used_their_key() -> None:
+    inner = ScriptedLLMProvider([reply(10, 2)])
+    inner.own_key = True
+    llm = MeteredLLMProvider(inner)
+    with metering() as meter:
+        await llm.complete([])
+    assert meter.total.own_key is True
+    assert meter.by_model["scripted"].own_key is True

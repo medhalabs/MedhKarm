@@ -63,6 +63,7 @@ def make_plan_node(
             "current_task": 0,
             "cto_tokens": response.usage.total_tokens,
             "cto_tokens_total": response.usage.total_tokens,
+            "own_key": bool(getattr(llm, "own_key", False)),
         }
 
     return plan

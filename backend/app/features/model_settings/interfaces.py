@@ -25,6 +25,10 @@ class ModelResolver(Protocol):
         self, company_id: str | None, role: str, fallback: str | None
     ) -> ModelConfig: ...
 
+    async def config_with_ownership(
+        self, company_id: str | None, role: str, fallback: str | None
+    ) -> tuple[ModelConfig, bool]: ...
+
 
 class ProviderFactory(Protocol):
     def __call__(self, config: ModelConfig, num_retries: int = 5) -> LLMProvider: ...

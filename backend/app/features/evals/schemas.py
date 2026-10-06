@@ -36,6 +36,7 @@ class TaskOutcome(BaseModel):
     prompt_tokens: int = 0
     completion_tokens: int = 0
     model_calls: int = 0
+    own_key: bool = False
     seconds: float = 0.0
     summary: str = ""
     files_changed: list[str] = Field(default_factory=list)

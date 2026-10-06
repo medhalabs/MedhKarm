@@ -19,6 +19,7 @@ class ModelUse(BaseModel):
     calls: int = 0
     prompt_tokens: int = 0
     completion_tokens: int = 0
+    own_key: bool = False
 
     @property
     def total_tokens(self) -> int:
@@ -28,11 +29,14 @@ class ModelUse(BaseModel):
 class Meter(BaseModel):
     by_model: dict[str, ModelUse] = Field(default_factory=dict)
 
-    def add(self, model: str, prompt_tokens: int, completion_tokens: int) -> None:
+    def add(
+        self, model: str, prompt_tokens: int, completion_tokens: int, own_key: bool = False
+    ) -> None:
         use = self.by_model.setdefault(model, ModelUse())
         use.calls += 1
         use.prompt_tokens += prompt_tokens
         use.completion_tokens += completion_tokens
+        use.own_key = use.own_key or own_key
 
     @property
     def total(self) -> ModelUse:
@@ -40,6 +44,7 @@ class Meter(BaseModel):
             calls=sum(u.calls for u in self.by_model.values()),
             prompt_tokens=sum(u.prompt_tokens for u in self.by_model.values()),
             completion_tokens=sum(u.completion_tokens for u in self.by_model.values()),
+            own_key=any(u.own_key for u in self.by_model.values()),
         )
 
 
@@ -66,6 +71,10 @@ class MeteredLLMProvider:
     def model_name(self) -> str:
         return self._inner.model_name
 
+    @property
+    def own_key(self) -> bool:
+        return bool(getattr(self._inner, "own_key", False))
+
     async def complete(
         self, messages: list[Message], tools: list[ToolSpec] | None = None
     ) -> LLMResponse:
@@ -76,5 +85,6 @@ class MeteredLLMProvider:
                 self._inner.model_name,
                 response.usage.prompt_tokens,
                 response.usage.completion_tokens,
+                bool(getattr(self._inner, "own_key", False)),
             )
         return response

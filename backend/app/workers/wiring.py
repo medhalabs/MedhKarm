@@ -25,7 +25,6 @@ from app.features.model_settings.dependencies import (
 from app.features.model_settings.routed import CompanyRoutedProvider
 from app.features.models.interfaces import LLMProvider
 from app.features.models.metering import MeteredLLMProvider
-from app.features.models.service import resolve_model_config
 from app.features.repos.code_graph import GraphifyCodeGraph
 from app.features.repos.github import GitHubRepoHost
 from app.features.repos.service import RepoService
@@ -211,9 +210,12 @@ def build_engine(
         from app.features.developer_engine.engines.openhands_engine import OpenHandsEngine
         from app.features.sandbox.providers.openhands_provider import OpenHandsSandboxProvider
 
-        engine = OpenHandsEngine(
-            resolve_model_config(settings, model), max_iterations=settings.openhands_max_iterations
+        resolver = (
+            get_model_settings_service()
+            if settings is get_settings()
+            else model_settings_service(settings)
         )
+        engine = OpenHandsEngine(resolver, model, max_iterations=settings.openhands_max_iterations)
         return engine, OpenHandsSandboxProvider(settings.openhands_server_image)
 
     from app.features.developer_engine.engines.tool_loop_engine import (

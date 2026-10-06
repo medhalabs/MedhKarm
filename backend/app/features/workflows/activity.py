@@ -13,6 +13,7 @@ async def record_step(recorder: RunRecorder, node: str, data: dict[str, Any]) ->
             Actor.CTO,
             EventType.MODEL_USED,
             "Thought about the plan" if node == "plan" else "Reviewed the work",
+            {"own_key": bool(data.get("own_key", False))},
             tokens=int(data["cto_tokens"]),
         )
     if node == "scaffold" and data.get("stack"):

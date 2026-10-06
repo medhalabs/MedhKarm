@@ -101,9 +101,8 @@ None new. `model.used` now names the model the company actually used.
 
 ## Known limitations and gotchas
 
-- **The OpenHands engine** reads its model when the worker starts, so it ignores founders' choices (G-45). The built-in engine, the default, follows them.
+- **OpenHands** resolves each company's model and key when it starts a task, as the built-in engine does. Each `model.used` event and eval meter marks whether the founder's own key was used.
 - **Local models need a public tunnel URL** (G-46).
-- **Usage isn't marked as on our keys or theirs** yet; billing needs that (G-47).
 - **Changing `SECRETS_KEY`** (or `AUTH_SECRET` without it) makes saved keys unreadable. Founders then add them again.
 - **Our other providers' keys** must be real environment variables (not only in `.env`), because LiteLLM reads `os.environ`.
 

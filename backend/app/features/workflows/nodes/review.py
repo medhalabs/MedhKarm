@@ -100,6 +100,7 @@ def make_review_node(
             "current_task": next_index,
             "cto_tokens": cto_tokens,
             "cto_tokens_total": state.get("cto_tokens_total", 0) + cto_tokens,
+            "own_key": bool(getattr(llm, "own_key", False)) if cto_tokens else False,
             "last_review": {
                 "task_id": task["id"],
                 "title": task["title"],

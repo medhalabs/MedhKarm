@@ -81,6 +81,7 @@ class EvalRunner:
                         outcome.prompt_tokens = used.prompt_tokens
                         outcome.completion_tokens = used.completion_tokens
                         outcome.total_tokens = used.total_tokens
+                        outcome.own_key = used.own_key
         except TimeoutError:
             outcome.error = f"Timed out after {self._timeout:.0f}s"
         except (ModelCallError, SandboxError) as exc:

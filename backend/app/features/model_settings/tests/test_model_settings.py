@@ -207,9 +207,11 @@ async def test_routed_provider_uses_the_running_companys_choice() -> None:
     with company_scope(A):
         await llm.complete([{"role": "user", "content": "plan"}])
         assert llm.model_name == "anthropic/claude-haiku-4-5-20251001"
+        assert llm.own_key is True
     with company_scope(B):
         await llm.complete([{"role": "user", "content": "plan"}])
         assert llm.model_name == DEFAULT
+        assert llm.own_key is False
     assert [c.api_key for c in factory.configs] == ["sk-ant-secret-a1b2", "ours"]
 
     with company_scope(A):  # the same model and key reuse the built provider
