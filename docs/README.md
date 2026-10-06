@@ -7,6 +7,7 @@ Planning documents for the AI Virtual Office product. **Start with [08-product-p
 | [00-original-plan.md](00-original-plan.md) | The original product and build plan (Sep 30, 2026); superseded by 08, kept as history |
 | [01-plan-review.md](01-plan-review.md) | Review of the original plan: what to change and why |
 | [02-competitors.md](02-competitors.md) | cto.new, Dots, Grok Bot, Claude Code/Cursor, and where we win |
+| [13-strategy-2027.md](13-strategy-2027.md) | What the market leaders do, what we adopt, the founder flow with a documentation bot, and how to be a hit in 2027 |
 | [03-roadmap.md](03-roadmap.md) | Phased roadmap with dates and gates (v2: AI workforce) |
 | [04-tech-stack.md](04-tech-stack.md) | Technology stack decisions |
 | [05-architecture-and-conventions.md](05-architecture-and-conventions.md) | Folder structure, SOLID rules and coding conventions |
