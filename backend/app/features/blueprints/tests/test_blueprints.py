@@ -248,3 +248,60 @@ def test_the_default_stack_for_a_new_project_comes_from_the_starters() -> None:
     assert "nextjs" in text and "razorpay" in text
     existing = StartRun(request="Add export", repo={"url": "https://github.com/me/shop"})
     assert StackText(StarterService())(existing) == ""
+
+
+CHANGE = StartRun(
+    request="Add a tip option at checkout",
+    repo={"url": "https://github.com/me/coffee"},
+)
+
+
+async def test_a_change_to_a_live_project_gets_three_short_documents_in_its_own_folder() -> None:
+    service, repo, _, runs = make()
+    blueprint = await service.create(COMPANY, NewBlueprint(brief=CHANGE))
+    texts = [f"# {t}\nbody" for t in ("Change brief", "Plan and impact", "Checks and risks")]
+    await BlueprintAuthor(repo, lekha(*texts)).write(blueprint.id)
+
+    done = await service.get(blueprint.id)
+
+    assert done.status == BlueprintStatus.READY
+    assert [d.id for d in done.docs] == ["change", "impact", "checks"]
+    folder = f"docs/changes/{done.created_at:%Y-%m-%d}-add-a-tip-option-at-checkout"
+    assert [d.path for d in done.docs] == [
+        f"{folder}/01-change-brief.md",
+        f"{folder}/02-plan-and-impact.md",
+        f"{folder}/03-checks-and-risks.md",
+    ]
+    await service.approve(blueprint.id, COMPANY)
+    assert runs.started[0][0].repo is not None  # builds on the existing repository
+
+
+async def test_a_changes_documents_never_replace_the_projects_own_docs_index() -> None:
+    service, repo, _, _ = make()
+    blueprint = await service.create(COMPANY, NewBlueprint(brief=CHANGE))
+    texts = [f"# {t}\nbody" for t in ("Change brief", "Plan and impact", "Checks and risks")]
+    await BlueprintAuthor(repo, lekha(*texts)).write(blueprint.id)
+    await service.approve(blueprint.id, COMPANY)
+
+    plan = await ApprovedPlans(service).for_run("run-1")
+
+    assert plan is not None and "docs/README.md" not in plan.files
+    assert all(path.startswith("docs/changes/") for path in plan.files)
+
+
+async def test_a_comment_on_a_change_rewrites_only_its_own_documents() -> None:
+    service, repo, _, _ = make()
+    blueprint = await service.create(COMPANY, NewBlueprint(brief=CHANGE))
+    texts = [f"# {t}\nbody" for t in ("Change brief", "Plan and impact", "Checks and risks")]
+    await BlueprintAuthor(repo, lekha(*texts)).write(blueprint.id)
+    await service.comment(blueprint.id, COMPANY, "Only on the counter screen, please")
+    pick = LLMResponse(
+        tool_calls=[ToolCall(id="1", name="rewrite_docs", arguments={"docs": ["impact"]})]
+    )
+    llm = ScriptedLLMProvider([pick, LLMResponse(content="# Plan and impact\ncounter only")])
+
+    await BlueprintAuthor(repo, BlueprintWriter(llm)).revise(blueprint.id)
+
+    done = await service.get(blueprint.id)
+    assert {d.id: d.content for d in done.docs}["impact"].endswith("counter only")
+    assert {d.id: d.content for d in done.docs}["change"] == "# Change brief\nbody"

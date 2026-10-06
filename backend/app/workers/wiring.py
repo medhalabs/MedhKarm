@@ -80,6 +80,8 @@ class TeamRuntime:
     browser_tester: DeveloperEngine | None  # QA's engine for browser tests (built-in only)
     deploys: DeployService | None  # DevOps, when the team has one and VERCEL_TOKEN is set
     qa_name: str
+    docs: LLMProvider  # Lekha's model: the changelog (and blueprints, in the worker)
+    docs_name: str
     engine: DeveloperEngine  # the developer
     sandboxes: SandboxProvider
 
@@ -108,6 +110,8 @@ def build_team_runtime(settings: Settings) -> TeamRuntime:
             else None
         ),
         qa_name=template.role("qa").display_names[0],
+        docs=_provider(settings, "docs", template.role("docs").model),
+        docs_name=template.role("docs").display_names[0],
         engine=engine,
         sandboxes=sandboxes,
     )
@@ -193,6 +197,8 @@ async def workflow_service(
             starters=StarterService(),
             notes=MessageService(SqlMessageRepository(session_factory)),
             plans=ApprovedPlans(get_blueprint_service()),
+            docs=team.docs,
+            docs_name=team.docs_name,
             repos=RepoService(
                 GitHubRepoHost(settings.github_token),
                 GraphifyCodeGraph() if settings.code_graph else None,

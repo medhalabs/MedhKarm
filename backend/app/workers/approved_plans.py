@@ -20,6 +20,9 @@ class ApprovedPlans:
             return None
         files = {d.path: d.content for d in plan.docs}
         titles = {d.path: d.title for d in plan.docs}
+        if any(d.path.startswith("docs/changes/") for d in plan.docs):
+            # A change to a project that has its own docs: add ours, never replace its index.
+            return PlanDocs(files=files, titles=titles)
         index = "# Project plan\n\nWritten by Lekha and approved before the build.\n\n" + "\n".join(
             f"- [{d.title}]({d.path.removeprefix('docs/')})" for d in plan.docs
         )

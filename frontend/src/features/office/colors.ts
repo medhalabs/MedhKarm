@@ -6,6 +6,7 @@ export const ROLE_COLORS: Record<string, string> = {
   qa: "#d97706",
   security: "#e11d48",
   devops: "#0d9488",
+  docs: "#db2777",
 };
 
 export function roleColor(role: string): string {

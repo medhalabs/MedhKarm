@@ -55,7 +55,7 @@ def after_security(state: BuildState) -> str:
     """Back to a developer for a fix task, on to the founder's gate, or stop."""
     if state.get("current_task", 0) < len(state.get("tasks", [])):
         return "develop"
-    return "preview" if state.get("security_passed", True) else "finish"
+    return "changelog" if state.get("security_passed", True) else "finish"
 
 
 def _fix_task(report: SecurityReport, owner: str, round_: int) -> dict[str, Any]:

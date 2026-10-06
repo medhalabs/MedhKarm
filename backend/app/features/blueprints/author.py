@@ -4,7 +4,7 @@ documents already written are kept."""
 
 from datetime import UTC, datetime
 
-from app.features.blueprints.catalog import BY_ID, DOCS
+from app.features.blueprints.catalog import BY_ID, change_folder, docset
 from app.features.blueprints.exceptions import BlueprintNotFoundError
 from app.features.blueprints.interfaces import BlueprintRepository
 from app.features.blueprints.schemas import Blueprint, BlueprintStatus, Comment, Doc
@@ -23,14 +23,19 @@ class BlueprintAuthor:
         blueprint = await self._get(blueprint_id)
         docs = list(blueprint.docs)
         have = {d.id for d in docs}
-        for number, spec in enumerate(DOCS, start=1):
+        is_change = blueprint.brief.repo is not None
+        specs = docset(is_change)
+        folder = change_folder(blueprint.created_at, blueprint.title) if is_change else ""
+        for number, spec in enumerate(specs, start=1):
             if spec.id in have:
                 continue
             await self._blueprints.update(
-                blueprint_id, progress=f"Writing the {spec.title.lower()} ({number} of {len(DOCS)})"
+                blueprint_id,
+                progress=f"Writing the {spec.title.lower()} ({number} of {len(specs)})",
             )
             content = await self._writer.write(blueprint.brief, spec, docs)
-            docs.append(Doc(id=spec.id, title=spec.title, path=spec.path, content=content))
+            path = spec.path.format(folder=folder)
+            docs.append(Doc(id=spec.id, title=spec.title, path=path, content=content))
             await self._blueprints.update(blueprint_id, docs=docs)
         unanswered = blueprint.comments and blueprint.comments[-1].author == "founder"
         if unanswered:  # a comment came in before a failed rewrite: apply it now

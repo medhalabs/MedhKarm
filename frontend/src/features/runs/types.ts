@@ -81,6 +81,10 @@ export type Brief = {
   new_repo_name: string | null;
   stack: StackChoiceInput & { modules?: string[] | null; starter?: boolean | null };
   test_command: string | null;
+  scale?: "small" | "big" | null; // the CTO's view of a change to a live project
 };
+
+/** The live project a conversation is a change request about. */
+export type About = { repo_url: string; name: string };
 
 export type IntakeReply = { agent: string; text: string; brief: Brief | null };

@@ -37,6 +37,8 @@ class BuildState(TypedDict, total=False):
     browser: dict[str, Any]  # QA's browser test: needed, passed, test files, output, round
     browser_rounds: int  # fix rounds the browser test has asked for
     browser_passed: bool  # the browser test passes (or none was needed)
+    docs_updated: dict[str, Any]  # Lekha's changelog entry (path, entry, by)
+    docs_tokens: int  # tokens that entry used
     preview: dict[str, Any]  # DevOps' preview before the gate (Deployment-shaped)
     deployment: dict[str, Any]  # the production deployment after approval (Deployment-shaped)
     approved: bool  # the founder's decision at the release gate

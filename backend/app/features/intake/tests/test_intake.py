@@ -2,8 +2,8 @@
 
 from typing import Any
 
-from app.features.intake.schemas import Conversation, Turn
-from app.features.intake.service import IntakeService
+from app.features.intake.schemas import About, Conversation, Turn
+from app.features.intake.service import IntakeService, parse_brief
 from app.features.models.providers.scripted_provider import ScriptedLLMProvider
 from app.features.models.schemas import LLMResponse, ToolCall
 
@@ -139,3 +139,49 @@ async def test_a_full_spec_or_just_start_can_go_straight_to_a_brief() -> None:
         llm = ScriptedLLMProvider([brief_call(request=first, summary="ok")])
         reply = await IntakeService(llm).turn(talk(first))
         assert reply.brief is not None, first
+
+
+async def test_a_change_to_a_live_project_is_about_that_project_and_says_how_big() -> None:
+    call = brief_call(
+        request="Add a tip option at checkout",
+        summary="Tips of 10, 20 or 50 rupees",
+        repo_url="https://github.com/someone/else",  # the model must not pick another project
+        create_repo=True,
+        scale="small",
+    )
+    llm = ScriptedLLMProvider([call])
+    conversation = Conversation(
+        turns=[Turn(role="founder", text="Add a tip option at checkout. Just do it.")],
+        about=About(repo_url="https://github.com/me/coffee", name="Coffee shop orders"),
+    )
+
+    reply = await IntakeService(llm, "Kabir").turn(conversation)
+
+    assert reply.brief is not None
+    assert reply.brief.repo_url == "https://github.com/me/coffee"
+    assert reply.brief.create_repo is False
+    assert reply.brief.scale == "small"
+    system: Any = llm.calls[0][0]["content"]
+    assert "CHANGE" in system and "https://github.com/me/coffee (Coffee shop orders)" in system
+
+
+def test_a_made_up_scale_is_ignored() -> None:
+    call = brief_call(request="Do a thing", summary="s", scale="huge")
+    brief = parse_brief(call, talk("Do a thing"))
+    assert brief is not None and brief.scale is None
+
+
+async def test_without_a_message_the_cto_still_says_what_he_thinks_of_a_changes_size() -> None:
+    about = About(repo_url="https://github.com/me/coffee", name="Coffee")
+
+    async def say(**arguments: Any) -> str:
+        call = brief_call(request="Add a tip", summary="s", **arguments)
+        call.content = ""
+        conversation = Conversation(
+            turns=[Turn(role="founder", text="Add a tip. Just do it.")], about=about
+        )
+        return (await IntakeService(ScriptedLLMProvider([call])).turn(conversation)).text
+
+    assert "small change" in await say(scale="small")
+    assert "bigger change" in await say(scale="big")
+    assert "choose what happens next" in await say()

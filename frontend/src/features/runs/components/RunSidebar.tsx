@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { OfficeIcon } from "@/shared/ui/icons";
 
+import { liveRepoUrl } from "../liveRepo";
 import type { Run, RunStatus } from "../types";
 import { CancelRunButton } from "./CancelRunButton";
 
@@ -48,6 +49,22 @@ export function RunSidebar({ run }: { run: Run }) {
           Open the office →
         </span>
       </Link>
+
+      {liveRepoUrl(run) && (
+        <Link
+          href={`/admin/runs/${run.id}/change`}
+          className="card block p-5 transition hover:border-indigo-300"
+        >
+          <p className="font-semibold">Request a change</p>
+          <p className="mt-1 text-sm text-zinc-500">
+            Something new or different? Tell Kabir. Small changes are built right away; bigger ones
+            get a plan first.
+          </p>
+          <span className="mt-3 inline-flex text-sm font-medium text-indigo-600 dark:text-indigo-400">
+            Start a change →
+          </span>
+        </Link>
+      )}
 
       <dl className="card divide-y divide-zinc-100 dark:divide-zinc-800">
         <Row label="Run">

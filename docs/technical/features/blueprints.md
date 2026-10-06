@@ -55,6 +55,14 @@ sequenceDiagram
    - It gives the CTO the plan, up to 14,000 characters, most useful documents first. Developers get the first 6,000. The instruction is to **build milestone 1 only**.
 6. **The inbox** shows "Plans to read and approve" for `ready` blueprints, and they count in the nav badge.
 
+## Changes to a live project
+
+A founder who wants something new on a released project talks to Kabir again, **about that project** (run page → "Request a change"). A change to an existing repository gets a lighter plan:
+- **Three documents, not seven,** filed under `docs/changes/<date>-<title>/` so the project's own plan and docs are never replaced: change brief, plan and impact, and checks and risks (what could break in the live app; extra cost in ₹).
+- **Lekha hasn't seen the code,** so she describes parts by what they do ("the checkout page") and is told never to invent file names. (Live, her first draft invented `src/pages/Checkout.tsx`.)
+- **A small change skips the plan:** Kabir marks the brief `small` or `big`, and the brief card offers "Build it now" or "Prepare the plan" accordingly.
+- **Comments and approval work the same way.** The build uses the existing repository, and the documents are added to the pull request. The project's own `docs/README.md` is never overwritten.
+
 ## Code map
 
 | File | Responsibility |
@@ -135,4 +143,5 @@ None on the run's log yet: the plan is written before a run exists. The run itse
 
 | Date | Change |
 | --- | --- |
+| 2026-10-06 | Changes to a live project: three-document change plans under `docs/changes/`, no invented file names, no overwrite of the project's docs index |
 | 2026-10-06 | Created: Lekha (the `docs` role), seven documents, comments, approval that starts the build, docs delivered in `docs/`, the inbox shows plans, the CTO suggests technology with ₹ costs |

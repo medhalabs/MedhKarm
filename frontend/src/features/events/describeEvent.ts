@@ -9,6 +9,7 @@ const ACTORS: Record<string, string> = {
   qa: "Tara (QA)",
   security: "Vikram (security)",
   devops: "Neel (DevOps)",
+  docs: "Lekha (docs)",
   system: "System",
 };
 

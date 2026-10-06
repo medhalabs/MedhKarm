@@ -1,5 +1,5 @@
 """Build graph: prepare → scaffold → connect → plan → (develop → review)* → verify → browser QA →
-security → preview → (release gate) → finish.
+security → changelog → preview → (release gate) → finish.
 
 QA (verify) runs the tests, build, type-check and lint; failures go back to a developer once.
 
@@ -28,6 +28,7 @@ from app.features.workflows.interfaces import ApprovedPlans, FounderNotes, WorkC
 from app.features.workflows.nodes.approval import make_approval_node
 from app.features.workflows.nodes.blueprint import make_blueprint_node
 from app.features.workflows.nodes.browser_qa import after_browser_qa, make_browser_qa_node
+from app.features.workflows.nodes.changelog import make_changelog_node
 from app.features.workflows.nodes.connect import make_connect_node
 from app.features.workflows.nodes.develop import make_develop_node
 from app.features.workflows.nodes.finish import make_finish_node
@@ -64,6 +65,8 @@ def build_app_graph(
     starters: StarterService | None = None,
     notes: FounderNotes | None = None,
     plans: ApprovedPlans | None = None,
+    docs: LLMProvider | None = None,
+    docs_name: str = "Lekha",
 ) -> CompiledStateGraph[BuildState, None, BuildState, BuildState]:
     """`planner` is the CTO's model: it plans and reviews. The role settings normally come from
     the team template (see app/workers/wiring.py). `approval_policy` decides the release gate:
@@ -77,7 +80,8 @@ def build_app_graph(
     up new projects from our starter and modules; without one, they start empty. `notes` are the
     founder's messages about a run, given to the CTO's plan and every developer brief. `plans`
     gives a run the plan the founder approved first (Lekha's blueprint): its documents go in the
-    project's docs/ folder and the team follows it."""
+    project's docs/ folder and the team follows it. `docs` is Lekha's model: before the gate she
+    adds a changelog entry to projects that keep a docs/ folder."""
     repos = repos or RepoService()
     graph = StateGraph(BuildState)
     graph.add_node("prepare", make_prepare_node(sandboxes))
@@ -117,6 +121,7 @@ def build_app_graph(
     graph.add_node(
         "security", make_security_node(sandboxes, security, developer_names or ["Developer"])
     )
+    graph.add_node("changelog", make_changelog_node(sandboxes, docs, docs_name))
     graph.add_node("preview", make_preview_node(sandboxes, deploys))
     graph.add_node("approval", make_approval_node(approval_policy))
     graph.add_node("finish", make_finish_node(sandboxes, repos, deploys))
@@ -131,7 +136,8 @@ def build_app_graph(
     graph.add_conditional_edges("review", after_review, ["develop", "verify"])
     graph.add_conditional_edges("verify", after_verify, ["develop", "browser_qa", "finish"])
     graph.add_conditional_edges("browser_qa", after_browser_qa, ["develop", "security", "finish"])
-    graph.add_conditional_edges("security", after_security, ["develop", "preview", "finish"])
+    graph.add_conditional_edges("security", after_security, ["develop", "changelog", "finish"])
+    graph.add_edge("changelog", "preview")
     graph.add_edge("preview", "approval")
     graph.add_edge("approval", "finish")
     graph.add_edge("finish", END)

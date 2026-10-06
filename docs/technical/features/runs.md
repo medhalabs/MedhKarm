@@ -125,6 +125,7 @@ None of its own. The workflow records the run's events ([workflows.md](workflows
 
 | Date | Change |
 | --- | --- |
+| 2026-10-06 | The run page shows the release sign-off card ([signoffs.md](signoffs.md)); released runs that reached GitHub offer **Request a change** (`/admin/runs/{id}/change`, see [intake.md](intake.md)) |
 | 2026-10-05 | The "New run" form is replaced by a conversation with the CTO that ends in a brief the founder confirms ([intake.md](intake.md)); repo, stack and test command come from the conversation |
 | 2026-10-05 | The run's activity scrolls in its own box and messages in theirs (newest in view), so messages are reachable without scrolling past every event |
 | 2026-10-05 | UI redesign: sidebar app shell; run page with a title from the request's first line, the request as formatted Markdown in a folding card, activity and messages in cards, a side panel (office, the run's facts, Cancel); Runs page with counts, a "New run" card (options folded), run titles without Markdown marks |

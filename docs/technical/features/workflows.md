@@ -171,6 +171,7 @@ LangGraph creates and owns its tables in our Postgres (`checkpoints`, `checkpoin
 
 | Date | Change |
 | --- | --- |
+| 2026-10-06 | New `changelog` step between `security` and `preview`: Lekha adds a plain-language entry to `docs/CHANGELOG.md` in projects that keep a `docs/` folder (one entry per run, safe to repeat); event `docs.updated` |
 | 2026-10-06 | New `blueprint` step between `connect` and `plan`: an approved plan's documents go in `docs/` and the CTO and developers follow it ([blueprints.md](blueprints.md)) |
 | 2026-10-05 | Page-work titles now include sections, hero, CTA, cards, styles, header/footer, theme…: a live landing page's "Create Hero Section" had gone to the backend developer |
 | 2026-10-05 | `build_app_graph(..., notes=)`: the founder's messages about a run (FounderNotes) go into the CTO's plan and every developer brief |

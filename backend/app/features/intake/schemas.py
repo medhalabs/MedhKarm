@@ -13,8 +13,16 @@ class Turn(BaseModel):
     text: str = Field(min_length=1, max_length=50_000)
 
 
+class About(BaseModel):
+    """The live project a conversation is about (a change request on a released run)."""
+
+    repo_url: str = Field(max_length=300)
+    name: str = Field(default="", max_length=200)  # what it is, e.g. the first request's title
+
+
 class Conversation(BaseModel):
     turns: list[Turn] = Field(min_length=1, max_length=40)
+    about: About | None = None  # set: a change to this existing project
 
 
 class Brief(BaseModel):
@@ -28,6 +36,7 @@ class Brief(BaseModel):
     new_repo_name: str | None = None
     stack: StackChoice = Field(default_factory=StackChoice)
     test_command: str | None = None
+    scale: Literal["small", "big"] | None = None  # the CTO's view of a change's size
 
 
 class Reply(BaseModel):

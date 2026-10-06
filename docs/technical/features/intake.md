@@ -30,6 +30,14 @@ The same conversation on the Projects page, with Mira, the PM.
 
 Small models sometimes hand over a brief straight away. When that happens on the founder's first message, `too_soon()` holds the brief back and the reply becomes questions: the model's own if it wrote any, else the role's standard ones (`FIRST_QUESTIONS`). The exceptions: a pasted full spec (700+ characters), or the founder saying "just start" / "go ahead".
 
+### Changes to a live project
+
+`POST /intake` takes an optional `about: {repo_url, name}`. Then Kabir's prompt adds that this is a **change** to the live project: he doesn't ask new-or-existing or about the stack, asks at most three questions about the change, and sets `scale`:
+- **small** (a tweak, a fix, one screen): the card offers **Build it now**, with **Plan it first** as the other choice.
+- **big** (new features, data, payments, sign-in): the card offers **Prepare the plan**, with **Build without a plan** as the other choice.
+
+The repository is set from `about` whatever the model wrote, so a change can't land on another project. The page is `/admin/runs/{id}/change`, opened by **Request a change** on a released run that reached GitHub.
+
 ## How it works
 
 1. **The conversation lives in the browser.** Each turn sends it whole to `POST /intake`, so nothing is stored on the server until the run starts.
@@ -104,6 +112,7 @@ None until the run starts.
 
 | Date | Change |
 | --- | --- |
+| 2026-10-06 | Changes to a live project: `about` on the conversation (the repository and name), Kabir doesn't ask new-or-existing or the stack, the repository is forced into the brief, and `scale` (small or big) decides whether the brief card offers "Build it now" or "Prepare the plan" |
 | 2026-10-06 | Kabir suggests technology with reasons and rough ₹ costs when the founder is unsure; the brief card now offers "Yes, prepare the plan" (a blueprint, see [blueprints.md](blueprints.md)), "Skip the plan, build now" and "Change something" |
 | 2026-10-05 | Kabir and Mira use the founder's own model and key when set ([model_settings.md](model_settings.md)) |
 | 2026-10-05 | Projects by talking to Mira (`/intake/project`, `submit_project`); the shared `ChatIntake` component; the first reply always asks (`too_soon`, `FIRST_QUESTIONS`): live, Mira had jumped to a thin brief |

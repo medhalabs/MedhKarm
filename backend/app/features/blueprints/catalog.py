@@ -1,6 +1,8 @@
 """The documents of a blueprint, in the order Lekha writes them."""
 
+import re
 from dataclasses import dataclass
+from datetime import datetime
 
 
 @dataclass(frozen=True)
@@ -79,6 +81,47 @@ DOCS: tuple[DocSpec, ...] = (
         "costs; the top five risks with what to do about each. " + COST_FACTS,
     ),
 )
-BY_ID = {d.id: d for d in DOCS}
+# A change to an existing, live project: three short documents in the project's own
+# docs/changes/ folder, so the original plan and the founder's own docs stay untouched.
+CHANGE_DOCS: tuple[DocSpec, ...] = (
+    DocSpec(
+        "change",
+        "Change brief",
+        "{folder}/01-change-brief.md",
+        "What the founder wants changed and why, in two sentences; who it affects; what is NOT "
+        "part of this change; assumptions you made where the founder didn't say.",
+    ),
+    DocSpec(
+        "impact",
+        "Plan and impact",
+        "{folder}/02-plan-and-impact.md",
+        "Which parts of the app change (screens, pages, data, endpoints) and how, in plain "
+        "words; any new data or settings; the order to build it in; 'done when' checks. This is "
+        "a change to a project that already works: describe only what changes. You have not seen "
+        "its code: name parts by what they do ('the checkout page', 'the orders table'), and "
+        "never invent file names, folders or function names.",
+    ),
+    DocSpec(
+        "checks",
+        "Checks and risks",
+        "{folder}/03-checks-and-risks.md",
+        "What will be tested; what could break in the live app and what to do about each; the "
+        "extra running cost in ₹ if any, or 'no extra cost'. " + COST_FACTS,
+    ),
+)
+ALL_DOCS = (*DOCS, *CHANGE_DOCS)
+BY_ID = {d.id: d for d in ALL_DOCS}
+
+
+def docset(is_change: bool) -> tuple[DocSpec, ...]:
+    """The documents to write: a full plan for a new project, three for a change."""
+    return CHANGE_DOCS if is_change else DOCS
+
+
+def change_folder(created: datetime, title: str) -> str:
+    """Where a change's documents live: docs/changes/2026-10-06-add-a-tip-option."""
+    slug = re.sub(r"[^a-z0-9]+", "-", title.lower()).strip("-")[:40].strip("-") or "change"
+    return f"docs/changes/{created:%Y-%m-%d}-{slug}"
+
 
 README_PATH = "docs/README.md"

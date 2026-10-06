@@ -113,4 +113,5 @@ Reads every run event type. The frontend's `EVENT_TYPES` now includes `project.s
 
 | Date | Change |
 | --- | --- |
+| 2026-10-06 | Lekha has a desk (top row) and her own colour; `docs.updated` shows her bubble |
 | 2026-10-05 | Created: the office per run (live and replay), task board, `@/features/events/client` |

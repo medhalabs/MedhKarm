@@ -139,3 +139,14 @@ describe("the task board", () => {
     ]);
   });
 });
+
+describe("Lekha in the office", () => {
+  it("shows what she added to the changelog, at her desk", () => {
+    const team: Member[] = [...TEAM, { role: "docs", title: "Documentation", name: "Lekha" }];
+    const state = officeState(team, [
+      event("docs.updated", "docs", "Lekha added to the changelog: Customers can add a tip"),
+    ]);
+    expect(state.agents.Lekha.bubble).toBe("Customers can add a tip");
+    expect(state.agents.Lekha.doing).toBe("working");
+  });
+});

@@ -28,6 +28,15 @@ documentation lead, Lekha, writes the plan (roadmap, architecture, costs) for th
 and approve before any code is written; they can also skip the plan and build straight away.
 Keep every message short."""
 
+CHANGE_PROMPT = """
+
+This conversation is about a CHANGE to the founder's existing, live project at {repo_url}{name}.
+Don't ask whether it is new or existing, and don't ask about the stack: the project keeps its
+own. Ask only what you need to understand the change (at most 3 short questions). When you
+call submit_brief, set `scale`: "small" for a tweak, a fix or one screen (it can be built
+straight away), "big" for new features, new data, payments or sign-in (it should be planned
+first). In your message, say which you think it is and why, in one sentence."""
+
 BRIEF_TOOL: ToolSpec = {
     "type": "function",
     "function": {
@@ -67,6 +76,13 @@ BRIEF_TOOL: ToolSpec = {
                     "description": "Start from our tested starter: auto (if it's an app), yes, no",
                 },
                 "notes": {"type": "string", "description": "Docs or links for anything new"},
+                "scale": {
+                    "type": "string",
+                    "enum": ["small", "big"],
+                    "description": "For a change to an existing project: small (a tweak, a "
+                    "fix, one screen: build it now) or big (new features, data or payments: "
+                    "plan first)",
+                },
                 "test_command": {"type": "string", "description": "Only if the founder gave one"},
             },
             "required": ["request", "summary"],

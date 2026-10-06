@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { MessageList } from "@/features/messages";
+import { SignoffCard } from "@/features/signoffs";
 import { timeAgo } from "@/shared/lib/format";
 import { titleFrom } from "@/shared/lib/title";
 import { PageHeader } from "@/shared/ui/PageHeader";
@@ -66,6 +67,7 @@ export async function InboxPage() {
                   Security: {a.security.join("; ")}
                 </p>
               )}
+              <SignoffCard runId={a.run_id} compact />
               <div className="flex flex-wrap items-center gap-3 text-sm">
                 {a.preview_url && (
                   <a href={a.preview_url} target="_blank" rel="noreferrer" className="underline">

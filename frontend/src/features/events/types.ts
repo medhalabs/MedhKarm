@@ -20,12 +20,13 @@ export const EVENT_TYPES = [
   "changes.delivered",
   "project.scaffolded",
   "message.posted",
+  "docs.updated",
 ] as const;
 
 export type EventType = (typeof EVENT_TYPES)[number];
 
 export type Actor =
-  "founder" | "pm" | "cto" | "developer" | "qa" | "security" | "devops" | "system";
+  "founder" | "pm" | "cto" | "developer" | "qa" | "security" | "devops" | "docs" | "system";
 
 export type ActivityEvent = {
   id: number;

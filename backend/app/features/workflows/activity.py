@@ -101,6 +101,16 @@ async def record_step(recorder: RunRecorder, node: str, data: dict[str, Any]) ->
                 + " ".join(approval.get("reasons", [])),
                 {"approved": approved, "rules": approval.get("rule_ids", []), "by": "rules"},
             )
+    elif node == "changelog" and data.get("docs_updated"):
+        update = data["docs_updated"]
+        first = str(update["entry"]).splitlines()[0].removeprefix("- ")
+        await recorder.record(
+            Actor.DOCS,
+            EventType.DOCS_UPDATED,
+            f"{update.get('by', 'Lekha')} added to the changelog: {first}"[:480],
+            update,
+            tokens=int(data.get("docs_tokens", 0)),
+        )
     elif node == "preview" and data.get("preview", {}).get("kind", "none") != "none":
         preview = data["preview"]
         summary = (

@@ -26,6 +26,7 @@ class EventType(StrEnum):
     APPROVAL_REQUESTED = "approval.requested"
     APPROVAL_DECIDED = "approval.decided"
     CHANGES_DELIVERED = "changes.delivered"
+    DOCS_UPDATED = "docs.updated"  # Lekha added to the project's changelog
     MESSAGE_POSTED = "message.posted"  # the founder and an agent talking about the run
 
 

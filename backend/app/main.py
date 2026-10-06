@@ -19,6 +19,7 @@ from app.features.model_settings.router import router as model_settings_router
 from app.features.notifications.router import router as notifications_router
 from app.features.projects.router import router as projects_router
 from app.features.runs.router import router as runs_router
+from app.features.signoffs.router import router as signoffs_router
 from app.features.standups.router import router as standups_router
 from app.features.starters.router import router as starters_router
 from app.features.teams.router import router as teams_router
@@ -54,6 +55,7 @@ def create_app() -> FastAPI:
     app.include_router(notifications_router)
     app.include_router(intake_router)
     app.include_router(blueprints_router)
+    app.include_router(signoffs_router)
     app.include_router(model_settings_router)
 
     return app

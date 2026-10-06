@@ -2,7 +2,7 @@
 
 from collections.abc import Callable
 
-from app.features.blueprints.catalog import BY_ID, DOCS, DocSpec
+from app.features.blueprints.catalog import ALL_DOCS, BY_ID, DocSpec
 from app.features.blueprints.schemas import Doc
 from app.features.models.interfaces import LLMProvider
 from app.features.runs.schemas import StartRun
@@ -116,7 +116,7 @@ class BlueprintWriter:
                 raw = call.arguments.get("docs")
                 asked += [str(x) for x in raw] if isinstance(raw, list) else []
         known = {d.id for d in docs}
-        chosen = [s.id for s in DOCS if s.id in asked and s.id in known]
+        chosen = [s.id for s in ALL_DOCS if s.id in asked and s.id in known]
         return chosen or [d.id for d in docs]  # unclear: rewrite them all, never nothing
 
 

@@ -98,6 +98,7 @@ async def test_reports_each_step() -> None:
         "verify",
         "browser_qa",
         "security",
+        "changelog",
         "preview",
     ]
 

@@ -9,6 +9,7 @@ from pydantic import ValidationError
 
 from app.features.intake.prompt import (
     BRIEF_TOOL,
+    CHANGE_PROMPT,
     FIRST_QUESTIONS,
     INTAKE_PROMPT,
     PROJECT_PROMPT,
@@ -35,15 +36,21 @@ class IntakeService:
 
     async def turn(self, conversation: Conversation) -> Reply:
         """The CTO's side: a run's brief."""
-        response = await self._ask(INTAKE_PROMPT, BRIEF_TOOL, conversation)
+        about = conversation.about
+        prompt = INTAKE_PROMPT + (
+            CHANGE_PROMPT.format(
+                repo_url=about.repo_url, name=f" ({about.name})" if about.name else ""
+            )
+            if about
+            else ""
+        )
+        response = await self._ask(prompt, BRIEF_TOOL, conversation)
         brief = parse_brief(response, conversation)
+        if brief and about:  # a change to this project, whatever the model wrote
+            brief.repo_url, brief.create_repo = about.repo_url, False
         if brief and too_soon(conversation):
             return Reply(agent=self._agent, text=_questions(response, "cto"), brief=None)
-        text = (response.content or "").strip() or (
-            "Here's the brief. Check it, then start the run, or tell me what to change."
-            if brief
-            else "Could you tell me a little more about what you need?"
-        )
+        text = (response.content or "").strip() or _fallback(brief)
         return Reply(agent=self._agent, text=text, brief=brief)
 
     async def project_turn(self, conversation: Conversation) -> ProjectReply:
@@ -85,6 +92,17 @@ def too_soon(conversation: Conversation) -> bool:
     return len(founder[0]) < FULL_SPEC and not GO_AHEAD.search(founder[0])
 
 
+def _fallback(brief: Brief | None) -> str:
+    """What the CTO says when the model sent a brief without a message."""
+    if brief is None:
+        return "Could you tell me a little more about what you need?"
+    if brief.scale == "small":
+        return "This looks like a small change, so I'd build it straight away. Check it below."
+    if brief.scale == "big":
+        return "This is a bigger change, so I'd plan it first. Check the brief below."
+    return "Here's the brief. Check it, then choose what happens next, or tell me what to change."
+
+
 def _questions(response: LLMResponse, role: str) -> str:
     """The agent's own questions if it wrote any, otherwise the standard ones."""
     text = (response.content or "").strip()
@@ -108,6 +126,7 @@ def parse_brief(response: LLMResponse, conversation: Conversation) -> Brief | No
             new_repo_name=_text(raw.get("new_repo_name")),
             stack=_stack(raw),
             test_command=_text(raw.get("test_command")),
+            scale=raw.get("scale") if raw.get("scale") in ("small", "big") else None,
         )
     except ValidationError:
         return Brief(request=founder[:50_000])

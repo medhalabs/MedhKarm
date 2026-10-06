@@ -108,6 +108,9 @@ export function applyEvent(state: OfficeState, event: ActivityEvent): OfficeStat
     case "changes.delivered":
       say(byRole("devops"), event.summary, "working");
       break;
+    case "docs.updated":
+      say(byRole("docs"), event.summary.replace(/^[^:]+: /, ""), "working");
+      break;
     case "approval.requested":
       next.founderWaiting = true;
       say(cto, "Waiting for your approval", "waiting", { kind: "door" });

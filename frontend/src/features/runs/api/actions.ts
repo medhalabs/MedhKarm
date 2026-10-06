@@ -10,7 +10,7 @@ import { ApiError, apiPost } from "@/shared/api/client";
 
 import { briefBody } from "../briefBody";
 import { parseDecision, parseStartRun } from "../parseForms";
-import type { Brief, FormState, IntakeReply, Run, Turn } from "../types";
+import type { About, Brief, FormState, IntakeReply, Run, Turn } from "../types";
 
 export async function startRunAction(_previous: FormState, form: FormData): Promise<FormState> {
   const input = parseStartRun(form);
@@ -27,9 +27,10 @@ export async function startRunAction(_previous: FormState, form: FormData): Prom
 /** One turn of the conversation with the CTO (the conversation itself lives in the browser). */
 export async function intakeAction(
   turns: Turn[],
+  about?: About,
 ): Promise<{ reply: IntakeReply } | { error: string }> {
   try {
-    return { reply: await apiPost<IntakeReply>("/intake", { turns }) };
+    return { reply: await apiPost<IntakeReply>("/intake", { turns, ...(about ? { about } : {}) }) };
   } catch (error) {
     return { error: describeError(error) };
   }

@@ -5,7 +5,15 @@ export const FLOOR = { width: 960, height: 560 };
 export const MEETING = { x: 690, y: 30, width: 250, height: 250 };
 export const DOOR = { x: 690, y: 310, width: 250, height: 220 };
 
-const ROWS: Record<string, number> = { pm: 0, cto: 0, developer: 1, qa: 2, security: 2, devops: 2 };
+const ROWS: Record<string, number> = {
+  pm: 0,
+  cto: 0,
+  docs: 0,
+  developer: 1,
+  qa: 2,
+  security: 2,
+  devops: 2,
+};
 const ROW_Y = [120, 290, 460];
 const FIRST_X = 110;
 const STEP_X = 200;
