@@ -276,6 +276,14 @@ async def _record_browser(recorder: RunRecorder, data: dict[str, Any]) -> None:
         summary,
         {"passed": bool(browser.get("passed")), "browser": True, **browser},
     )
+    if browser.get("demo"):
+        demo = browser["demo"]
+        await recorder.record(
+            Actor.QA,
+            EventType.DEMO_RECORDED,
+            "Recorded a demo video of the app working",
+            {"artifact_id": demo["artifact_id"], "bytes": demo["bytes"]},
+        )
     if fix:
         await recorder.record(
             Actor.QA,

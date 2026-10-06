@@ -1,7 +1,8 @@
 """The morning standup and the Monday report reach each founder: their own runs only, on
 their channels, once a day."""
 
-from datetime import timedelta
+from datetime import datetime, time, timedelta
+from zoneinfo import ZoneInfo
 
 from app.features.events.schemas import Actor, EventType
 from app.features.events.service import RunRecorder
@@ -40,6 +41,9 @@ class Log:
 
 async def test_each_founder_gets_their_own_standup_and_weekly_report() -> None:
     events, queue = InMemoryEventStore(), InMemoryJobQueue()
+    # Noon today: inside the window that ends at 23:00, whatever time the test runs
+    today = datetime.now(ZoneInfo("Asia/Kolkata")).date()
+    events.now = datetime.combine(today, time(12), ZoneInfo("Asia/Kolkata"))
     runs = RunService(InMemoryRunRepository(), queue)
     mine = await runs.start(StartRun(request="Build the chai stall orders library"), "c1")
     theirs = await runs.start(StartRun(request="Someone else's secret project"), "c2")

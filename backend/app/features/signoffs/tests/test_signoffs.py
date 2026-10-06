@@ -223,3 +223,22 @@ def test_steps_a_run_never_reached_are_skipped_once_it_is_at_the_gate_or_over() 
     assert at_gate["devops"].headline == "No preview was set up for this run"
     over = by_role(events((Actor.SYSTEM, EventType.RUN_FINISHED, "Stopped", {})))
     assert over["security"].state == State.SKIPPED
+
+
+def test_a_recorded_demo_video_is_attached_to_qas_line_unless_the_checks_failed() -> None:
+    passed = (
+        Actor.QA,
+        EventType.CHECK_FINISHED,
+        "Browser test passed (a.py)",
+        {"passed": True, "browser": True},
+    )
+    demo = (Actor.QA, EventType.DEMO_RECORDED, "Recorded a demo", {"artifact_id": 7})
+    assert by_role(events(passed, demo))["qa"].video_id == 7
+    failed = (
+        Actor.QA,
+        EventType.CHECK_FINISHED,
+        "Browser test failed",
+        {"passed": False, "browser": True},
+    )
+    assert by_role(events(failed, demo))["qa"].video_id is None
+    assert by_role(events(passed))["qa"].video_id is None

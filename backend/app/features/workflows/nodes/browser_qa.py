@@ -3,6 +3,8 @@ with Playwright (a real headless browser), and we run it ourselves. A failure go
 frontend developer once ("fix the app, not the test"); if it still fails, the release stops
 without asking the founder. Runs without web UI changes pass straight through."""
 
+import base64
+import logging
 import shlex
 from pathlib import PurePosixPath
 from typing import Any
@@ -12,11 +14,16 @@ from app.features.developer_engine.schemas import DevTask
 from app.features.events.interfaces import EventStore
 from app.features.events.schemas import Actor, EventType
 from app.features.events.service import RunRecorder
-from app.features.sandbox.interfaces import SandboxProvider
+from app.features.sandbox.interfaces import Sandbox, SandboxProvider
+from app.features.workflows.interfaces import ArtifactSink
 from app.features.workflows.nodes.base import BuildNode
 from app.features.workflows.state import BuildState
 
+logger = logging.getLogger(__name__)
 E2E_DIR = "tests/e2e"
+VIDEO_DIR = "/tmp/medhkarm-demo"  # outside the project, so the video isn't committed
+MAX_VIDEO_BYTES = 6 * 1024 * 1024
+SLOWMO_MS = 300  # a pause after each browser action, so a person can follow the video
 E2E_COMMAND = f"python -m pytest {E2E_DIR} -q -p no:cacheprovider"
 WEB_SUFFIXES = {".html", ".htm", ".jsx", ".tsx", ".vue", ".svelte"}
 WEB_FOLDERS = {"templates", "static", "public", "pages", "components"}
@@ -56,9 +63,11 @@ def make_browser_qa_node(
     qa_name: str = "QA",
     fixer: str = "Developer",
     max_fix_rounds: int = 1,
+    artifacts: ArtifactSink | None = None,
 ) -> BuildNode:
     """`tester` is QA's engine (QA role: instructions, tools); None = no browser tests.
-    `fixer` is who gets the fix task (the frontend developer)."""
+    `fixer` is who gets the fix task (the frontend developer). `artifacts`: where the demo video
+    of a passing test is kept (None: not recorded)."""
 
     async def browser_qa(state: BuildState) -> dict[str, Any]:
         changed = list(state.get("dev_result", {}).get("files_changed", []))
@@ -89,11 +98,17 @@ def make_browser_qa_node(
             )
             qa_summary = result.summary
             tests = [f for f in result.files_changed if f.startswith(f"{E2E_DIR}/")]
-        run = await sandbox.run(E2E_COMMAND + " " + " ".join(shlex.quote(t) for t in tests))
+        rounds = state.get("browser_rounds", 0)
+        video_dir = f"{VIDEO_DIR}-{rounds}"
+        flags = (
+            f" --video on --slowmo {SLOWMO_MS} --output {shlex.quote(video_dir)}"
+            if artifacts
+            else ""
+        )
+        run = await sandbox.run(E2E_COMMAND + flags + " " + " ".join(shlex.quote(t) for t in tests))
         app_bug = qa_summary.strip().upper().startswith(APP_BUG)
         passed = bool(tests) and run.ok and not app_bug
         output = run.output[-2000:] if tests else "QA didn't write a browser test."
-        rounds = state.get("browser_rounds", 0)
         update: dict[str, Any] = {
             "browser": {
                 "needed": True,
@@ -105,6 +120,10 @@ def make_browser_qa_node(
             },
             "browser_passed": passed,
         }
+        if passed and artifacts is not None:
+            demo = await _keep_demo(sandbox, artifacts, state.get("run_id", ""), video_dir)
+            if demo:
+                update["browser"]["demo"] = demo
         if not passed and tests and rounds < max_fix_rounds:
             tasks = [dict(t) for t in state.get("tasks", [])]
             tasks.append(_fix_task(fixer, tests, qa_summary if app_bug else "", output, rounds))
@@ -144,3 +163,27 @@ def _fix_task(owner: str, tests: list[str], bug: str, output: str, round_: int) 
         "files_changed": [],
         "success": False,
     }
+
+
+async def _keep_demo(
+    sandbox: Sandbox, artifacts: ArtifactSink, run_id: str, video_dir: str
+) -> dict[str, Any] | None:
+    """The recording of the passing test, kept for the founder. Never fails the run: a missing
+    or oversized video just means there's no demo."""
+    try:
+        found = await sandbox.run(
+            f"find {shlex.quote(video_dir)} -name '*.webm' -printf '%s %p\\n' | sort -rn | head -1"
+        )
+        size_text, _, path = found.output.strip().partition(" ")
+        size = int(size_text) if size_text.isdigit() else 0
+        if not found.ok or not path or not 0 < size <= MAX_VIDEO_BYTES:
+            return None
+        encoded = await sandbox.run(f"base64 -w0 {shlex.quote(path)}")
+        if not encoded.ok:
+            return None
+        data = base64.b64decode(encoded.output.strip(), validate=True)
+        saved = await artifacts.save(run_id, "demo", "browser-test.webm", "video/webm", data)
+    except Exception as error:  # a demo is a bonus: whatever goes wrong, the run carries on
+        logger.warning("Couldn't keep the demo video for %s: %s", run_id, error)
+        return None
+    return {"artifact_id": saved.id, "bytes": len(data)}

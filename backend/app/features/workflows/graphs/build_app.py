@@ -24,7 +24,12 @@ from app.features.security.service import SecurityReview
 from app.features.starters.service import StarterService
 from app.features.workflows.checkers.quality import QualityChecker
 from app.features.workflows.checkers.test_command import TestCommandChecker
-from app.features.workflows.interfaces import ApprovedPlans, FounderNotes, WorkChecker
+from app.features.workflows.interfaces import (
+    ApprovedPlans,
+    ArtifactSink,
+    FounderNotes,
+    WorkChecker,
+)
 from app.features.workflows.nodes.approval import make_approval_node
 from app.features.workflows.nodes.blueprint import make_blueprint_node
 from app.features.workflows.nodes.browser_qa import after_browser_qa, make_browser_qa_node
@@ -67,6 +72,7 @@ def build_app_graph(
     plans: ApprovedPlans | None = None,
     docs: LLMProvider | None = None,
     docs_name: str = "Lekha",
+    artifacts: ArtifactSink | None = None,
 ) -> CompiledStateGraph[BuildState, None, BuildState, BuildState]:
     """`planner` is the CTO's model: it plans and reviews. The role settings normally come from
     the team template (see app/workers/wiring.py). `approval_policy` decides the release gate:
@@ -81,7 +87,8 @@ def build_app_graph(
     founder's messages about a run, given to the CTO's plan and every developer brief. `plans`
     gives a run the plan the founder approved first (Lekha's blueprint): its documents go in the
     project's docs/ folder and the team follows it. `docs` is Lekha's model: before the gate she
-    adds a changelog entry to projects that keep a docs/ folder."""
+    adds a changelog entry to projects that keep a docs/ folder. `artifacts` is where QA's demo
+    video of a passing browser test is kept; without it, none is recorded."""
     repos = repos or RepoService()
     graph = StateGraph(BuildState)
     graph.add_node("prepare", make_prepare_node(sandboxes))
@@ -116,7 +123,9 @@ def build_app_graph(
     frontend = next((n for n in names if (specialties or {}).get(n) == "frontend"), names[0])
     graph.add_node(
         "browser_qa",
-        make_browser_qa_node(sandboxes, browser_tester, events, qa_name, frontend),
+        make_browser_qa_node(
+            sandboxes, browser_tester, events, qa_name, frontend, artifacts=artifacts
+        ),
     )
     graph.add_node(
         "security", make_security_node(sandboxes, security, developer_names or ["Developer"])

@@ -28,3 +28,17 @@ class ApprovedPlans(Protocol):
     feature, through a small adapter in app/workers). None: the run didn't start from one."""
 
     async def for_run(self, run_id: str) -> "PlanDocs | None": ...
+
+
+class SavedFile(Protocol):
+    @property
+    def id(self) -> int: ...
+
+
+class ArtifactSink(Protocol):
+    """Where a run keeps the files it produces for the founder (the artifacts feature): QA's
+    demo video of the browser test."""
+
+    async def save(
+        self, run_id: str, kind: str, name: str, content_type: str, data: bytes
+    ) -> SavedFile: ...

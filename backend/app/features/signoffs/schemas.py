@@ -21,3 +21,4 @@ class Signoff(BaseModel):
     headline: str  # one plain sentence
     details: list[str] = Field(default_factory=list)
     url: str = ""  # a preview, the live site or a pull request, if there is one
+    video_id: int | None = None  # QA's demo video (an artifact of the run), if recorded

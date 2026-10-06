@@ -46,12 +46,20 @@ def build(events: list[Event], names: dict[str, str]) -> list[Signoff]:
     return [
         _developers(of(EventType.WORK_FINISHED), card),
         _cto(of(EventType.REVIEW_FINISHED), card),
-        _qa(of(EventType.CHECK_FINISHED, Actor.QA), card),
+        _with_demo(_qa(of(EventType.CHECK_FINISHED, Actor.QA), card), of(EventType.DEMO_RECORDED)),
         _security(of(EventType.SECURITY_FINISHED), over, card),
         _devops(of(EventType.DEPLOY_FINISHED), of(EventType.CHANGES_DELIVERED), over, card),
         _docs(of(EventType.DOCS_UPDATED), over, card),
         _founder(of(EventType.APPROVAL_DECIDED), card),
     ]
+
+
+def _with_demo(qa: Signoff, recordings: list[Event]) -> Signoff:
+    """QA's line, with the demo video of the passing browser test when one was recorded."""
+    video = recordings[-1].data.get("artifact_id") if recordings else None
+    if not isinstance(video, int) or qa.state == State.FAIL:
+        return qa
+    return qa.model_copy(update={"video_id": video})
 
 
 def _developers(finished: list[Event], card: Card) -> Signoff:

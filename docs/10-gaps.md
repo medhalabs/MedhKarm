@@ -60,6 +60,7 @@ Last updated: Oct 5, 2026.
 
 | Id | Gap | Filled | Where |
 | --- | --- | --- | --- |
+| G-52 | A standup test failed between 23:00 and midnight (it assumed "now" was before the standup hour) | Oct 6, 2026 | The test sets its event times to noon today (`tests/test_founder_updates.py`) |
 | — | Developers faked tests with a stand-in `pytest.py` (no pytest in the sandbox) | Oct 1, 2026 | Sandbox image with pytest; review and QA refuse stand-ins ([workflows.md](technical/features/workflows.md)) |
 | — | Retries leaked a Docker container per failed developer step | Oct 1, 2026 | `prepare` step creates the sandbox first ([jobs.md](technical/features/jobs.md)) |
 | — | The engine ran built-in tools a role wasn't given | Oct 1, 2026 | Only offered tools run ([integrations.md](technical/features/integrations.md)) |
@@ -78,5 +79,6 @@ Last updated: Oct 5, 2026.
 | G-04 | QA failures ended the run: no fix round from QA back to a developer | Oct 4, 2026 | One "Make QA's checks pass" task, with build, type-check and lint checks ([workflows.md](technical/features/workflows.md)) |
 | G-49 | Blueprints: Lekha's work isn't in the run log or the office (no events before a run exists); the run page doesn't link to its plan; no download of the documents; no "update the docs after a change" yet; Lekha doesn't read an existing repository | Part of the plan-first flow | Oct 6 | Events on blueprints, a plan link on the run, a zip download, Lekha updating docs after each release (change requests) |
 | G-50 | Changes: Lekha writes change plans and the changelog without reading the repository, and the original plan documents are not updated after a change (only a changelog entry and the change folder are added); the changelog step and the change flow were tested with fakes, and the plan and sign-offs live, but never in a full run on a real GitHub repository | The "change after launch" promise | Oct 6 | Give Lekha the codebase map (as the CTO has); update the affected original documents after each release; one live change on a real repository |
+| G-51 | Demo video: plain Playwright recording (no audio, captions or cursor highlight), only for web changes with a passing browser test, one video per run, kept in Postgres, no download button; Next.js apps depend on QA writing a test that passes | The demo is step 7 of the founder flow | Oct 6 | Cursor highlight and captions, a narrated version, object storage, download |
 | G-45 | The OpenHands engine read one model at worker startup | Oct 5, 2026 | Resolve each company's developer model and key for every OpenHands task ([model_settings.md](technical/features/model_settings.md)); focused routing tests pass |
 | G-47 | Model usage did not identify whose key paid for it | Oct 5, 2026 | Add `own_key` to model usage events and the per-model eval meter ([model_settings.md](technical/features/model_settings.md)); focused metering tests pass |

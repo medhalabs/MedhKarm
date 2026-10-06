@@ -2,7 +2,7 @@ import { STATE_LOOK, overall } from "../signoffLabel";
 import { getSignoffs } from "../api/getSignoffs";
 import type { Signoff } from "../types";
 
-function Row({ s, compact }: { s: Signoff; compact: boolean }) {
+function Row({ s, compact, runId }: { s: Signoff; compact: boolean; runId: string }) {
   const look = STATE_LOOK[s.state];
   return (
     <li className="flex gap-3 px-5 py-3">
@@ -33,6 +33,16 @@ function Row({ s, compact }: { s: Signoff; compact: boolean }) {
             </>
           )}
         </p>
+        {s.video_id !== null && (
+          <p className="mt-0.5">
+            <a
+              href={`/admin/runs/${runId}#demo`}
+              className="text-indigo-600 underline-offset-2 hover:underline dark:text-indigo-400"
+            >
+              ▶ Watch the demo
+            </a>
+          </p>
+        )}
         {!compact && s.details.length > 0 && (
           <ul className="mt-1 list-disc pl-4 text-xs text-zinc-500">
             {s.details.slice(0, 5).map((d) => (
@@ -64,7 +74,7 @@ export async function SignoffCard({
       </div>
       <ul className="divide-y divide-zinc-100 dark:divide-zinc-800">
         {signoffs.map((s) => (
-          <Row key={s.role} s={s} compact={compact} />
+          <Row key={s.role} s={s} compact={compact} runId={runId} />
         ))}
       </ul>
     </section>

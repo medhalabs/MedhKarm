@@ -73,7 +73,7 @@ Reads `work.finished`, `review.finished`, `check.finished`, `security.finished`,
 
 - QA's line is the event summaries, not a pass/fail table of each check (the details are in the activity log).
 - Not shown on WhatsApp or email yet (roadmap: WhatsApp two-way).
-- A demo recording will join Tara's line when it exists (roadmap).
+- The demo video is linked from Tara's line when it exists ([artifacts.md](artifacts.md)).
 
 ## Troubleshooting
 
@@ -86,4 +86,5 @@ Reads `work.finished`, `review.finished`, `check.finished`, `security.finished`,
 
 | Date | Change |
 | --- | --- |
+| 2026-10-06 | Tara's line links to the demo video when one was recorded (`video_id`, from `demo.recorded`) |
 | 2026-10-06 | Created: the release sign-off card on the run page and in the inbox |

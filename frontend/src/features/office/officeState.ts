@@ -108,6 +108,9 @@ export function applyEvent(state: OfficeState, event: ActivityEvent): OfficeStat
     case "changes.delivered":
       say(byRole("devops"), event.summary, "working");
       break;
+    case "demo.recorded":
+      say(byRole("qa"), "Recorded a demo of the app", "testing", desk(byRole("qa") ?? ""));
+      break;
     case "docs.updated":
       say(byRole("docs"), event.summary.replace(/^[^:]+: /, ""), "working");
       break;

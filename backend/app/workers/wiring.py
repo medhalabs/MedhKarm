@@ -11,6 +11,8 @@ from pathlib import Path
 from app.core.config import Settings, get_settings
 from app.core.database import session_factory
 from app.features.approvals.schemas import ApprovalPolicy
+from app.features.artifacts.repository import SqlArtifactRepository
+from app.features.artifacts.service import ArtifactService
 from app.features.blueprints.dependencies import get_blueprint_service
 from app.features.deploys.service import DeployService
 from app.features.deploys.vercel import VercelDeployTarget
@@ -198,6 +200,7 @@ async def workflow_service(
             notes=MessageService(SqlMessageRepository(session_factory)),
             plans=ApprovedPlans(get_blueprint_service()),
             docs=team.docs,
+            artifacts=ArtifactService(SqlArtifactRepository(session_factory)),
             docs_name=team.docs_name,
             repos=RepoService(
                 GitHubRepoHost(settings.github_token),

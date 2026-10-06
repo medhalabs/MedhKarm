@@ -10,4 +10,5 @@ export type Signoff = {
   headline: string;
   details: string[];
   url: string;
+  video_id: number | null; // QA's demo video, an artifact of the run
 };

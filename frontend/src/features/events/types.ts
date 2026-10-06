@@ -21,6 +21,7 @@ export const EVENT_TYPES = [
   "project.scaffolded",
   "message.posted",
   "docs.updated",
+  "demo.recorded",
 ] as const;
 
 export type EventType = (typeof EVENT_TYPES)[number];

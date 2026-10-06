@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { DemoCard } from "@/features/artifacts";
 import { MessageList } from "@/features/messages";
 import { SignoffCard } from "@/features/signoffs";
 import { timeAgo } from "@/shared/lib/format";
@@ -67,6 +68,7 @@ export async function InboxPage() {
                   Security: {a.security.join("; ")}
                 </p>
               )}
+              <DemoCard runId={a.run_id} compact />
               <SignoffCard runId={a.run_id} compact />
               <div className="flex flex-wrap items-center gap-3 text-sm">
                 {a.preview_url && (
